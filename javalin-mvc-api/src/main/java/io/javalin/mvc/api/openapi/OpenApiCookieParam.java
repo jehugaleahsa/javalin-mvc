@@ -7,7 +7,7 @@ import java.lang.annotation.*;
 @Target(ElementType.METHOD)
 public @interface OpenApiCookieParam {
     String name();
-    Class<?> type() default String.class;
+    Class<?> type() default void.class;
     String description() default "";
     boolean deprecated() default false;
     boolean required() default false;

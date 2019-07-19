@@ -11,10 +11,7 @@ import io.javalin.mvc.JavalinHttpContext;
 import io.javalin.mvc.api.openapi.*;
 import org.apache.commons.lang3.StringUtils;
 
-import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.Name;
-import javax.lang.model.element.TypeElement;
-import javax.lang.model.element.VariableElement;
+import javax.lang.model.element.*;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.MirroredTypeException;
 import javax.lang.model.type.TypeKind;
@@ -372,7 +369,7 @@ final class RouteGenerator {
             .map(p -> {
                 OpenApiParameter parameter = new OpenApiParameter();
                 parameter.setName(p.name());
-                parameter.setType(getTypeMirror(p::type));
+                parameter.setType(getType(parameterLookup, p.name(), p::type));
                 PathParameter pathParameter = new PathParameter();
                 pathParameter.setRequired(p.required());
                 pathParameter.setAllowEmptyValue(p.allowEmptyValue());
@@ -393,7 +390,7 @@ final class RouteGenerator {
                 .map(p -> {
                     OpenApiParameter parameter = new OpenApiParameter();
                     parameter.setName(p.name());
-                    parameter.setType(getTypeMirror(p::type));
+                    parameter.setType(getType(parameterLookup, p.name(), p::type));
                     PathParameter pathParameter = new PathParameter();
                     pathParameter.setRequired(p.required());
                     pathParameter.setAllowEmptyValue(p.allowEmptyValue());
@@ -414,7 +411,7 @@ final class RouteGenerator {
                 .map(p -> {
                     OpenApiParameter parameter = new OpenApiParameter();
                     parameter.setName(p.name());
-                    parameter.setType(getTypeMirror(p::type));
+                    parameter.setType(getType(parameterLookup, p.name(), p::type));
                     PathParameter pathParameter = new PathParameter();
                     pathParameter.setRequired(p.required());
                     pathParameter.setAllowEmptyValue(p.allowEmptyValue());
@@ -435,7 +432,7 @@ final class RouteGenerator {
                 .map(p -> {
                     OpenApiParameter parameter = new OpenApiParameter();
                     parameter.setName(p.name());
-                    parameter.setType(getTypeMirror(p::type));
+                    parameter.setType(getType(parameterLookup, p.name(), p::type));
                     PathParameter pathParameter = new PathParameter();
                     pathParameter.setRequired(p.required());
                     pathParameter.setAllowEmptyValue(p.allowEmptyValue());
@@ -465,7 +462,7 @@ final class RouteGenerator {
                 .toArray(OpenApiResponse[]::new);
     }
 
-    private TypeMirror getTypeMirror(Supplier<Class<?>> supplier) {
+    private static TypeMirror getTypeMirror(Supplier<Class<?>> supplier) {
         try {
             supplier.get();
         } catch (MirroredTypeException exception) {
@@ -478,6 +475,21 @@ final class RouteGenerator {
         return Optional.ofNullable(lookup.get(name))
                 .map((p) -> p.getAnnotation(Deprecated.class))
                 .isPresent();
+    }
+
+    private TypeMirror getType(Map<String, VariableElement> lookup, String name, Supplier<Class<?>> typeGetter) {
+        TypeMirror suppliedType = getTypeMirror(typeGetter);
+        if (suppliedType == null || suppliedType.getKind() == TypeKind.VOID) {
+            VariableElement parameter = lookup.get(name);
+            if (parameter == null) {
+                // Default to String if the type is not provided and it cannot be determined.
+                return elementUtils.getTypeElement(String.class.getCanonicalName()).asType();
+            } else {
+                return parameter.asType();
+            }
+
+        }
+        return suppliedType;
     }
 
     private final static class OpenApiParameter {

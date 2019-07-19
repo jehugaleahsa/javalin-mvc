@@ -135,7 +135,7 @@ You can also inject the `HttpContext`, the `HttpRequest` and/or the `HttpRespons
 Your action methods should return instances of `ActionResult`. An `ActionResult` exists for each type of response (JSON, plain text, status codes, redirects, etc.). You can also return `void`, in which case you must provide a response via `HttpResponse`.
 
 #### Pending Features
-Here is a list of supported and/or desired features. An `x` means it is already supported and a `-` means it is partially supported. Feel free to submit an issue for feature requests!!!
+Here is a list of supported and/or desired features. An `x` means it is already supported. Feel free to submit an issue for feature requests!!!
 
 * [x] Specify controllers via `@Controller`
 * [x] Specify routes via `@HttpGet`, `@HttpPost`, etc.
@@ -157,6 +157,7 @@ Here is a list of supported and/or desired features. An `x` means it is already 
         * [x] ZonedDateTime
         * [x] LocalDateTime
         * [x] LocalDate
+    * [x] UUID
     * [x] Arrays
     * [x] File uploads
 * [x] Bind Java object from request body
@@ -168,6 +169,10 @@ Here is a list of supported and/or desired features. An `x` means it is already 
     * [x] StatusCodeResult - return HTTP status code (no body)
     * [x] RedirectResult - indicate client to redirect
     * [x] FileStreamResult - send file contents
+* [ ] Support returning non-`ActionResult` values
+    * [x] void
+    * [ ] Primitives, Strings, Dates, UUIDs, etc.
+    * [ ] Objects as JsonResult
 * [x] Support parameter naming flexibility
 * [x] Support custom/alternative parameter name bindings
 * [x] Support pre-execution interceptor
@@ -177,19 +182,38 @@ Here is a list of supported and/or desired features. An `x` means it is already 
     * [x] Inject controller dependencies
     * [x] Inject injector (self-injection)
     * [x] Inject context/request/response objects
-* [-] Open API/Swagger Annotations
+* [ ] Open API/Swagger Annotations
     * [x] Summary
     * [x] Description
     * [x] Tags
     * [x] Deprecated
+        * [x] Also support `Deprecated` annotation
     * [x] Ignore
-    * [-] Path Params
-    * [-] Query Params
-    * [-] Headers
-    * [-] Cookies
-    * [-] File Uploads
-    * [-] Request Body
-    * [-] Responses
+    * [ ] Path, Query, Header, Cookie Params
+        * [x] Param Name
+        * [x] Param Type (`Class<?>`)
+            * [x] Auto-detect from parameter
+        * [x] Description
+        * [x] Required flag
+        * [x] Deprecated flag
+            * [x] Also support `Deprecated` annotation
+    * [ ] File Uploads
+        * [x] File name
+        * [x] Description
+        * [x] Required Flag
+    * [ ] Request Body
+        * [x] Model type (`Class<?>`)
+        * [x] Mime type
+        * [x] Description
+        * [x] Required flag
+        * [ ] Auto-detect from parameter
+        * [ ] Full-blown multipart/form-data support (schemas)
+    * [ ] Responses
+        * [x] Status code
+        * [x] Model type (`Class<?>`)
+        * [x] Mime type
+        * [x] Description
+        * [ ] Auto-detect from return type
 
 ## Dagger
 Dependency injection is at the core of modern software projects. It supports switching between implementations at runtime and promotes testability. Historically, dependency injection has utilized runtime reflection to instantiate objects and inject them. However, waiting to perform injection until runtime comes with the risk of missing bindings that will lead to system failure. There's also the overhead of constructing objects using reflection. However, the [Dagger](https://google.github.io/dagger/) project uses annotation processing to provide compile-time dependency injection. This provides all the benefits of using an inversion of control (IoC) container without the risk of missing bindings causing runtime failures. There's also minimal overhead because there's no reflection involved.
