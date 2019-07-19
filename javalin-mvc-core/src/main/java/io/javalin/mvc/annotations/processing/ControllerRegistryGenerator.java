@@ -28,7 +28,7 @@ final class ControllerRegistryGenerator {
             .addModifiers(Modifier.PUBLIC, Modifier.FINAL);
 
         AnnotationSpec generatedAnnotation = AnnotationSpec.builder(Generated.class)
-            .addMember("value", "$S", "io.javalin.mvc.annotations.processing.ControllerProcessor")
+            .addMember("value", "$S", ControllerProcessor.class.getCanonicalName())
             .build();
         registryTypeBuilder.addAnnotation(generatedAnnotation);
 

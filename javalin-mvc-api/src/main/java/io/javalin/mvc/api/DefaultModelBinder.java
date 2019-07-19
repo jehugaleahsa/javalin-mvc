@@ -15,6 +15,7 @@ import java.util.function.Supplier;
  */
 public class DefaultModelBinder implements ModelBinder {
     private static final Map<Class<?>, Function<String, Object>> primitiveConverters = getPrimitiveConverters();
+    public static final Class<?>[] SUPPORTED_TYPES = primitiveConverters.keySet().toArray(new Class<?>[0]);
     private final HttpRequest request;
     private final ParameterCache headers;
     private final ParameterCache pathParameters;
@@ -22,8 +23,10 @@ public class DefaultModelBinder implements ModelBinder {
     private final ParameterCache formFields;
 
     private static Map<Class<?>, Function<String, Object>> getPrimitiveConverters() {
+        // We treat anything that can be parsed as a single value as "primitive".
+        // Everything else we treat as an object that can be parsed from JSON.
         Map<Class<?>, Function<String, Object>> converters = new HashMap<>();
-        converters.put(String.class, s -> s);  // we treat String as a primitive
+        converters.put(String.class, s -> s);
         converters.put(Integer.class, Integer::parseInt);
         converters.put(Boolean.class, Boolean::parseBoolean);
         converters.put(Date.class, DefaultModelBinder::toDate);
@@ -40,6 +43,7 @@ public class DefaultModelBinder implements ModelBinder {
         converters.put(BigInteger.class, BigInteger::new);
         converters.put(BigDecimal.class, BigDecimal::new);
         converters.put(Byte.class, Byte::parseByte);
+        converters.put(UUID.class, UUID::fromString);
         return converters;
     }
 

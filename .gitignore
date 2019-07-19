@@ -99,3 +99,4 @@ pickle-electron/assets
 **/.idea/**
 **/.vscode/**
 **/.settings
+**/*.iml

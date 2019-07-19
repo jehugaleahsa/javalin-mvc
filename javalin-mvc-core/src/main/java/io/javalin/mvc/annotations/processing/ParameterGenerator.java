@@ -9,44 +9,8 @@ import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.time.*;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 
 final class ParameterGenerator {
-    private static final Class<?>[] SUPPORTED_TYPES = new Class[] {
-            String.class, Integer.class, Boolean.class, Date.class, BigDecimal.class,
-            Double.class, Long.class, BigInteger.class, Short.class, Byte.class, Float.class,
-            Character.class, Instant.class, ZonedDateTime.class, LocalDateTime.class,
-            OffsetDateTime.class, LocalDate.class
-    };
-    private static final Map<Class<?>, Class<?>> ARRAY_TYPE_LOOKUP = getArrayTypeLookup();
-
-    private static Map<Class<?>, Class<?>> getArrayTypeLookup() {
-        Map<Class<?>, Class<?>> lookup = new HashMap<>();
-        lookup.put(String.class, String[].class);
-        lookup.put(Integer.class, Integer[].class);
-        lookup.put(Boolean.class, Boolean[].class);
-        lookup.put(Date.class, Date[].class);
-        lookup.put(BigDecimal.class, BigDecimal[].class);
-        lookup.put(Double.class, Double[].class);
-        lookup.put(Long.class, Long[].class);
-        lookup.put(BigInteger.class, BigInteger[].class);
-        lookup.put(Short.class, Short[].class);
-        lookup.put(Byte.class, Byte[].class);
-        lookup.put(Float.class, Float[].class);
-        lookup.put(Character.class, Character[].class);
-        lookup.put(Instant.class, Instant[].class);
-        lookup.put(ZonedDateTime.class, ZonedDateTime[].class);
-        lookup.put(LocalDateTime.class, LocalDateTime[].class);
-        lookup.put(OffsetDateTime.class, OffsetDateTime[].class);
-        lookup.put(LocalDate.class, LocalDate[].class);
-        return lookup;
-    }
-
     private final Types typeUtils;
     private final Elements elementUtils;
     private final VariableElement parameter;
@@ -77,11 +41,11 @@ final class ParameterGenerator {
             return CodeBlock.of(contextName + ".getRequest().getFile($S)", parameterName).toString();
         }
         ValueSource valueSource = getValueSource(parameter);
-        for (Class<?> parameterClass : SUPPORTED_TYPES) {
+        for (Class<?> parameterClass : DefaultModelBinder.SUPPORTED_TYPES) {
             if (isType(parameterType, parameterClass)) {
                 return bindParameter(parameterName, parameterClass, valueSource);
             } else {
-                Class<?> arrayClass = ARRAY_TYPE_LOOKUP.get(parameterClass);
+                Class<?> arrayClass = getArrayClass(parameterClass);
                 if (isType(parameterType, arrayClass)) {
                     return bindParameter(parameterName, arrayClass, valueSource);
                 }
@@ -97,10 +61,20 @@ final class ParameterGenerator {
     }
 
     private boolean isType(TypeMirror parameterType, Class<?> type) {
-        if (parameterType.getKind() == TypeKind.ARRAY) {
+        if (type == null) {
+            return false;
+        } else if (parameterType.getKind() == TypeKind.ARRAY) {
             return type.isArray() && isType(((ArrayType)parameterType).getComponentType(), type.getComponentType());
         } else {
             return !type.isArray() && typeUtils.isSameType(parameterType, elementUtils.getTypeElement(type.getCanonicalName()).asType());
+        }
+    }
+
+    private Class<?> getArrayClass(Class<?> type) {
+        try {
+            return Class.forName("[L" + type.getCanonicalName() + ";");
+        } catch (ClassNotFoundException e) {
+            return null;
         }
     }
 

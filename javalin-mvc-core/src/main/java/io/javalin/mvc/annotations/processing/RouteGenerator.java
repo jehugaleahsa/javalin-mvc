@@ -1,9 +1,6 @@
 package io.javalin.mvc.annotations.processing;
 
 import com.squareup.javapoet.CodeBlock;
-import com.squareup.javapoet.MethodSpec;
-import com.squareup.javapoet.TypeSpec;
-import io.javalin.Javalin;
 import io.javalin.http.Handler;
 import io.javalin.plugin.openapi.dsl.OpenApiBuilder;
 import io.javalin.plugin.openapi.dsl.OpenApiDocumentation;
@@ -15,7 +12,6 @@ import io.javalin.mvc.api.openapi.*;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.Modifier;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
