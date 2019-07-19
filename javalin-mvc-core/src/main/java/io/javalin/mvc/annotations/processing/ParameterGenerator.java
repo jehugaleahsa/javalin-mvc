@@ -25,6 +25,10 @@ final class ParameterGenerator {
         return new ParameterGenerator(route.getTypeUtils(), route.getElementUtils(), parameter);
     }
 
+    public VariableElement getParameter() {
+        return parameter;
+    }
+
     public String generateParameter(String contextName) {
         TypeMirror parameterType = parameter.asType();
         if (isType(parameterType, HttpContext.class)) {
@@ -36,7 +40,7 @@ final class ParameterGenerator {
         if (isType(parameterType, HttpResponse.class)) {
             return contextName + ".getResponse()";
         }
-        String parameterName = getParameterName(parameter);
+        String parameterName = getParameterName();
         if (isType(parameterType, FileUpload.class)) {
             return CodeBlock.of(contextName + ".getRequest().getFile($S)", parameterName).toString();
         }
@@ -78,7 +82,7 @@ final class ParameterGenerator {
         }
     }
 
-    private String getParameterName(VariableElement parameter) {
+    public String getParameterName() {
         Named annotation = parameter.getAnnotation(Named.class);
         if (annotation == null) {
             return parameter.getSimpleName().toString();

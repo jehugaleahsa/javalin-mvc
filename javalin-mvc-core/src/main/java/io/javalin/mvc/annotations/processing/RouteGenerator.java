@@ -14,6 +14,7 @@ import org.apache.commons.lang3.StringUtils;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.MirroredTypeException;
 import javax.lang.model.type.TypeKind;
@@ -22,7 +23,9 @@ import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 import java.lang.annotation.Annotation;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -237,13 +240,16 @@ final class RouteGenerator {
     }
 
     private void appendOpenApiDocs(CodeBlock.Builder docsBuilder) {
+        Map<String, VariableElement> parameterLookup = this.method.getParameters().stream()
+            .map((p) -> ParameterGenerator.getParameterGenerator(this, p))
+            .collect(Collectors.toMap(ParameterGenerator::getParameterName, ParameterGenerator::getParameter));
         String summary = getOpenApiSummary();
         if (!StringUtils.isBlank(summary)) {
-            docsBuilder.add(".operation((op) -> { op.summary($S); })", summary);
+            docsBuilder.add(".operation((op) -> { op.setSummary($S); })", summary);
         }
         String description = getOpenApiDescription();
         if (!StringUtils.isBlank(description)) {
-            docsBuilder.add(".operation((op) -> { op.description($S); })", description);
+            docsBuilder.add(".operation((op) -> { op.setDescription($S); })", description);
         }
         boolean isIgnored = getOpenApiIgnored();
         if (isIgnored) {
@@ -253,25 +259,29 @@ final class RouteGenerator {
         for (String tag : tags) {
             docsBuilder.add(".operation((op) -> { op.addTagsItem($S); })", tag);
         }
-        OpenApiParameter[] pathParams = getOpenApiPathParams();
+        boolean isDeprecated = findAnnotation(Deprecated.class) != null;
+        if (isDeprecated) {
+            docsBuilder.add(".operation((op) -> { op.setDeprecated(true); })");
+        }
+        OpenApiParameter[] pathParams = getOpenApiPathParams(parameterLookup);
         for (OpenApiParameter param : pathParams) {
             docsBuilder.add(".pathParam($S, $T.class, (u) -> { ", param.getName(), param.getType());
             addParamSettings(docsBuilder, "u", param.getParameter());
             docsBuilder.add("})");
         }
-        OpenApiParameter[] queryParams = getOpenApiQueryParams();
+        OpenApiParameter[] queryParams = getOpenApiQueryParams(parameterLookup);
         for (OpenApiParameter param : queryParams) {
             docsBuilder.add(".queryParam($S, $T.class, (u) -> { ", param.getName(), param.getType());
             addParamSettings(docsBuilder, "u", param.getParameter());
             docsBuilder.add("})");
         }
-        OpenApiParameter[] headerParams = getOpenApiHeaderParams();
+        OpenApiParameter[] headerParams = getOpenApiHeaderParams(parameterLookup);
         for (OpenApiParameter param : headerParams) {
             docsBuilder.add(".header($S, $T.class, (u) -> { ", param.getName(), param.getType());
             addParamSettings(docsBuilder, "u", param.getParameter());
             docsBuilder.add("})");
         }
-        OpenApiParameter[] cookieParams = getOpenApiCookieParams();
+        OpenApiParameter[] cookieParams = getOpenApiCookieParams(parameterLookup);
         for (OpenApiParameter param : cookieParams) {
             docsBuilder.add(".cookie($S, $T.class, (u) -> { ", param.getName(), param.getType());
             addParamSettings(docsBuilder, "u", param.getParameter());
@@ -318,18 +328,18 @@ final class RouteGenerator {
 
     private static void addParamSettings(CodeBlock.Builder docsBuilder, String updater, Parameter param) {
         if (param.getRequired()) {
-            docsBuilder.add("$N.required(true); ", updater);
+            docsBuilder.add("$N.setRequired(true); ", updater);
         } else {
-            docsBuilder.add("$N.required(false); ", updater);
+            docsBuilder.add("$N.setRequired(false); ", updater);
         }
         if (param.getAllowEmptyValue()) {
             docsBuilder.add("$N.setAllowEmptyValue(true); ", updater);
         }
         if (param.getDeprecated()) {
-            docsBuilder.add("$N.deprecated(true); ", updater);
+            docsBuilder.add("$N.setDeprecated(true); ", updater);
         }
         if (!StringUtils.isBlank(param.getDescription())) {
-            docsBuilder.add("$N.description($S); ", updater, param.getDescription());
+            docsBuilder.add("$N.setDescription($S); ", updater, param.getDescription());
         }
     }
 
@@ -353,7 +363,7 @@ final class RouteGenerator {
         return annotation == null ? new String[0] : annotation.value();
     }
 
-    private OpenApiParameter[] getOpenApiPathParams() {
+    private OpenApiParameter[] getOpenApiPathParams(Map<String, VariableElement> parameterLookup) {
         OpenApiPathParam single = findAnnotation(OpenApiPathParam.class);
         OpenApiPathParamContainer container = findAnnotation(OpenApiPathParamContainer.class);
         OpenApiPathParam[] multiple = container == null ? new OpenApiPathParam[0] : container.value();
@@ -366,7 +376,7 @@ final class RouteGenerator {
                 PathParameter pathParameter = new PathParameter();
                 pathParameter.setRequired(p.required());
                 pathParameter.setAllowEmptyValue(p.allowEmptyValue());
-                pathParameter.setDeprecated(p.deprecated());
+                pathParameter.setDeprecated(p.deprecated() || isDeprecated(parameterLookup, p.name()));
                 pathParameter.setDescription(p.description());
                 parameter.setParameter(pathParameter);
                 return parameter;
@@ -374,7 +384,7 @@ final class RouteGenerator {
             .toArray(OpenApiParameter[]::new);
     }
 
-    private OpenApiParameter[] getOpenApiQueryParams() {
+    private OpenApiParameter[] getOpenApiQueryParams(Map<String, VariableElement> parameterLookup) {
         OpenApiQueryParam single = findAnnotation(OpenApiQueryParam.class);
         OpenApiQueryParamContainer container = findAnnotation(OpenApiQueryParamContainer.class);
         OpenApiQueryParam[] multiple = container == null ? new OpenApiQueryParam[0] : container.value();
@@ -387,7 +397,7 @@ final class RouteGenerator {
                     PathParameter pathParameter = new PathParameter();
                     pathParameter.setRequired(p.required());
                     pathParameter.setAllowEmptyValue(p.allowEmptyValue());
-                    pathParameter.setDeprecated(p.deprecated());
+                    pathParameter.setDeprecated(p.deprecated() || isDeprecated(parameterLookup, p.name()));
                     pathParameter.setDescription(p.description());
                     parameter.setParameter(pathParameter);
                     return parameter;
@@ -395,7 +405,7 @@ final class RouteGenerator {
                 .toArray(OpenApiParameter[]::new);
     }
 
-    private OpenApiParameter[] getOpenApiHeaderParams() {
+    private OpenApiParameter[] getOpenApiHeaderParams(Map<String, VariableElement> parameterLookup) {
         OpenApiHeaderParam single = findAnnotation(OpenApiHeaderParam.class);
         OpenApiHeaderParamContainer container = findAnnotation(OpenApiHeaderParamContainer.class);
         OpenApiHeaderParam[] multiple = container == null ? new OpenApiHeaderParam[0] : container.value();
@@ -408,7 +418,7 @@ final class RouteGenerator {
                     PathParameter pathParameter = new PathParameter();
                     pathParameter.setRequired(p.required());
                     pathParameter.setAllowEmptyValue(p.allowEmptyValue());
-                    pathParameter.setDeprecated(p.deprecated());
+                    pathParameter.setDeprecated(p.deprecated() || isDeprecated(parameterLookup, p.name()));
                     pathParameter.setDescription(p.description());
                     parameter.setParameter(pathParameter);
                     return parameter;
@@ -416,7 +426,7 @@ final class RouteGenerator {
                 .toArray(OpenApiParameter[]::new);
     }
 
-    private OpenApiParameter[] getOpenApiCookieParams() {
+    private OpenApiParameter[] getOpenApiCookieParams(Map<String, VariableElement> parameterLookup) {
         OpenApiCookieParam single = findAnnotation(OpenApiCookieParam.class);
         OpenApiCookieParamContainer container = findAnnotation(OpenApiCookieParamContainer.class);
         OpenApiCookieParam[] multiple = container == null ? new OpenApiCookieParam[0] : container.value();
@@ -429,7 +439,7 @@ final class RouteGenerator {
                     PathParameter pathParameter = new PathParameter();
                     pathParameter.setRequired(p.required());
                     pathParameter.setAllowEmptyValue(p.allowEmptyValue());
-                    pathParameter.setDeprecated(p.deprecated());
+                    pathParameter.setDeprecated(p.deprecated() || isDeprecated(parameterLookup, p.name()));
                     pathParameter.setDescription(p.description());
                     parameter.setParameter(pathParameter);
                     return parameter;
@@ -462,6 +472,12 @@ final class RouteGenerator {
             return exception.getTypeMirror();
         }
         return null;
+    }
+
+    private static boolean isDeprecated(Map<String, VariableElement> lookup, String name) {
+        return Optional.ofNullable(lookup.get(name))
+                .map((p) -> p.getAnnotation(Deprecated.class))
+                .isPresent();
     }
 
     private final static class OpenApiParameter {
