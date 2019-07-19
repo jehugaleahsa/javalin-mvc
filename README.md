@@ -171,8 +171,8 @@ Here is a list of supported and/or desired features. An `x` means it is already 
     * [x] FileStreamResult - send file contents
 * [ ] Support returning non-`ActionResult` values
     * [x] void
-    * [ ] Primitives, Strings, Dates, UUIDs, etc.
-    * [ ] Objects as JsonResult
+    * [x] Primitives, Strings, Dates, UUIDs, etc.
+    * [x] Objects as JsonResult
 * [x] Support parameter naming flexibility
 * [x] Support custom/alternative parameter name bindings
 * [x] Support pre-execution interceptor

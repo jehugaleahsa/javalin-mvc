@@ -19,10 +19,7 @@ import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 import java.lang.annotation.Annotation;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -116,7 +113,7 @@ final class RouteGenerator {
         return method.getAnnotation(annotationClass);
     }
 
-    public CodeBlock getRouteMethodBody(ContainerSource container, String app, String hasOpenApi, int index) {
+    public CodeBlock generateRoute(ContainerSource container, String app, String hasOpenApi, int index) {
         CodeBlock.Builder handlerBuilder = CodeBlock.builder();
         handlerBuilder.beginControlFlow("$T handler$L = (ctx) ->", Handler.class, index);
 
@@ -144,22 +141,35 @@ final class RouteGenerator {
             handlerBuilder.addStatement("Exception caughtException = null;");
             handlerBuilder.beginControlFlow("try");
         }
-        if (hasActionResultReturnType()) {
+        if (hasVoidReturnType()) {
+            handlerBuilder.addStatement(
+                "controller.$N(" + bindParameters("wrapper") + ")",
+                method.getSimpleName());
+        } else if (hasActionResultReturnType()) {
             handlerBuilder.addStatement(
                 "$T result = controller.$N(" + bindParameters("wrapper") + ")",
                 ActionResult.class,
                 method.getSimpleName());
             handlerBuilder.addStatement("result.execute(wrapper)");
-        } else if (isFutureReturnType(method)) {
+        } else if (hasFutureActionResultReturnType()) {
             handlerBuilder.addStatement(
                 "$T<?> future = controller.$N(" + bindParameters("wrapper") + ").thenApply(r -> r.executeAsync(wrapper))",
                 CompletableFuture.class,
                 method.getSimpleName());
             handlerBuilder.addStatement("ctx.result(future)");
+        } else if (hasFutureSimpleReturnType()) {
+            handlerBuilder.addStatement(
+                "$T<?> future = controller.$N(" + bindParameters("wrapper") + ").thenApply(p -> new $T(p).executeAsync(wrapper))",
+                CompletableFuture.class,
+                method.getSimpleName(),
+                JsonResult.class);
+            handlerBuilder.addStatement("ctx.result(future)");
         } else {
             handlerBuilder.addStatement(
-                "controller.$N(" + bindParameters("wrapper") + ")",
+                "$T result = controller.$N(" + bindParameters("wrapper") + ")",
+                method.getReturnType(),
                 method.getSimpleName());
+            handlerBuilder.addStatement("new $T(result).execute(wrapper)", JsonResult.class);
         }
         if (afterGenerators.size() > 0) {
             handlerBuilder.nextControlFlow("catch (Exception exception)");
@@ -194,24 +204,30 @@ final class RouteGenerator {
         }
     }
 
+    private boolean hasVoidReturnType() {
+        TypeMirror returnType = method.getReturnType();
+        return returnType.getKind() == TypeKind.VOID;
+    }
+
     private boolean hasActionResultReturnType() {
         TypeMirror returnType = method.getReturnType();
-        if (returnType.getKind() == TypeKind.VOID) {
-            return false;
-        }
         TypeMirror resultType = elementUtils.getTypeElement(ActionResult.class.getCanonicalName()).asType();
         return typeUtils.isSubtype(returnType, resultType);
     }
 
-    private boolean isFutureReturnType(ExecutableElement method) {
+    private boolean hasFutureActionResultReturnType() {
         TypeMirror returnType = method.getReturnType();
-        if (returnType.getKind() == TypeKind.VOID) {
-            return false;
-        }
         TypeMirror resultType = elementUtils.getTypeElement(ActionResult.class.getCanonicalName()).asType();
         TypeElement futureType = elementUtils.getTypeElement(CompletableFuture.class.getCanonicalName());
         DeclaredType futureResultType = typeUtils.getDeclaredType(futureType, resultType);
-        return typeUtils.isSameType(returnType, futureResultType);
+        return typeUtils.isSubtype(returnType, futureResultType);
+    }
+
+    private boolean hasFutureSimpleReturnType() {
+        TypeMirror returnType = typeUtils.erasure(method.getReturnType());
+        TypeMirror futureType = typeUtils.erasure(
+            elementUtils.getTypeElement(CompletableFuture.class.getCanonicalName()).asType());
+        return typeUtils.isSubtype(returnType, futureType);
     }
 
     private String bindParameters(String contextName) {

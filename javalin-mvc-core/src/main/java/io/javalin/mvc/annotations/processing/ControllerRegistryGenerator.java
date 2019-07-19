@@ -79,7 +79,7 @@ final class ControllerRegistryGenerator {
         AtomicInteger index = new AtomicInteger();
         return controllers.stream()
             .flatMap(r -> r.getRouteGenerators().stream())
-            .map(g -> g.getRouteMethodBody(container, app, hasOpenApi, index.getAndIncrement()))
+            .map(g -> g.generateRoute(container, app, hasOpenApi, index.getAndIncrement()))
             .collect(CodeBlock.joining("\n"));
     }
 }
