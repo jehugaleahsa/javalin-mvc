@@ -2,6 +2,7 @@ package io.javalin.mvc.annotations.processing;
 
 import com.squareup.javapoet.CodeBlock;
 import io.javalin.http.Handler;
+import io.javalin.mvc.DefaultModelBinder;
 import io.javalin.plugin.openapi.dsl.OpenApiBuilder;
 import io.javalin.plugin.openapi.dsl.OpenApiDocumentation;
 import io.swagger.v3.oas.models.parameters.Parameter;

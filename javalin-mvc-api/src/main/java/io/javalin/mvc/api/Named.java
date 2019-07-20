@@ -11,7 +11,7 @@ import java.lang.annotation.Target;
  * the same name as the action method parameter.
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.PARAMETER)
+@Target({ElementType.PARAMETER, ElementType.FIELD, ElementType.METHOD})
 public @interface Named {
     /**
      * The alternative name used to bind the parameter value.

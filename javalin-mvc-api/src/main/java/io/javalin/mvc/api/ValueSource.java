@@ -13,6 +13,10 @@ public enum ValueSource {
      */
     Header,
     /**
+     * The value must be retrieved from a cookie.
+     */
+    Cookie,
+    /**
      * The value must be retrieved from the URL path.
      */
     Path,

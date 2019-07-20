@@ -139,7 +139,7 @@ Here is a list of supported and/or desired features. An `x` means it is already 
 
 * [x] Specify controllers via `@Controller`
 * [x] Specify routes via `@HttpGet`, `@HttpPost`, etc.
-* [x] Bind parameters from headers, URL parameters, query strings, form data by name.
+* [x] Bind parameters from headers, cookies, URL parameters, query strings, and form data by name.
     * [x] Strings
     * [x] Integer (reference type only)
     * [x] Boolean (reference type only)
@@ -160,8 +160,13 @@ Here is a list of supported and/or desired features. An `x` means it is already 
     * [x] UUID
     * [x] Arrays
     * [x] File uploads
-* [x] Bind Java object from request body
-* [ ] Bind Java object from URI parameters
+* [x] Bind Java object from request body (JSON)
+* [ ] Bind Java object from other sources
+    * [x] Support `Named` annotation on fields and setter methods
+    * [x] Support setting int, short, byte, char, String, Date, etc.
+    * [x] Support setting arrays of int, short, byte, char, String, Date, etc.
+    * [x] Support binding values from headers, cookies, URL parameters, query strings, and form data
+    * [ ] Support overriding binding source using `From*` annotations on a specific member.
 * [x] Override where parameters are bound from.
 * [x] Support returning `ActionResult` implementations
     * [x] ContentResult - return plain strings
@@ -169,10 +174,10 @@ Here is a list of supported and/or desired features. An `x` means it is already 
     * [x] StatusCodeResult - return HTTP status code (no body)
     * [x] RedirectResult - indicate client to redirect
     * [x] FileStreamResult - send file contents
-* [ ] Support returning non-`ActionResult` values
+* [x] Support returning non-`ActionResult` values
     * [x] void
     * [x] Primitives, Strings, Dates, UUIDs, etc.
-    * [x] Objects as JsonResult
+    * [x] Objects using JsonResult
 * [x] Support parameter naming flexibility
 * [x] Support custom/alternative parameter name bindings
 * [x] Support pre-execution interceptor

@@ -39,7 +39,12 @@ final class JavalinHttpResponse implements HttpResponse {
     }
 
     public HttpResponse setJsonBody(Object data) {
-        context.json(data);
+        if (data == null) {
+            context.contentType("application/json");
+            context.result("null");
+        } else {
+            context.json(data);
+        }
         return this;
     }
 

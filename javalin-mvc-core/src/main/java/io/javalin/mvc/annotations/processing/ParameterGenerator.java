@@ -1,6 +1,7 @@
 package io.javalin.mvc.annotations.processing;
 
 import com.squareup.javapoet.CodeBlock;
+import io.javalin.mvc.DefaultModelBinder;
 import io.javalin.mvc.api.*;
 
 import javax.lang.model.element.VariableElement;
@@ -94,6 +95,9 @@ final class ParameterGenerator {
     private ValueSource getValueSource(VariableElement parameter) {
         if (parameter.getAnnotation(FromHeader.class) != null) {
             return ValueSource.Header;
+        }
+        if (parameter.getAnnotation(FromCookie.class) != null) {
+            return ValueSource.Cookie;
         }
         if (parameter.getAnnotation(FromPath.class) != null) {
             return ValueSource.Path;
