@@ -294,7 +294,6 @@ public class DefaultModelBinder implements ModelBinder {
         Object results = Array.newInstance(componentType, values.size());
         for (int index = 0; index != values.size(); ++index) {
             Object rawValue = values.get(index);
-            System.err.println("From: " + rawValue + " to: " + componentType.getCanonicalName());
             Array.set(results, index, rawValue);
         }
         return results;
