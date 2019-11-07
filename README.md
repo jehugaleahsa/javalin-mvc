@@ -188,7 +188,7 @@ Here is a list of supported and/or desired features. An `x` means it is already 
     * [x] Inject injector (self-injection)
     * [x] Inject context/request/response objects
 * [x] Open API/Swagger Annotations
-    * [x] Now used built-in Javalin OpenAPI annotations
+    * [x] Now uses built-in Javalin OpenAPI annotations
 
 ## Dagger
 Dependency injection is at the core of modern software projects. It supports switching between implementations at runtime and promotes testability. Historically, dependency injection has utilized runtime reflection to instantiate objects and inject them. However, waiting to perform injection until runtime comes with the risk of missing bindings that will lead to system failure. There's also the overhead of constructing objects using reflection. However, the [Dagger](https://google.github.io/dagger/) project uses annotation processing to provide compile-time dependency injection. This provides all the benefits of using an inversion of control (IoC) container without the risk of missing bindings causing runtime failures. There's also minimal overhead because there's no reflection involved.
