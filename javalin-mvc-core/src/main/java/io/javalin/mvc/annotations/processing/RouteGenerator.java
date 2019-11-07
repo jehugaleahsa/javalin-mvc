@@ -3,18 +3,11 @@ package io.javalin.mvc.annotations.processing;
 import com.squareup.javapoet.CodeBlock;
 import io.javalin.http.Handler;
 import io.javalin.mvc.DefaultModelBinder;
-import io.javalin.plugin.openapi.dsl.OpenApiBuilder;
-import io.javalin.plugin.openapi.dsl.OpenApiDocumentation;
-import io.swagger.v3.oas.models.parameters.Parameter;
-import io.swagger.v3.oas.models.parameters.PathParameter;
 import io.javalin.mvc.api.*;
 import io.javalin.mvc.JavalinHttpContext;
-import io.javalin.mvc.api.openapi.*;
-import org.apache.commons.lang3.StringUtils;
 
 import javax.lang.model.element.*;
 import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.MirroredTypeException;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
@@ -114,7 +107,7 @@ final class RouteGenerator {
         return method.getAnnotation(annotationClass);
     }
 
-    public CodeBlock generateRoute(ContainerSource container, String app, String hasOpenApi, int index) {
+    public CodeBlock generateRoute(ContainerSource container, String app, int index) {
         CodeBlock.Builder handlerBuilder = CodeBlock.builder();
         handlerBuilder.beginControlFlow("$T handler$L = (ctx) ->", Handler.class, index);
 
@@ -181,13 +174,13 @@ final class RouteGenerator {
         handlerBuilder.endControlFlow();
         handlerBuilder.addStatement("");
 
-        handlerBuilder.beginControlFlow("if ($N)", hasOpenApi);
-        CodeBlock.Builder docsBuilder = CodeBlock.builder()
-            .add("$T docs = $T.document()", OpenApiDocumentation.class, OpenApiBuilder.class);
-        appendOpenApiDocs(docsBuilder);
-        handlerBuilder.addStatement(docsBuilder.build());
-        handlerBuilder.addStatement("handler$L = $T.documented(docs, handler$L)", index, OpenApiBuilder.class, index);
-        handlerBuilder.endControlFlow();
+        handlerBuilder.addStatement(
+            "handler$L = $T.moveDocumentationFromAnnotationToHandler($N.class, $S, handler$L)",
+            index,
+            io.javalin.plugin.openapi.dsl.OpenApiBuilder.class,
+            controller.getTypeName().toString(),
+            method.getSimpleName(),
+            index);
 
         return CodeBlock.builder()
             .add(handlerBuilder.build())
@@ -251,291 +244,5 @@ final class RouteGenerator {
         routeBuilder.beginControlFlow("if (caughtException != null)")
                 .addStatement("throw caughtException")
                 .endControlFlow();
-    }
-
-    private void appendOpenApiDocs(CodeBlock.Builder docsBuilder) {
-        Map<String, VariableElement> parameterLookup = this.method.getParameters().stream()
-            .map((p) -> ParameterGenerator.getParameterGenerator(this, p))
-            .collect(Collectors.toMap(ParameterGenerator::getParameterName, ParameterGenerator::getParameter));
-        String summary = getOpenApiSummary();
-        if (!StringUtils.isBlank(summary)) {
-            docsBuilder.add(".operation((op) -> { op.setSummary($S); })", summary);
-        }
-        String description = getOpenApiDescription();
-        if (!StringUtils.isBlank(description)) {
-            docsBuilder.add(".operation((op) -> { op.setDescription($S); })", description);
-        }
-        boolean isIgnored = getOpenApiIgnored();
-        if (isIgnored) {
-            docsBuilder.add(".ignore()");
-        }
-        String[] tags = getOpenApiTags();
-        for (String tag : tags) {
-            docsBuilder.add(".operation((op) -> { op.addTagsItem($S); })", tag);
-        }
-        boolean isDeprecated = findAnnotation(Deprecated.class) != null;
-        if (isDeprecated) {
-            docsBuilder.add(".operation((op) -> { op.setDeprecated(true); })");
-        }
-        OpenApiParameter[] pathParams = getOpenApiPathParams(parameterLookup);
-        for (OpenApiParameter param : pathParams) {
-            docsBuilder.add(".pathParam($S, $T.class, (u) -> { ", param.getName(), param.getType());
-            addParamSettings(docsBuilder, "u", param.getParameter());
-            docsBuilder.add("})");
-        }
-        OpenApiParameter[] queryParams = getOpenApiQueryParams(parameterLookup);
-        for (OpenApiParameter param : queryParams) {
-            docsBuilder.add(".queryParam($S, $T.class, (u) -> { ", param.getName(), param.getType());
-            addParamSettings(docsBuilder, "u", param.getParameter());
-            docsBuilder.add("})");
-        }
-        OpenApiParameter[] headerParams = getOpenApiHeaderParams(parameterLookup);
-        for (OpenApiParameter param : headerParams) {
-            docsBuilder.add(".header($S, $T.class, (u) -> { ", param.getName(), param.getType());
-            addParamSettings(docsBuilder, "u", param.getParameter());
-            docsBuilder.add("})");
-        }
-        OpenApiParameter[] cookieParams = getOpenApiCookieParams(parameterLookup);
-        for (OpenApiParameter param : cookieParams) {
-            docsBuilder.add(".cookie($S, $T.class, (u) -> { ", param.getName(), param.getType());
-            addParamSettings(docsBuilder, "u", param.getParameter());
-            docsBuilder.add("})");
-        }
-        OpenApiFileUpload[] uploads = getOpenApiFileUploads();
-        for (OpenApiFileUpload upload : uploads) {
-            docsBuilder.add(".uploadedFile($S, (u) -> { ", upload.name());
-            if (upload.required()) {
-                docsBuilder.add("u.setRequired(true); ");
-            } else {
-                docsBuilder.add("u.setRequired(false); ");
-            }
-            if (!StringUtils.isBlank(upload.description())) {
-                docsBuilder.add("u.setDescription($S); ", upload.description());
-            }
-            docsBuilder.add("})");
-        }
-        OpenApiResponse[] responses = getOpenApiResponses();
-        for (OpenApiResponse response : responses) {
-            docsBuilder.add(".result($S", response.status());
-            docsBuilder.add(", $T.class", getTypeMirror(response::modelType));
-            if (!StringUtils.isBlank(response.mimeType())) {
-                docsBuilder.add(", $S", response.mimeType());
-            }
-            if (!StringUtils.isBlank(response.description())) {
-                docsBuilder.add(", (u) -> { u.setDescription($S); }", response.description());
-            }
-            docsBuilder.add(")");
-        }
-        OpenApiRequestBody body = findAnnotation(OpenApiRequestBody.class);
-        if (body != null) {
-            docsBuilder.add(".body($T.class", getTypeMirror(body::modelType));
-            if (!StringUtils.isBlank(body.mimeType())) {
-                docsBuilder.add(", $S", body.mimeType());
-            }
-            docsBuilder.add(", (u) -> { u.setRequired($L); ", body.required());
-            if (!StringUtils.isBlank(body.description())) {
-                docsBuilder.add("u.setDescription($S);", body.description());
-            }
-            docsBuilder.add("})");
-        }
-    }
-
-    private static void addParamSettings(CodeBlock.Builder docsBuilder, String updater, Parameter param) {
-        if (param.getRequired()) {
-            docsBuilder.add("$N.setRequired(true); ", updater);
-        } else {
-            docsBuilder.add("$N.setRequired(false); ", updater);
-        }
-        if (param.getAllowEmptyValue()) {
-            docsBuilder.add("$N.setAllowEmptyValue(true); ", updater);
-        }
-        if (param.getDeprecated()) {
-            docsBuilder.add("$N.setDeprecated(true); ", updater);
-        }
-        if (!StringUtils.isBlank(param.getDescription())) {
-            docsBuilder.add("$N.setDescription($S); ", updater, param.getDescription());
-        }
-    }
-
-    private String getOpenApiSummary() {
-        OpenApiSummary annotation = findAnnotation(OpenApiSummary.class);
-        return annotation == null ? null : annotation.value();
-    }
-
-    private String getOpenApiDescription() {
-        OpenApiDescription annotation = findAnnotation(OpenApiDescription.class);
-        return annotation == null ? null : annotation.value();
-    }
-
-    private boolean getOpenApiIgnored() {
-        OpenApiIgnore annotation = findAnnotation(OpenApiIgnore.class);
-        return annotation != null;
-    }
-
-    private String[] getOpenApiTags() {
-        OpenApiTags annotation = findAnnotation(OpenApiTags.class);
-        return annotation == null ? new String[0] : annotation.value();
-    }
-
-    private OpenApiParameter[] getOpenApiPathParams(Map<String, VariableElement> parameterLookup) {
-        OpenApiPathParam single = findAnnotation(OpenApiPathParam.class);
-        OpenApiPathParamContainer container = findAnnotation(OpenApiPathParamContainer.class);
-        OpenApiPathParam[] multiple = container == null ? new OpenApiPathParam[0] : container.value();
-        return Stream.concat(Stream.of(single), Stream.of(multiple))
-            .filter(Objects::nonNull)
-            .map(p -> {
-                OpenApiParameter parameter = new OpenApiParameter();
-                parameter.setName(p.name());
-                parameter.setType(getType(parameterLookup, p.name(), p::type));
-                PathParameter pathParameter = new PathParameter();
-                pathParameter.setRequired(p.required());
-                pathParameter.setAllowEmptyValue(p.allowEmptyValue());
-                pathParameter.setDeprecated(p.deprecated() || isDeprecated(parameterLookup, p.name()));
-                pathParameter.setDescription(p.description());
-                parameter.setParameter(pathParameter);
-                return parameter;
-            })
-            .toArray(OpenApiParameter[]::new);
-    }
-
-    private OpenApiParameter[] getOpenApiQueryParams(Map<String, VariableElement> parameterLookup) {
-        OpenApiQueryParam single = findAnnotation(OpenApiQueryParam.class);
-        OpenApiQueryParamContainer container = findAnnotation(OpenApiQueryParamContainer.class);
-        OpenApiQueryParam[] multiple = container == null ? new OpenApiQueryParam[0] : container.value();
-        return Stream.concat(Stream.of(single), Stream.of(multiple))
-                .filter(Objects::nonNull)
-                .map(p -> {
-                    OpenApiParameter parameter = new OpenApiParameter();
-                    parameter.setName(p.name());
-                    parameter.setType(getType(parameterLookup, p.name(), p::type));
-                    PathParameter pathParameter = new PathParameter();
-                    pathParameter.setRequired(p.required());
-                    pathParameter.setAllowEmptyValue(p.allowEmptyValue());
-                    pathParameter.setDeprecated(p.deprecated() || isDeprecated(parameterLookup, p.name()));
-                    pathParameter.setDescription(p.description());
-                    parameter.setParameter(pathParameter);
-                    return parameter;
-                })
-                .toArray(OpenApiParameter[]::new);
-    }
-
-    private OpenApiParameter[] getOpenApiHeaderParams(Map<String, VariableElement> parameterLookup) {
-        OpenApiHeaderParam single = findAnnotation(OpenApiHeaderParam.class);
-        OpenApiHeaderParamContainer container = findAnnotation(OpenApiHeaderParamContainer.class);
-        OpenApiHeaderParam[] multiple = container == null ? new OpenApiHeaderParam[0] : container.value();
-        return Stream.concat(Stream.of(single), Stream.of(multiple))
-                .filter(Objects::nonNull)
-                .map(p -> {
-                    OpenApiParameter parameter = new OpenApiParameter();
-                    parameter.setName(p.name());
-                    parameter.setType(getType(parameterLookup, p.name(), p::type));
-                    PathParameter pathParameter = new PathParameter();
-                    pathParameter.setRequired(p.required());
-                    pathParameter.setAllowEmptyValue(p.allowEmptyValue());
-                    pathParameter.setDeprecated(p.deprecated() || isDeprecated(parameterLookup, p.name()));
-                    pathParameter.setDescription(p.description());
-                    parameter.setParameter(pathParameter);
-                    return parameter;
-                })
-                .toArray(OpenApiParameter[]::new);
-    }
-
-    private OpenApiParameter[] getOpenApiCookieParams(Map<String, VariableElement> parameterLookup) {
-        OpenApiCookieParam single = findAnnotation(OpenApiCookieParam.class);
-        OpenApiCookieParamContainer container = findAnnotation(OpenApiCookieParamContainer.class);
-        OpenApiCookieParam[] multiple = container == null ? new OpenApiCookieParam[0] : container.value();
-        return Stream.concat(Stream.of(single), Stream.of(multiple))
-                .filter(Objects::nonNull)
-                .map(p -> {
-                    OpenApiParameter parameter = new OpenApiParameter();
-                    parameter.setName(p.name());
-                    parameter.setType(getType(parameterLookup, p.name(), p::type));
-                    PathParameter pathParameter = new PathParameter();
-                    pathParameter.setRequired(p.required());
-                    pathParameter.setAllowEmptyValue(p.allowEmptyValue());
-                    pathParameter.setDeprecated(p.deprecated() || isDeprecated(parameterLookup, p.name()));
-                    pathParameter.setDescription(p.description());
-                    parameter.setParameter(pathParameter);
-                    return parameter;
-                })
-                .toArray(OpenApiParameter[]::new);
-    }
-
-    private OpenApiFileUpload[] getOpenApiFileUploads() {
-        OpenApiFileUpload single = findAnnotation(OpenApiFileUpload.class);
-        OpenApiFileUploadContainer container = findAnnotation(OpenApiFileUploadContainer.class);
-        OpenApiFileUpload[] multiple = container == null ? new OpenApiFileUpload[0] : container.value();
-        return Stream.concat(Stream.of(single), Stream.of(multiple))
-                .filter(Objects::nonNull)
-                .toArray(OpenApiFileUpload[]::new);
-    }
-
-    private OpenApiResponse[] getOpenApiResponses() {
-        OpenApiResponse single = findAnnotation(OpenApiResponse.class);
-        OpenApiResponseContainer container = findAnnotation(OpenApiResponseContainer.class);
-        OpenApiResponse[] multiple = container == null ? new OpenApiResponse[0] : container.value();
-        return Stream.concat(Stream.of(single), Stream.of(multiple))
-                .filter(Objects::nonNull)
-                .toArray(OpenApiResponse[]::new);
-    }
-
-    private static TypeMirror getTypeMirror(Supplier<Class<?>> supplier) {
-        try {
-            supplier.get();
-        } catch (MirroredTypeException exception) {
-            return exception.getTypeMirror();
-        }
-        return null;
-    }
-
-    private static boolean isDeprecated(Map<String, VariableElement> lookup, String name) {
-        return Optional.ofNullable(lookup.get(name))
-                .map((p) -> p.getAnnotation(Deprecated.class))
-                .isPresent();
-    }
-
-    private TypeMirror getType(Map<String, VariableElement> lookup, String name, Supplier<Class<?>> typeGetter) {
-        TypeMirror suppliedType = getTypeMirror(typeGetter);
-        if (suppliedType == null || suppliedType.getKind() == TypeKind.VOID) {
-            VariableElement parameter = lookup.get(name);
-            if (parameter == null) {
-                // Default to String if the type is not provided and it cannot be determined.
-                return elementUtils.getTypeElement(String.class.getCanonicalName()).asType();
-            } else {
-                return parameter.asType();
-            }
-
-        }
-        return suppliedType;
-    }
-
-    private final static class OpenApiParameter {
-        private String name;
-        private TypeMirror type;
-        private Parameter parameter;
-
-        public String getName() {
-            return name;
-        }
-
-        public void setName(String name) {
-            this.name = name;
-        }
-
-        public TypeMirror getType() {
-            return type;
-        }
-
-        public void setType(TypeMirror type) {
-            this.type = type;
-        }
-
-        public Parameter getParameter() {
-            return parameter;
-        }
-
-        public void setParameter(Parameter parameter) {
-            this.parameter = parameter;
-        }
     }
 }

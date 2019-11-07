@@ -2,7 +2,6 @@ package io.javalin.mvc.annotations.processing;
 
 import com.squareup.javapoet.*;
 import io.javalin.Javalin;
-import io.javalin.plugin.openapi.OpenApiPlugin;
 
 import javax.annotation.Generated;
 import javax.annotation.processing.Filer;
@@ -42,26 +41,10 @@ final class ControllerRegistryGenerator {
             .build();
         registryTypeBuilder.addMethod(constructor);
 
-        MethodSpec isOpenApiPluginRegistered = MethodSpec.methodBuilder("isOpenApiPluginRegistered")
-            .returns(boolean.class)
-            .addModifiers(Modifier.PRIVATE)
-            .addParameter(Javalin.class, "app", Modifier.FINAL)
-            .addCode(CodeBlock.builder()
-                .beginControlFlow("try")
-                .addStatement("app.config.getPlugin($T.class)", OpenApiPlugin.class)
-                .addStatement("return true")
-                .nextControlFlow("catch ($T ex)", Throwable.class)
-                .addStatement("return false")
-                .endControlFlow()
-                .build())
-            .build();
-        registryTypeBuilder.addMethod(isOpenApiPluginRegistered);
-
         MethodSpec register = MethodSpec.methodBuilder("register")
             .addModifiers(Modifier.PUBLIC)
             .addParameter(Javalin.class, "app", Modifier.FINAL)
-            .addStatement("$T hasOpenApi = isOpenApiPluginRegistered(app)", boolean.class)
-            .addCode(createActionMethods("app", "hasOpenApi"))
+            .addCode(createActionMethods("app"))
             .build();
         registryTypeBuilder.addMethod(register);
 
@@ -75,11 +58,11 @@ final class ControllerRegistryGenerator {
         }
     }
 
-    private CodeBlock createActionMethods(String app, String hasOpenApi) {
+    private CodeBlock createActionMethods(String app) {
         AtomicInteger index = new AtomicInteger();
         return controllers.stream()
             .flatMap(r -> r.getRouteGenerators().stream())
-            .map(g -> g.generateRoute(container, app, hasOpenApi, index.getAndIncrement()))
+            .map(g -> g.generateRoute(container, app, index.getAndIncrement()))
             .collect(CodeBlock.joining("\n"));
     }
 }

@@ -17,29 +17,29 @@ This project has not yet been published to Maven Central, so you will need to cl
 <dependency>
     <groupId>io.javalin</groupId>
     <artifactId>javalin</artifactId>
-    <version>3.1.0</version>
+    <version>3.6.0</version>
 </dependency>
 <!-- Dependency Injection -->
 <dependency>
     <groupId>com.google.dagger</groupId>
     <artifactId>dagger</artifactId>
-    <version>2.23.2</version>
+    <version>2.25.2</version>
 </dependency>
 <!-- Needed for configuring JSON in Javalin and MVC model binding -->
 <dependency>
     <groupId>com.fasterxml.jackson.core</groupId>
     <artifactId>jackson-databind</artifactId>
-    <version>2.9.9</version>
+    <version>2.9.10</version>
 </dependency>
 <dependency>
     <groupId>com.fasterxml.jackson.module</groupId>
     <artifactId>jackson-module-kotlin</artifactId>
     <version>2.9.9</version>
 </dependency>
-<!-- The rest of these dependencies are for OpenAPI support. Currently non-optional. -->
+<!-- The rest of these dependencies are for OpenAPI support. Optional!!! -->
 <dependency>
     <groupId>io.swagger.core.v3</groupId>
-    <artifactId>swagger-models</artifactId>
+    <artifactId>swagger-core</artifactId>
     <version>2.0.8</version>
 </dependency>
 <dependency>
@@ -50,7 +50,7 @@ This project has not yet been published to Maven Central, so you will need to cl
 <dependency>
     <groupId>org.webjars</groupId>
     <artifactId>swagger-ui</artifactId>
-    <version>3.22.2</version>
+    <version>3.23.8</version>
 </dependency>
 <dependency>
     <groupId>io.github.classgraph</groupId>
@@ -73,7 +73,7 @@ Javalin MVC uses annotation processing (more on this later) so must be setup in 
                     <path>
                         <groupId>com.google.dagger</groupId>
                         <artifactId>dagger-compiler</artifactId>
-                        <version>2.23.2</version>
+                        <version>2.25.2</version>
                     </path>
                     <path>
                         <groupId>io.javalin.mvc</groupId>
@@ -187,38 +187,8 @@ Here is a list of supported and/or desired features. An `x` means it is already 
     * [x] Inject controller dependencies
     * [x] Inject injector (self-injection)
     * [x] Inject context/request/response objects
-* [ ] Open API/Swagger Annotations
-    * [x] Summary
-    * [x] Description
-    * [x] Tags
-    * [x] Deprecated
-        * [x] Also support `Deprecated` annotation
-    * [x] Ignore
-    * [ ] Path, Query, Header, Cookie Params
-        * [x] Param Name
-        * [x] Param Type (`Class<?>`)
-            * [x] Auto-detect from parameter
-        * [x] Description
-        * [x] Required flag
-        * [x] Deprecated flag
-            * [x] Also support `Deprecated` annotation
-    * [ ] File Uploads
-        * [x] File name
-        * [x] Description
-        * [x] Required Flag
-    * [ ] Request Body
-        * [x] Model type (`Class<?>`)
-        * [x] Mime type
-        * [x] Description
-        * [x] Required flag
-        * [ ] Auto-detect from parameter
-        * [ ] Full-blown multipart/form-data support (schemas)
-    * [ ] Responses
-        * [x] Status code
-        * [x] Model type (`Class<?>`)
-        * [x] Mime type
-        * [x] Description
-        * [ ] Auto-detect from return type
+* [x] Open API/Swagger Annotations
+    * [x] Now used built-in Javalin OpenAPI annotations
 
 ## Dagger
 Dependency injection is at the core of modern software projects. It supports switching between implementations at runtime and promotes testability. Historically, dependency injection has utilized runtime reflection to instantiate objects and inject them. However, waiting to perform injection until runtime comes with the risk of missing bindings that will lead to system failure. There's also the overhead of constructing objects using reflection. However, the [Dagger](https://google.github.io/dagger/) project uses annotation processing to provide compile-time dependency injection. This provides all the benefits of using an inversion of control (IoC) container without the risk of missing bindings causing runtime failures. There's also minimal overhead because there's no reflection involved.
