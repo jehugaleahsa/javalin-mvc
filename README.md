@@ -299,3 +299,47 @@ public ActionResult update(Customer customer) {
 ```
 
 You can have as many `@Before` and `@After` annotations on a single action method as you need. They will be executed in the order they appear (top-down).
+
+## OpenAPI/Swagger Support
+You can directly use Javalin OpenAPI annotations on controller methods and they will appear in swagger/Swagger-UI. You must first configure Javalin to use swagger (see the example main above). Below is an absurd example demonstrating the majority of the annotations you can use.
+
+```java
+    @HttpGet(route="/api/pickles")
+    @After(handler = ErrorHandler.class)
+    @After(handler = Log.class)
+    @OpenApi(
+        requestBody = @OpenApiRequestBody(
+            content = @OpenApiContent(from = byte[].class),
+            description = "Get all the pickles",
+            required = true
+        ),
+        description = "Get all the pickles",
+        summary = "Get all the pickles",
+        responses = {
+            @OpenApiResponse(
+                status = "200",
+                description = "Successfully retrieved all the pickles",
+                content = @OpenApiContent(from = PickleModel[].class)
+            )
+        },
+        tags = { "pickles", "all" },
+        fileUploads = {
+            @OpenApiFileUpload(name = "file", required = true, description = "A file to upload")
+        },
+        queryParams = {
+            @OpenApiParam(name = "q", deprecated = true, description = "The search parameter"),
+            @OpenApiParam(name = "e", description = "Search exclusions")
+        },
+        headers = {
+            @OpenApiParam(name = "Content-Type", description = "What sort of data is passed.")
+        },
+        cookies = {
+            @OpenApiParam(name = "Num num, me eat", required = true, description = "A cookie")
+        }
+    )
+    public ActionResult index() {
+        // ... crazy API implementation
+    }
+```
+
+One caveat is that you must ensure method names in your controllers are unique; otherwise, which documentation goes to which controller action becomes ambiguous. This is a good practice anyway.
