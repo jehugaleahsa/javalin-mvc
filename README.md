@@ -189,17 +189,23 @@ Here is a list of supported and/or desired features. An `x` means it is already 
     * [x] Inject context/request/response objects
 * [x] Open API/Swagger Annotations
     * [x] Now uses built-in Javalin OpenAPI annotations
+* [ ] WebSockets
+    * [x] Specify routes via WsRoutes
+    * [x] Allow overriding: OnConnected, OnDisconnected, OnError, OnMessage and OnBinaryMessage
+    * [ ] Support for data binding
+    * [ ] Support for @Before and @After handlers
 
 ## Dagger
 Dependency injection is at the core of modern software projects. It supports switching between implementations at runtime and promotes testability. Historically, dependency injection has utilized runtime reflection to instantiate objects and inject them. However, waiting to perform injection until runtime comes with the risk of missing bindings that will lead to system failure. There's also the overhead of constructing objects using reflection. However, the [Dagger](https://google.github.io/dagger/) project uses annotation processing to provide compile-time dependency injection. This provides all the benefits of using an inversion of control (IoC) container without the risk of missing bindings causing runtime failures. There's also minimal overhead because there's no reflection involved.
 
-Dagger is integrated into `javalin-mvc-core`, somewhat dictating the use of Dagger. Dagger, being a compile-time DI library, has a somewhat different API than other DI libraries. Instead of having a global `injector.get(Class<?> clz)` method that can be used to retrieve every type of object, there are specific methods for each dependency. Ideally, a generic DI interface could be provided so `javalin-mvc-core` could work against *any* DI library, but this dramatic difference in API makes that infeasible. It was a tough decision, but I ended up choosing Dagger. Technically, you can wire in your own choice of DI library on top of Dagger.
+Dagger is integrated into `javalin-mvc-core`, somewhat dictating the use of Dagger (although, I'm working on making it optional some day). Dagger, being a compile-time DI library, has a somewhat different API than other DI libraries. Instead of having a global `injector.get(Class<?> clz)` method that can be used to retrieve every type of object, there are specific methods for each dependency. Ideally, a generic DI interface could be provided so `javalin-mvc-core` could work against *any* DI library, but this dramatic difference in API makes that infeasible. It was a tough decision, but I ended up choosing Dagger. Technically, you can wire in your own choice of DI library on top of Dagger.
 
-The `javalin-mvc-core` project needs to know how to instantiate objects with Dagger. The `JavalinControllerModule` is provided to wire up types defined in the `javalin-mvc-api` project. There is also a `ControllerContainer` interface that the main Dagger container interface must extend. Your Dagger container will, minimally, look like this:
+The `javalin-mvc-core` project needs to know how to instantiate objects with Dagger; to do this, you must mark your Dagger container with the `ControllerComponent` annotation. Your Dagger container will, minimally, look like this:
 
 ```java
-@Component(modules = { JavalinControllerModule.class })
-public interface WebContainer extends ControllerContainer {
+@Component
+@ControllerComponent
+public interface WebContainer {
 }
 
 ```
@@ -222,10 +228,7 @@ public static void main(String[] args) throws IOException {
 
     // Provide method of constructing a new DI container
     // Dagger prepends "Dagger" automatically at compile time
-    Function<Context, WebContainer> scopeFactory = (ctx) ->
-        DaggerWebContainer.builder()
-            .javalinControllerModule(new JavalinControllerModule(ctx))
-            .build();
+    Supplier<WebContainer> scopeFactory = () -> DaggerWebContainer.builder().build();
     // Javalin MVC generates "io.javalin.mvc.ControllerRegistry" automatically at compile time
     ControllerRegistry registry = new ControllerRegistry(scopeFactory);
     registry.register(app);
@@ -272,11 +275,13 @@ Here's an example `Log` handler that logs before and after an action fires:
 
 ```java
 public final class Log implements BeforeActionHandler, AfterActionHandler {
+    @Override
     public boolean executeBefore(HttpContext context, String[] arguments) {
         System.out.println("Before: " + String.join(",", arguments));
         return true; // Continue processing the request.
     }
 
+    @Override
     public Exception executeAfter(HttpContext context, String[] arguments, Exception exception) {
         System.out.println("After: " + String.join(", ", arguments));
         if (exception != null) {
@@ -341,3 +346,6 @@ public ActionResult index() {
 ```
 
 One caveat is that you must ensure method names in your controllers are unique; otherwise, which documentation goes to which controller action becomes ambiguous. This is a good practice anyway.
+
+## WebSockets
+WebSockets are handled using implementations of the `WsController` interface. In order to map a particular route to a WebSocket controller, you must annotate it with the `WsRoute` annotation, specifying the URL to be handled. You can optionally override any of the operations in the `WsController` interface, `onConnect`, `onDisconnect`, `onError`, `onMessage`, and `onBinaryMessage`. Each handler accepts a different `WsContext` object, containing information needed to process the request. The context provides access to a `WsRequest` and a `WsResponse` object. Any parameters, cookies, etc. come from the `WsRequest` object and methods for sending responses are found in the `WsResponse` object.
