@@ -113,13 +113,10 @@ final class RouteGenerator {
 
         if (container.isFound()) {
             handlerBuilder.add("@SuppressWarnings($S)\n", "unchecked");
-            handlerBuilder.addStatement("$T injector = ($T)scopeFactory.apply(ctx)", container.getType(), container.getType());
-            handlerBuilder.addStatement("$T wrapper = injector.$L()", HttpContext.class, container.getDependencyName(HttpContext.class));
-            handlerBuilder.addStatement("$T binder = injector.$L()", ModelBinder.class, container.getDependencyName(ModelBinder.class));
-        } else {
-            handlerBuilder.addStatement("$T wrapper = new $T(ctx)", HttpContext.class, JavalinHttpContext.class);
-            handlerBuilder.addStatement("$T binder = new $T(wrapper.getRequest())", ModelBinder.class, DefaultModelBinder.class);
+            handlerBuilder.addStatement("$T injector = ($T)scopeFactory.get()", container.getType(), container.getType());
         }
+        handlerBuilder.addStatement("$T wrapper = new $T(ctx)", HttpContext.class, JavalinHttpContext.class);
+        handlerBuilder.addStatement("$T binder = new $T(wrapper.getRequest())", ModelBinder.class, DefaultModelBinder.class);
 
         Name controllerName = container.getDependencyName(controller.getTypeName());
         if (controllerName != null) {

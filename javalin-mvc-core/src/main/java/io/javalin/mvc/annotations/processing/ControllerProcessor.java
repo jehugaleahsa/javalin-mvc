@@ -32,12 +32,16 @@ public final class ControllerProcessor extends AbstractProcessor {
 	@Override
 	public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment env) {
         try {
-            List<ControllerSource> controllers = ControllerSource.getRouteSources(typeUtils, elementUtils, env);
-            if (controllers.isEmpty()) {
+            List<ControllerSource> controllers = ControllerSource.getControllers(typeUtils, elementUtils, env);
+            List<WsControllerSource> wsControllers = WsControllerSource.getWsControllers(typeUtils, elementUtils, env);
+            if (controllers.isEmpty() && wsControllers.isEmpty()) {
                 return true;
             }
             ContainerSource container = ContainerSource.getContainerSource(typeUtils, elementUtils, env);
-            ControllerRegistryGenerator generator = new ControllerRegistryGenerator(container, controllers);
+            ControllerRegistryGenerator generator = new ControllerRegistryGenerator(
+                container,
+                controllers,
+                wsControllers);
             generator.generateRoutes(filer);
         } catch (ProcessingException exception) {
             for (Element element : exception.getElements()) {

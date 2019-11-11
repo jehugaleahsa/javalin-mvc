@@ -18,6 +18,10 @@ final class JavalinHttpRequest implements HttpRequest {
         this.context = context;
     }
 
+    public Context getContext() {
+        return context;
+    }
+
     public boolean hasPathParameter(String name) {
         return context.pathParamMap().containsKey(name);
     }
@@ -100,6 +104,10 @@ final class JavalinHttpRequest implements HttpRequest {
 
     public String getUserAgent() {
         return context.userAgent();
+    }
+
+    public boolean hasCookie(String name) {
+        return context.cookieMap().containsKey(name);
     }
 
     public String getCookieValue(String name) {

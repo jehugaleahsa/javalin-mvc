@@ -2,12 +2,33 @@
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>io.javalin.mvc</groupId>
+  <groupId>com.truncon</groupId>
   <artifactId>javalin-mvc</artifactId>
   <packaging>pom</packaging>
   <version>1.0-SNAPSHOT</version>
   <name>javalin-mvc</name>
+  <description>
+    Generates and configures Javalin route handlers from annotated controller classes and methods.
+  </description>
   <url>https://github.com/jehugaleahsa/javalin-mvc</url>
+  <organization>
+    <name>com.truncon</name>
+    <url>http://truncon.com</url>
+  </organization>
+  <issueManagement>
+    <system>GitHub</system>
+    <url>https://github.com/jehugaleahsa/javalin-mvc/issues</url>
+  </issueManagement>
+  <licenses>
+    <license>
+      <name>UNLICENSE</name>
+      <url>https://github.com/jehugaleahsa/javalin-mvc/blob/master/LICENSE</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+  <scm>
+    <url>https://github.com/jehugaleahsa/javalin-mvc</url>
+  </scm>
   <modules>
     <module>javalin-mvc-api</module>
     <module>javalin-mvc-core</module>

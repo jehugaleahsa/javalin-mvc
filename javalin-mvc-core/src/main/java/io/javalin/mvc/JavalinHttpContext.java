@@ -16,6 +16,10 @@ public final class JavalinHttpContext implements HttpContext {
         this.context = context;
     }
 
+    public Context getContext() {
+        return context;
+    }
+
     public HttpRequest getRequest() {
         return new JavalinHttpRequest(context);
     }

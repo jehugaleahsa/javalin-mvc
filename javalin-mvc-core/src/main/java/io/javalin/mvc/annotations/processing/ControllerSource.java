@@ -22,7 +22,7 @@ final class ControllerSource {
         this.controllerElement = controllerElement;
     }
 
-    public static List<ControllerSource> getRouteSources(Types typeUtils, Elements elementUtils, RoundEnvironment environment) throws ProcessingException {
+    public static List<ControllerSource> getControllers(Types typeUtils, Elements elementUtils, RoundEnvironment environment) throws ProcessingException {
         Set<? extends Element> controllerElements = environment.getElementsAnnotatedWith(Controller.class);
         checkControllerElements(controllerElements);
         return controllerElements.stream()

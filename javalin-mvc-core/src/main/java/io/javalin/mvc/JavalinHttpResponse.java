@@ -13,6 +13,10 @@ final class JavalinHttpResponse implements HttpResponse {
         this.context = context;
     }
 
+    public Context getContext() {
+        return context;
+    }
+
     public HttpResponse setStatusCode(int statusCode) {
         context.status(statusCode);
         return this;

@@ -11,15 +11,20 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Function;
+import java.util.function.Supplier;
 
 final class ControllerRegistryGenerator {
     private final ContainerSource container;
     private final List<ControllerSource> controllers;
+    private final List<WsControllerSource> wsControllers;
 
-    public ControllerRegistryGenerator(ContainerSource container, List<ControllerSource> controllers) {
+    public ControllerRegistryGenerator(
+            ContainerSource container,
+            List<ControllerSource> controllers,
+            List<WsControllerSource> wsControllers) {
         this.container = container;
         this.controllers = controllers;
+        this.wsControllers = wsControllers;
     }
 
     public void generateRoutes(Filer filer) throws IOException {
@@ -31,20 +36,22 @@ final class ControllerRegistryGenerator {
             .build();
         registryTypeBuilder.addAnnotation(generatedAnnotation);
 
-        FieldSpec scopeFactoryField = FieldSpec.builder(Function.class, "scopeFactory", Modifier.PRIVATE, Modifier.FINAL).build();
+        FieldSpec scopeFactoryField = FieldSpec.builder(Supplier.class, "scopeFactory", Modifier.PRIVATE, Modifier.FINAL).build();
         registryTypeBuilder.addField(scopeFactoryField);
 
         MethodSpec constructor = MethodSpec.constructorBuilder()
             .addModifiers(Modifier.PUBLIC)
-            .addParameter(Function.class, "scopeFactory")
+            .addParameter(Supplier.class, "scopeFactory")
             .addStatement("this.scopeFactory = scopeFactory")
             .build();
         registryTypeBuilder.addMethod(constructor);
 
+        final String APP_NAME = "app";
         MethodSpec register = MethodSpec.methodBuilder("register")
             .addModifiers(Modifier.PUBLIC)
-            .addParameter(Javalin.class, "app", Modifier.FINAL)
-            .addCode(createActionMethods("app"))
+            .addParameter(Javalin.class, APP_NAME, Modifier.FINAL)
+            .addCode(createActionMethods(APP_NAME))
+            .addCode(createWsEndpoints(APP_NAME))
             .build();
         registryTypeBuilder.addMethod(register);
 
@@ -63,6 +70,12 @@ final class ControllerRegistryGenerator {
         return controllers.stream()
             .flatMap(r -> r.getRouteGenerators().stream())
             .map(g -> g.generateRoute(container, app, index.getAndIncrement()))
+            .collect(CodeBlock.joining("\n"));
+    }
+
+    private CodeBlock createWsEndpoints(String app) {
+        return wsControllers.stream()
+            .map(s -> s.generateEndpoint(container, app))
             .collect(CodeBlock.joining("\n"));
     }
 }
