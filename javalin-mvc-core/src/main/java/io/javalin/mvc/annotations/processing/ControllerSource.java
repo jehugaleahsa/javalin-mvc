@@ -48,8 +48,8 @@ final class ControllerSource {
         return elementUtils;
     }
 
-    public Name getTypeName() {
-        return controllerElement.getQualifiedName();
+    public TypeElement getType() {
+        return controllerElement;
     }
 
     public List<RouteGenerator> getRouteGenerators() {

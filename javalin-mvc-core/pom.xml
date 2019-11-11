@@ -6,13 +6,13 @@
   <packaging>jar</packaging>
   <name>javalin-mvc-core</name>
   <parent>
-    <groupId>com.truncon</groupId>
+    <groupId>io.javalin.mvc</groupId>
     <artifactId>javalin-mvc</artifactId>
     <version>1.0-SNAPSHOT</version>
   </parent>
   <dependencies>
     <dependency>
-      <groupId>com.truncon</groupId>
+      <groupId>io.javalin.mvc</groupId>
       <artifactId>javalin-mvc-api</artifactId>
       <version>1.0-SNAPSHOT</version>
     </dependency>

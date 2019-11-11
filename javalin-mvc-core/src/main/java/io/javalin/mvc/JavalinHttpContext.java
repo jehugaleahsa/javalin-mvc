@@ -16,23 +16,28 @@ public final class JavalinHttpContext implements HttpContext {
         this.context = context;
     }
 
-    public Context getContext() {
-        return context;
-    }
-
+    @Override
     public HttpRequest getRequest() {
         return new JavalinHttpRequest(context);
     }
 
+    @Override
     public HttpResponse getResponse() {
         return new JavalinHttpResponse(context);
     }
 
+    @Override
     public String toJson(Object data) {
         return JavalinJackson.INSTANCE.toJson(data);
     }
 
+    @Override
     public <T> T fromJson(String json, Class<T> dataClass) {
         return JavalinJackson.INSTANCE.fromJson(json, dataClass);
+    }
+
+    @Override
+    public Object getHandle() {
+        return context;
     }
 }

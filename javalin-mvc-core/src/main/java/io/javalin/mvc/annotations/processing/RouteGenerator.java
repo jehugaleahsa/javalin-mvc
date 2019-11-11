@@ -15,7 +15,6 @@ import javax.lang.model.util.Types;
 import java.lang.annotation.Annotation;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -112,17 +111,16 @@ final class RouteGenerator {
         handlerBuilder.beginControlFlow("$T handler$L = (ctx) ->", Handler.class, index);
 
         if (container.isFound()) {
-            handlerBuilder.add("@SuppressWarnings($S)\n", "unchecked");
-            handlerBuilder.addStatement("$T injector = ($T)scopeFactory.get()", container.getType(), container.getType());
+            handlerBuilder.addStatement("$T injector = scopeFactory.get()", container.getType());
         }
         handlerBuilder.addStatement("$T wrapper = new $T(ctx)", HttpContext.class, JavalinHttpContext.class);
         handlerBuilder.addStatement("$T binder = new $T(wrapper.getRequest())", ModelBinder.class, DefaultModelBinder.class);
 
-        Name controllerName = container.getDependencyName(controller.getTypeName());
+        Name controllerName = container.getDependencyName(controller.getType());
         if (controllerName != null) {
-            handlerBuilder.addStatement("$N controller = injector.$L()", controller.getTypeName(), controllerName);
+            handlerBuilder.addStatement("$T controller = injector.$L()", controller.getType(), controllerName);
         } else {
-            handlerBuilder.addStatement("$N controller = new $N()", controller.getTypeName(), controller.getTypeName());
+            handlerBuilder.addStatement("$T controller = new $T()", controller.getType(), controller.getType());
         }
 
         List<BeforeGenerator> beforeGenerators = BeforeGenerator.getBeforeGenerators(container, this);
@@ -134,30 +132,30 @@ final class RouteGenerator {
         }
         if (hasVoidReturnType()) {
             handlerBuilder.addStatement(
-                "controller.$N(" + bindParameters("wrapper") + ")",
+                "controller.$N(" + bindParameters("ctx", "wrapper") + ")",
                 method.getSimpleName());
         } else if (hasActionResultReturnType()) {
             handlerBuilder.addStatement(
-                "$T result = controller.$N(" + bindParameters("wrapper") + ")",
+                "$T result = controller.$N(" + bindParameters("ctx", "wrapper") + ")",
                 ActionResult.class,
                 method.getSimpleName());
             handlerBuilder.addStatement("result.execute(wrapper)");
         } else if (hasFutureActionResultReturnType()) {
             handlerBuilder.addStatement(
-                "$T<?> future = controller.$N(" + bindParameters("wrapper") + ").thenApply(r -> r.executeAsync(wrapper))",
+                "$T<?> future = controller.$N(" + bindParameters("ctx", "wrapper") + ").thenApply(r -> r.executeAsync(wrapper))",
                 CompletableFuture.class,
                 method.getSimpleName());
             handlerBuilder.addStatement("ctx.result(future)");
         } else if (hasFutureSimpleReturnType()) {
             handlerBuilder.addStatement(
-                "$T<?> future = controller.$N(" + bindParameters("wrapper") + ").thenApply(p -> new $T(p).executeAsync(wrapper))",
+                "$T<?> future = controller.$N(" + bindParameters("ctx", "wrapper") + ").thenApply(p -> new $T(p).executeAsync(wrapper))",
                 CompletableFuture.class,
                 method.getSimpleName(),
                 JsonResult.class);
             handlerBuilder.addStatement("ctx.result(future)");
         } else {
             handlerBuilder.addStatement(
-                "$T result = controller.$N(" + bindParameters("wrapper") + ")",
+                "$T result = controller.$N(" + bindParameters("ctx", "wrapper") + ")",
                 method.getReturnType(),
                 method.getSimpleName());
             handlerBuilder.addStatement("new $T(result).execute(wrapper)", JsonResult.class);
@@ -172,10 +170,10 @@ final class RouteGenerator {
         handlerBuilder.addStatement("");
 
         handlerBuilder.addStatement(
-            "handler$L = $T.moveDocumentationFromAnnotationToHandler($N.class, $S, handler$L)",
+            "handler$L = $T.moveDocumentationFromAnnotationToHandler($T.class, $S, handler$L)",
             index,
             io.javalin.plugin.openapi.dsl.OpenApiBuilder.class,
-            controller.getTypeName().toString(),
+            controller.getType(),
             method.getSimpleName(),
             index);
 
@@ -221,10 +219,10 @@ final class RouteGenerator {
         return typeUtils.isSubtype(returnType, futureType);
     }
 
-    private String bindParameters(String contextName) {
+    private String bindParameters(String context, String wrapper) {
         String[] arguments = method.getParameters().stream()
                 .map(p -> ParameterGenerator.getParameterGenerator(this, p))
-                .map(g -> g.generateParameter(contextName))
+                .map(g -> g.generateParameter(context, wrapper))
                 .toArray(String[]::new);
         return String.join(", ", arguments);
     }

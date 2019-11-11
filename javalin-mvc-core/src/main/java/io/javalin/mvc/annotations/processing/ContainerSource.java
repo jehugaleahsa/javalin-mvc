@@ -1,7 +1,7 @@
 package io.javalin.mvc.annotations.processing;
 
 import dagger.Component;
-import io.javalin.mvc.api.ControllerContainer;
+import io.javalin.mvc.api.ControllerComponent;
 
 import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.element.*;
@@ -42,15 +42,14 @@ final class ContainerSource {
             Types typeUtils,
             Elements elementUtils,
             RoundEnvironment environment) throws ProcessingException {
-        TypeMirror containerType = elementUtils.getTypeElement(ControllerContainer.class.getCanonicalName()).asType();
         List<? extends TypeElement> elements = environment.getElementsAnnotatedWith(Component.class).stream()
                 .filter(e -> e.getKind() == ElementKind.INTERFACE)
+                .filter(e -> e.getAnnotation(ControllerComponent.class) != null)
                 .map(e -> (TypeElement)e)
-                .filter(e -> isControllerContainer(typeUtils, containerType, e))
                 .collect(Collectors.toList());
         if (elements.size() > 1) {
             Element[] badElements = elements.toArray(new Element[0]);
-            throw new ProcessingException("Multiple Dagger Components extending ControllerContainer were found.", badElements);
+            throw new ProcessingException("Multiple Dagger Components annotated with ControllerComponent were found.", badElements);
         }
         if (elements.size() == 0) {
             return new ContainerSource(typeUtils, elementUtils, null, new ArrayList<>());
@@ -60,15 +59,6 @@ final class ContainerSource {
 
         List<ExecutableElement> dependencies = getDependencies(typeUtils, typeElement).collect(Collectors.toList());
         return new ContainerSource(typeUtils, elementUtils, typeElement, dependencies);
-    }
-
-    private static boolean isControllerContainer(Types typeUtils, TypeMirror containerType, TypeElement element) {
-        if (typeUtils.isSameType(containerType, element.asType())) {
-            return true;
-        }
-        return element.getInterfaces().stream()
-                .map(i -> (TypeElement)typeUtils.asElement(i))
-                .anyMatch(i -> isControllerContainer(typeUtils, containerType, i));
     }
 
     private static Stream<ExecutableElement> getDependencies(Types typeUtils, TypeElement container) {

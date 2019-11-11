@@ -33,4 +33,10 @@ public interface HttpContext {
      * @return the deserialized object.
      */
     <T> T fromJson(String json, Class<T>  dataClass);
+
+    /**
+     * Gets access to the underlying implementation of the context.
+     * @return An object.
+     */
+    Object getHandle();
 }

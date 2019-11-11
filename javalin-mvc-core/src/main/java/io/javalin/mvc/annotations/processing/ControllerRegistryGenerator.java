@@ -36,12 +36,16 @@ final class ControllerRegistryGenerator {
             .build();
         registryTypeBuilder.addAnnotation(generatedAnnotation);
 
-        FieldSpec scopeFactoryField = FieldSpec.builder(Supplier.class, "scopeFactory", Modifier.PRIVATE, Modifier.FINAL).build();
+
+        TypeName factoryType = ParameterizedTypeName.get(
+            ClassName.get(Supplier.class),
+            TypeName.get(container.getType()));
+        FieldSpec scopeFactoryField = FieldSpec.builder(factoryType, "scopeFactory", Modifier.PRIVATE, Modifier.FINAL).build();
         registryTypeBuilder.addField(scopeFactoryField);
 
         MethodSpec constructor = MethodSpec.constructorBuilder()
             .addModifiers(Modifier.PUBLIC)
-            .addParameter(Supplier.class, "scopeFactory")
+            .addParameter(factoryType, "scopeFactory")
             .addStatement("this.scopeFactory = scopeFactory")
             .build();
         registryTypeBuilder.addMethod(constructor);

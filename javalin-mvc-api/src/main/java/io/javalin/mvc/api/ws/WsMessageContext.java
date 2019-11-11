@@ -1,6 +1,13 @@
 package io.javalin.mvc.api.ws;
 
+/**
+ * Provides information about a WebSocket message.
+ */
 public interface WsMessageContext {
+    /**
+     * Gets the WebSocket context.
+     * @return The context.
+     */
     WsContext getContext();
 
     /**

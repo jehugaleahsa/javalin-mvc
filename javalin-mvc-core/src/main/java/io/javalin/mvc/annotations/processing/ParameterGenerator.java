@@ -1,6 +1,7 @@
 package io.javalin.mvc.annotations.processing;
 
 import com.squareup.javapoet.CodeBlock;
+import io.javalin.http.Context;
 import io.javalin.mvc.DefaultModelBinder;
 import io.javalin.mvc.api.*;
 
@@ -30,20 +31,23 @@ final class ParameterGenerator {
         return parameter;
     }
 
-    public String generateParameter(String contextName) {
+    public String generateParameter(String context, String wrapper) {
         TypeMirror parameterType = parameter.asType();
+        if (isType(parameterType, Context.class)) {
+            return context;
+        }
         if (isType(parameterType, HttpContext.class)) {
-            return contextName;
+            return wrapper;
         }
         if (isType(parameterType, HttpRequest.class)) {
-            return contextName + ".getRequest()";
+            return wrapper + ".getRequest()";
         }
         if (isType(parameterType, HttpResponse.class)) {
-            return contextName + ".getResponse()";
+            return wrapper + ".getResponse()";
         }
         String parameterName = getParameterName();
         if (isType(parameterType, FileUpload.class)) {
-            return CodeBlock.of(contextName + ".getRequest().getFile($S)", parameterName).toString();
+            return CodeBlock.of(wrapper + ".getRequest().getFile($S)", parameterName).toString();
         }
         ValueSource valueSource = getValueSource(parameter);
         for (Class<?> parameterClass : DefaultModelBinder.SUPPORTED_TYPES) {

@@ -1,5 +1,10 @@
 package io.javalin.mvc.api.ws;
 
+/**
+ * Represents the WebSocket request being processed by the web application. It provide access to the
+ * request information and allows for sending a response. Other utilities for handling requests
+ * are provided, as well.
+ */
 public interface WsContext {
     /**
      * Gets the {@link WsRequest} object for retrieving the request details.
@@ -28,4 +33,10 @@ public interface WsContext {
      * @return the deserialized object.
      */
     <T> T fromJson(String json, Class<T>  dataClass);
+
+    /**
+     * Gets access to the underlying implementation of the context.
+     * @return An object.
+     */
+    Object getHandle();
 }

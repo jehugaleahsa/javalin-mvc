@@ -31,4 +31,9 @@ public final class JavalinWsContext implements WsContext {
     public <T> T fromJson(String json, Class<T> dataClass) {
         return JavalinJackson.INSTANCE.fromJson(json, dataClass);
     }
+
+    @Override
+    public Object getHandle() {
+        return context;
+    }
 }

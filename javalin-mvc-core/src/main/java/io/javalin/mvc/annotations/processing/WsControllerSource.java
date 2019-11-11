@@ -28,16 +28,16 @@ final class WsControllerSource {
         Set<? extends Element> controllerElements = environment.getElementsAnnotatedWith(WsRoute.class);
         checkControllerElements(controllerElements);
         return controllerElements.stream()
-                .map(e -> (TypeElement)e)
-                .filter(e -> isWsController(typeUtils, elementUtils, e))
-                .map(e -> new WsControllerSource(typeUtils, elementUtils, e))
-                .collect(Collectors.toList());
+            .map(e -> (TypeElement)e)
+            .filter(e -> isWsController(typeUtils, elementUtils, e))
+            .map(e -> new WsControllerSource(typeUtils, elementUtils, e))
+            .collect(Collectors.toList());
     }
 
     private static void checkControllerElements(Set<? extends Element> elements) throws ProcessingException {
         Element[] badElements = elements.stream()
-                .filter(e -> e.getKind() != ElementKind.CLASS)
-                .toArray(Element[]::new);
+            .filter(e -> e.getKind() != ElementKind.CLASS)
+            .toArray(Element[]::new);
         if (badElements.length > 0) {
             throw new ProcessingException("WsRoute annotations can only be applied to classes.", badElements);
         }
@@ -45,24 +45,12 @@ final class WsControllerSource {
 
     private static boolean isWsController(Types typeUtils, Elements elementUtils, TypeElement element) {
         TypeElement controllerElement = elementUtils.getTypeElement(WsController.class.getCanonicalName());
-        return typeUtils.isAssignable(controllerElement.asType(), element.asType());
-    }
-
-    Types getTypeUtils() {
-        return typeUtils;
-    }
-
-    Elements getElementUtils() {
-        return elementUtils;
-    }
-
-    public Name getTypeName() {
-        return controllerElement.getQualifiedName();
+        return typeUtils.isAssignable(element.asType(), controllerElement.asType());
     }
 
     public CodeBlock generateEndpoint(ContainerSource container, String app) {
         CodeBlock.Builder handlerBuilder = CodeBlock.builder();
-        handlerBuilder.beginControlFlow("$N.ws((ws) ->", WsHandler.class);
+        handlerBuilder.beginControlFlow("$N.ws($S, (ws) ->", app, getRoute());
 
         addOnConnectHandler(container, handlerBuilder);
         addOnDisconnectHandler(container, handlerBuilder);
@@ -71,8 +59,12 @@ final class WsControllerSource {
         addOnBinaryMessageHandler(container, handlerBuilder);
 
         handlerBuilder.endControlFlow(")");
-        handlerBuilder.addStatement("");
         return handlerBuilder.build();
+    }
+
+    private String getRoute() {
+        WsRoute route = controllerElement.getAnnotation(WsRoute.class);
+        return route.route();
     }
 
     private void addOnConnectHandler(ContainerSource container, CodeBlock.Builder handlerBuilder) {
@@ -132,9 +124,8 @@ final class WsControllerSource {
             Class<?> contextInterface,
             Class<?> contextImpl,
             String methodName) {
-        handlerBuilder.beginControlFlow("ws.$N(ctx ->", javalinHandler);
-        handlerBuilder.addStatement("$T wrapper = new $T(ctx)", WsContext.class, JavalinWsContext.class);
-        handlerBuilder.addStatement("$T context = new $T(wrapper)", contextInterface, contextImpl);
+        handlerBuilder.beginControlFlow("ws.$N((ctx) ->", javalinHandler);
+        handlerBuilder.addStatement("$T context = new $T(ctx)", contextInterface, contextImpl);
         addController(container, handlerBuilder);
         handlerBuilder.addStatement("controller.$N(context)", methodName);
         handlerBuilder.endControlFlow(")");
@@ -143,11 +134,10 @@ final class WsControllerSource {
     private void addController(ContainerSource container, CodeBlock.Builder handlerBuilder) {
         Name controllerName = container.getDependencyName(controllerElement);
         if (container.isFound() && controllerName != null) {
-            handlerBuilder.add("@SuppressWarnings($S)\n", "unchecked");
-            handlerBuilder.addStatement("$T injector = ($T)scopeFactory.get()", container.getType(), container.getType());
-            handlerBuilder.addStatement("$N controller = injector.$L()", controllerElement, controllerName);
+            handlerBuilder.addStatement("$T injector = scopeFactory.get()", container.getType());
+            handlerBuilder.addStatement("$T controller = injector.$L()", controllerElement, controllerName);
         } else {
-            handlerBuilder.addStatement("$N controller = new $N()", controllerElement, controllerElement);
+            handlerBuilder.addStatement("$T controller = new $T()", controllerElement, controllerElement);
         }
     }
 }

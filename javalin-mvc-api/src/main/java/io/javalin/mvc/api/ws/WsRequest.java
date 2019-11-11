@@ -3,6 +3,9 @@ package io.javalin.mvc.api.ws;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Provides details about the current WebSocket request.
+ */
 public interface WsRequest {
     /**
      * Specifies whether a parameter with the given name exists in the URL.
