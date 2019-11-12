@@ -1,1 +1,1 @@
-io.javalin.mvc.annotations.processing.ControllerProcessor
+com.truncon.javalin.mvc.annotations.processing.ControllerProcessor

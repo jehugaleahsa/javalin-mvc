@@ -76,7 +76,7 @@ Javalin MVC uses annotation processing (more on this later) so must be setup in 
                         <version>2.25.2</version>
                     </path>
                     <path>
-                        <groupId>io.javalin.mvc</groupId>
+                        <groupId>com.truncon</groupId>
                         <artifactId>javalin-mvc-core</artifactId>
                         <version>1.0-SNAPSHOT</version>
                     </path>
@@ -226,7 +226,7 @@ public static void main(String[] args) throws IOException {
         DaggerWebContainer.builder()
             .javalinControllerModule(new JavalinControllerModule(ctx))
             .build();
-    // Javalin MVC generates "io.javalin.mvc.ControllerRegistry" automatically at compile time
+    // Javalin MVC generates "com.truncon.javalin.mvc.ControllerRegistry" automatically at compile time
     ControllerRegistry registry = new ControllerRegistry(scopeFactory);
     registry.register(app);
 
