@@ -190,10 +190,10 @@ Here is a list of supported and/or desired features. An `x` means it is already 
 * [x] Open API/Swagger Annotations
     * [x] Now uses built-in Javalin OpenAPI annotations
 * [ ] WebSockets
-    * [x] Specify routes via WsRoutes
-    * [x] Allow overriding: OnConnected, OnDisconnected, OnError, OnMessage and OnBinaryMessage
+    * [x] Specify routes via WsController
+    * [x] Support WsConnect, WsDisconnect, WsError, WsMessage and WsBinaryMessage annotations
     * [x] Support for data binding
-    * [ ] Support for @Before and @After handlers
+    * [ ] Support for @Before and @After handlers (does this make sense?)
 
 ## Dagger
 Dependency injection is at the core of modern software projects. It supports switching between implementations at runtime and promotes testability. Historically, dependency injection has utilized runtime reflection to instantiate objects and inject them. However, waiting to perform injection until runtime comes with the risk of missing bindings that will lead to system failure. There's also the overhead of constructing objects using reflection. However, the [Dagger](https://google.github.io/dagger/) project uses annotation processing to provide compile-time dependency injection. This provides all the benefits of using an inversion of control (IoC) container without the risk of missing bindings causing runtime failures. There's also minimal overhead because there's no reflection involved.
