@@ -6,14 +6,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Marks a class as a WebSocket controller.
+ * Indicates that the annotated method should be used to handle WebSocket connections.
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
-public @interface WsController {
-    /**
-     * Specifies the URL (a.k.a. route) that the annotated controller processes.
-     * @return The route.
-     */
-    String route();
+@Target(ElementType.METHOD)
+public @interface WsConnect {
 }

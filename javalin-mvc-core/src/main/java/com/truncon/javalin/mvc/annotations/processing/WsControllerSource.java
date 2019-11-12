@@ -8,6 +8,7 @@ import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.element.*;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
+import java.lang.annotation.Annotation;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -24,11 +25,10 @@ final class WsControllerSource {
     }
 
     public static List<WsControllerSource> getWsControllers(Types typeUtils, Elements elementUtils, RoundEnvironment environment) throws ProcessingException {
-        Set<? extends Element> controllerElements = environment.getElementsAnnotatedWith(WsRoute.class);
+        Set<? extends Element> controllerElements = environment.getElementsAnnotatedWith(WsController.class);
         checkControllerElements(controllerElements);
         return controllerElements.stream()
             .map(e -> (TypeElement)e)
-            .filter(e -> isWsController(typeUtils, elementUtils, e))
             .map(e -> new WsControllerSource(typeUtils, elementUtils, e))
             .collect(Collectors.toList());
     }
@@ -38,82 +38,123 @@ final class WsControllerSource {
             .filter(e -> e.getKind() != ElementKind.CLASS)
             .toArray(Element[]::new);
         if (badElements.length > 0) {
-            throw new ProcessingException("WsRoute annotations can only be applied to classes.", badElements);
+            throw new ProcessingException("WsController annotations can only be applied to classes.", badElements);
         }
     }
 
-    private static boolean isWsController(Types typeUtils, Elements elementUtils, TypeElement element) {
-        TypeElement controllerElement = elementUtils.getTypeElement(WsController.class.getCanonicalName());
-        return typeUtils.isAssignable(element.asType(), controllerElement.asType());
-    }
+    public CodeBlock generateEndpoint(ContainerSource container, String app) throws ProcessingException {
+        ExecutableElement connectMethod = getAnnotatedMethod(WsConnect.class);
+        ExecutableElement disconnectMethod = getAnnotatedMethod(WsDisconnect.class);
+        ExecutableElement errorMethod = getAnnotatedMethod(WsError.class);
+        ExecutableElement messageMethod = getAnnotatedMethod(WsMessage.class);
+        ExecutableElement binaryMessageMethod = getAnnotatedMethod(WsBinaryMessage.class);
+        if (connectMethod == null
+            && disconnectMethod == null
+            && errorMethod == null
+            && messageMethod == null
+            && binaryMessageMethod == null) {
+            return null;
+        }
 
-    public CodeBlock generateEndpoint(ContainerSource container, String app) {
         CodeBlock.Builder handlerBuilder = CodeBlock.builder();
         handlerBuilder.beginControlFlow("$N.ws($S, (ws) ->", app, getRoute());
 
-        addOnConnectHandler(container, handlerBuilder);
-        addOnDisconnectHandler(container, handlerBuilder);
-        addOnErrorHandler(container, handlerBuilder);
-        addOnMessageHandler(container, handlerBuilder);
-        addOnBinaryMessageHandler(container, handlerBuilder);
+        addOnConnectHandler(container, handlerBuilder, connectMethod);
+        addOnDisconnectHandler(container, handlerBuilder, disconnectMethod);
+        addOnErrorHandler(container, handlerBuilder, errorMethod);
+        addOnMessageHandler(container, handlerBuilder, messageMethod);
+        addOnBinaryMessageHandler(container, handlerBuilder, binaryMessageMethod);
 
         handlerBuilder.endControlFlow(")");
         return handlerBuilder.build();
     }
 
+    private <A extends Annotation> ExecutableElement getAnnotatedMethod(Class<A> annotationType) throws ProcessingException {
+        List<ExecutableElement> methods = controllerElement.getEnclosedElements().stream()
+            .filter(e -> e.getKind() == ElementKind.METHOD)
+            .filter(e -> e.getAnnotation(annotationType) != null)
+            .map(e -> (ExecutableElement)e)
+            .collect(Collectors.toList());
+        if (methods.isEmpty()) {
+            return null;
+        } else if (methods.size() > 1) {
+            String message = "Only a single method can be annotated with the "
+                + annotationType.getCanonicalName()
+                + " annotation.";
+            throw new ProcessingException(message, controllerElement);
+        } else {
+            return methods.get(0);
+        }
+    }
+
     private String getRoute() {
-        WsRoute route = controllerElement.getAnnotation(WsRoute.class);
+        WsController route = controllerElement.getAnnotation(WsController.class);
         return route.route();
     }
 
-    private void addOnConnectHandler(ContainerSource container, CodeBlock.Builder handlerBuilder) {
+    private void addOnConnectHandler(
+            ContainerSource container,
+            CodeBlock.Builder handlerBuilder,
+            ExecutableElement method) {
         addHandler(
             container,
             handlerBuilder,
             "onConnect",
             WsConnectContext.class,
             JavalinWsConnectContext.class,
-            "onConnect");
+            method);
     }
 
-    private void addOnDisconnectHandler(ContainerSource container, CodeBlock.Builder handlerBuilder) {
+    private void addOnDisconnectHandler(
+            ContainerSource container,
+            CodeBlock.Builder handlerBuilder,
+            ExecutableElement method) {
         addHandler(
             container,
             handlerBuilder,
             "onClose",
             WsDisconnectContext.class,
             JavalinWsDisconnectContext.class,
-            "onDisconnect");
+            method);
     }
 
-    private void addOnErrorHandler(ContainerSource container, CodeBlock.Builder handlerBuilder) {
+    private void addOnErrorHandler(
+            ContainerSource container,
+            CodeBlock.Builder handlerBuilder,
+            ExecutableElement method) {
         addHandler(
             container,
             handlerBuilder,
             "onError",
             WsErrorContext.class,
             JavalinWsErrorContext.class,
-            "onError");
+            method);
     }
 
-    private void addOnMessageHandler(ContainerSource container, CodeBlock.Builder handlerBuilder) {
+    private void addOnMessageHandler(
+            ContainerSource container,
+            CodeBlock.Builder handlerBuilder,
+            ExecutableElement method) {
         addHandler(
             container,
             handlerBuilder,
             "onMessage",
             WsMessageContext.class,
             JavalinWsMessageContext.class,
-            "onMessage");
+            method);
     }
 
-    private void addOnBinaryMessageHandler(ContainerSource container, CodeBlock.Builder handlerBuilder) {
+    private void addOnBinaryMessageHandler(
+            ContainerSource container,
+            CodeBlock.Builder handlerBuilder,
+            ExecutableElement method) {
         addHandler(
             container,
             handlerBuilder,
             "onBinaryMessage",
             WsBinaryMessageContext.class,
             JavalinWsBinaryMessageContext.class,
-            "onBinaryMessage");
+            method);
     }
 
     private void addHandler(
@@ -122,11 +163,56 @@ final class WsControllerSource {
             String javalinHandler,
             Class<?> contextInterface,
             Class<?> contextImpl,
-            String methodName) {
-        handlerBuilder.beginControlFlow("ws.$N((ctx) ->", javalinHandler);
-        handlerBuilder.addStatement("$T context = new $T(ctx)", contextInterface, contextImpl);
+            ExecutableElement method) {
+        if (method == null) {
+            return;
+        }
+        final String context = "ctx";
+        handlerBuilder.beginControlFlow("ws.$N(($N) ->", javalinHandler, context);
+        final String wrapper = "context";
+        handlerBuilder.addStatement("$T $N = new $T($N)", contextInterface, wrapper, contextImpl, context);
         addController(container, handlerBuilder);
-        handlerBuilder.addStatement("controller.$N(context)", methodName);
+        if (ParameterGenerator.isWsBinderNeeded(typeUtils, elementUtils, method, contextInterface)) {
+            handlerBuilder.addStatement(
+                "$T binder = new $T($N)",
+                WsModelBinder.class,
+                DefaultWsModelBinder.class,
+                wrapper);
+        }
+        String parameters = ParameterGenerator.bindWsParameters(
+                typeUtils,
+                elementUtils,
+                method,
+                context,
+                contextInterface,
+                wrapper);
+        MethodUtils methodUtils = new MethodUtils(typeUtils, elementUtils);
+        if (methodUtils.hasVoidReturnType(method)) {
+            handlerBuilder.addStatement("controller.$N(" + parameters + ")", method.getSimpleName());
+        } else if (methodUtils.hasWsActionResultReturnType(method)) {
+            handlerBuilder.addStatement(
+                "$T result = controller.$N(" + parameters + ")",
+                WsActionResult.class,
+                method.getSimpleName());
+            handlerBuilder.addStatement("result.execute($N)", wrapper);
+        } else if (methodUtils.hasFutureWsActionResultReturnType(method)) {
+            handlerBuilder.addStatement(
+                "controller.$N(" + parameters + ").thenApply(r -> r.execute($N))",
+                method.getSimpleName(),
+                wrapper);
+        } else if (methodUtils.hasFutureSimpleReturnType(method)) {
+            handlerBuilder.addStatement(
+                "controller.$N(" + parameters + ").thenApply(p -> new $T(p).execute($N))",
+                method.getSimpleName(),
+                WsJsonResult.class,
+                wrapper);
+        } else {
+            handlerBuilder.addStatement(
+                "$T result = controller.$N(" + parameters + ")",
+                method.getReturnType(),
+                method.getSimpleName());
+            handlerBuilder.addStatement("new $T(result).execute($N)", WsJsonResult.class, wrapper);
+        }
         handlerBuilder.endControlFlow(")");
     }
 

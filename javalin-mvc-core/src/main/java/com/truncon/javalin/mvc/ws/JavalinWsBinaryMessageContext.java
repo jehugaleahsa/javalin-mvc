@@ -1,18 +1,13 @@
 package com.truncon.javalin.mvc.ws;
 
 import com.truncon.javalin.mvc.api.ws.WsBinaryMessageContext;
-import com.truncon.javalin.mvc.api.ws.WsContext;
 
-public final class JavalinWsBinaryMessageContext implements WsBinaryMessageContext {
+public final class JavalinWsBinaryMessageContext extends JavalinWsContext implements WsBinaryMessageContext {
     private final io.javalin.websocket.WsBinaryMessageContext context;
 
     public JavalinWsBinaryMessageContext(io.javalin.websocket.WsBinaryMessageContext context) {
+        super(context);
         this.context = context;
-    }
-
-    @Override
-    public WsContext getContext() {
-        return new JavalinWsContext(context);
     }
 
     @Override
@@ -21,12 +16,12 @@ public final class JavalinWsBinaryMessageContext implements WsBinaryMessageConte
     }
 
     @Override
-    public int getOffset() {
+    public Integer getOffset() {
         return context.offset();
     }
 
     @Override
-    public int getLength() {
+    public Integer getLength() {
         return context.length();
     }
 }

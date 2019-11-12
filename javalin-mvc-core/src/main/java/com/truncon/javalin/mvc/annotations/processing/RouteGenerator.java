@@ -7,9 +7,6 @@ import com.truncon.javalin.mvc.DefaultModelBinder;
 import com.truncon.javalin.mvc.JavalinHttpContext;
 
 import javax.lang.model.element.*;
-import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.TypeKind;
-import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 import java.lang.annotation.Annotation;
@@ -114,7 +111,9 @@ final class RouteGenerator {
             handlerBuilder.addStatement("$T injector = scopeFactory.get()", container.getType());
         }
         handlerBuilder.addStatement("$T wrapper = new $T(ctx)", HttpContext.class, JavalinHttpContext.class);
-        handlerBuilder.addStatement("$T binder = new $T(wrapper.getRequest())", ModelBinder.class, DefaultModelBinder.class);
+        if (ParameterGenerator.isBinderNeeded(typeUtils, elementUtils, method)) {
+            handlerBuilder.addStatement("$T binder = new $T(wrapper.getRequest())", ModelBinder.class, DefaultModelBinder.class);
+        }
 
         Name controllerName = container.getDependencyName(controller.getType());
         if (controllerName != null) {
@@ -130,32 +129,34 @@ final class RouteGenerator {
             handlerBuilder.addStatement("Exception caughtException = null;");
             handlerBuilder.beginControlFlow("try");
         }
-        if (hasVoidReturnType()) {
+        String parameters = bindParameters("ctx", "wrapper");
+        MethodUtils methodUtils = new MethodUtils(typeUtils, elementUtils);
+        if (methodUtils.hasVoidReturnType(method)) {
             handlerBuilder.addStatement(
-                "controller.$N(" + bindParameters("ctx", "wrapper") + ")",
+                "controller.$N(" + parameters + ")",
                 method.getSimpleName());
-        } else if (hasActionResultReturnType()) {
+        } else if (methodUtils.hasActionResultReturnType(method)) {
             handlerBuilder.addStatement(
-                "$T result = controller.$N(" + bindParameters("ctx", "wrapper") + ")",
+                "$T result = controller.$N(" + parameters + ")",
                 ActionResult.class,
                 method.getSimpleName());
             handlerBuilder.addStatement("result.execute(wrapper)");
-        } else if (hasFutureActionResultReturnType()) {
+        } else if (methodUtils.hasFutureActionResultReturnType(method)) {
             handlerBuilder.addStatement(
-                "$T<?> future = controller.$N(" + bindParameters("ctx", "wrapper") + ").thenApply(r -> r.executeAsync(wrapper))",
+                "$T<?> future = controller.$N(" + parameters + ").thenApply(r -> r.executeAsync(wrapper))",
                 CompletableFuture.class,
                 method.getSimpleName());
             handlerBuilder.addStatement("ctx.result(future)");
-        } else if (hasFutureSimpleReturnType()) {
+        } else if (methodUtils.hasFutureSimpleReturnType(method)) {
             handlerBuilder.addStatement(
-                "$T<?> future = controller.$N(" + bindParameters("ctx", "wrapper") + ").thenApply(p -> new $T(p).executeAsync(wrapper))",
+                "$T<?> future = controller.$N(" + parameters + ").thenApply(p -> new $T(p).executeAsync(wrapper))",
                 CompletableFuture.class,
                 method.getSimpleName(),
                 JsonResult.class);
             handlerBuilder.addStatement("ctx.result(future)");
         } else {
             handlerBuilder.addStatement(
-                "$T result = controller.$N(" + bindParameters("ctx", "wrapper") + ")",
+                "$T result = controller.$N(" + parameters + ")",
                 method.getReturnType(),
                 method.getSimpleName());
             handlerBuilder.addStatement("new $T(result).execute(wrapper)", JsonResult.class);
@@ -193,38 +194,8 @@ final class RouteGenerator {
         }
     }
 
-    private boolean hasVoidReturnType() {
-        TypeMirror returnType = method.getReturnType();
-        return returnType.getKind() == TypeKind.VOID;
-    }
-
-    private boolean hasActionResultReturnType() {
-        TypeMirror returnType = method.getReturnType();
-        TypeMirror resultType = elementUtils.getTypeElement(ActionResult.class.getCanonicalName()).asType();
-        return typeUtils.isSubtype(returnType, resultType);
-    }
-
-    private boolean hasFutureActionResultReturnType() {
-        TypeMirror returnType = method.getReturnType();
-        TypeMirror resultType = elementUtils.getTypeElement(ActionResult.class.getCanonicalName()).asType();
-        TypeElement futureType = elementUtils.getTypeElement(CompletableFuture.class.getCanonicalName());
-        DeclaredType futureResultType = typeUtils.getDeclaredType(futureType, resultType);
-        return typeUtils.isSubtype(returnType, futureResultType);
-    }
-
-    private boolean hasFutureSimpleReturnType() {
-        TypeMirror returnType = typeUtils.erasure(method.getReturnType());
-        TypeMirror futureType = typeUtils.erasure(
-            elementUtils.getTypeElement(CompletableFuture.class.getCanonicalName()).asType());
-        return typeUtils.isSubtype(returnType, futureType);
-    }
-
     private String bindParameters(String context, String wrapper) {
-        String[] arguments = method.getParameters().stream()
-                .map(p -> ParameterGenerator.getParameterGenerator(this, p))
-                .map(g -> g.generateParameter(context, wrapper))
-                .toArray(String[]::new);
-        return String.join(", ", arguments);
+        return ParameterGenerator.bindParameters(typeUtils, elementUtils, method, context, wrapper);
     }
 
     private static void generateAfterHandlers(

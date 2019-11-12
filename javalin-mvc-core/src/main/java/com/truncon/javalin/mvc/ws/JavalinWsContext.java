@@ -5,7 +5,7 @@ import com.truncon.javalin.mvc.api.ws.WsRequest;
 import com.truncon.javalin.mvc.api.ws.WsResponse;
 import io.javalin.plugin.json.JavalinJackson;
 
-public final class JavalinWsContext implements WsContext {
+public abstract class JavalinWsContext implements WsContext {
     private final io.javalin.websocket.WsContext context;
 
     public JavalinWsContext(io.javalin.websocket.WsContext context) {

@@ -3,12 +3,7 @@ package com.truncon.javalin.mvc.api.ws;
 /**
  * Provides information about a received binary message.
  */
-public interface WsBinaryMessageContext {
-    /**
-     * The WebSocket context.
-     * @return The context.
-     */
-    WsContext getContext();
+public interface WsBinaryMessageContext extends WsContext {
 
     /**
      * Gets the binary data as a {@link byte[]}.
@@ -20,11 +15,11 @@ public interface WsBinaryMessageContext {
      * Gets the starting offset into the binary data.
      * @return The starting offset.
      */
-    int getOffset();
+    Integer getOffset();
 
     /**
      * Gets the number of bytes to read.
      * @return The number of bytes.
      */
-    int getLength();
+    Integer getLength();
 }

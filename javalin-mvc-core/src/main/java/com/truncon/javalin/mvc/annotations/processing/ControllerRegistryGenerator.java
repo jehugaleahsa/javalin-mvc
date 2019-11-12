@@ -10,6 +10,7 @@ import javax.tools.JavaFileObject;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
@@ -27,7 +28,7 @@ final class ControllerRegistryGenerator {
         this.wsControllers = wsControllers;
     }
 
-    public void generateRoutes(Filer filer) throws IOException {
+    public void generateRoutes(Filer filer) throws IOException, ProcessingException {
         TypeSpec.Builder registryTypeBuilder = TypeSpec.classBuilder("ControllerRegistry")
             .addModifiers(Modifier.PUBLIC, Modifier.FINAL);
 
@@ -77,9 +78,10 @@ final class ControllerRegistryGenerator {
             .collect(CodeBlock.joining("\n"));
     }
 
-    private CodeBlock createWsEndpoints(String app) {
+    private CodeBlock createWsEndpoints(String app) throws ProcessingException{
         return wsControllers.stream()
             .map(s -> s.generateEndpoint(container, app))
+            .filter(Objects::nonNull)
             .collect(CodeBlock.joining("\n"));
     }
 }

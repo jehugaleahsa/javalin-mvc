@@ -3,13 +3,7 @@ package com.truncon.javalin.mvc.api.ws;
 /**
  * Provides information about a WebSocket message.
  */
-public interface WsMessageContext {
-    /**
-     * Gets the WebSocket context.
-     * @return The context.
-     */
-    WsContext getContext();
-
+public interface WsMessageContext extends WsContext {
     /**
      * Gets the message that was sent.
      * @return The sent message.
@@ -23,7 +17,6 @@ public interface WsMessageContext {
      * @return the deserialized object.
      */
     default <T> T getMessage(Class<T>  dataClass) {
-        WsContext context = getContext();
-        return context.fromJson(getMessage(), dataClass);
+        return fromJson(getMessage(), dataClass);
     }
 }
