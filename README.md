@@ -192,7 +192,7 @@ Here is a list of supported and/or desired features. An `x` means it is already 
 * [ ] WebSockets
     * [x] Specify routes via WsRoutes
     * [x] Allow overriding: OnConnected, OnDisconnected, OnError, OnMessage and OnBinaryMessage
-    * [ ] Support for data binding
+    * [x] Support for data binding
     * [ ] Support for @Before and @After handlers
 
 ## Dagger
@@ -348,4 +348,36 @@ public ActionResult index() {
 One caveat is that you must ensure method names in your controllers are unique; otherwise, which documentation goes to which controller action becomes ambiguous. This is a good practice anyway.
 
 ## WebSockets
-WebSockets are handled using implementations of the `WsController` interface. In order to map a particular route to a WebSocket controller, you must annotate it with the `WsRoute` annotation, specifying the URL to be handled. You can optionally override any of the operations in the `WsController` interface, `onConnect`, `onDisconnect`, `onError`, `onMessage`, and `onBinaryMessage`. Each handler accepts a different `WsContext` object, containing information needed to process the request. The context provides access to a `WsRequest` and a `WsResponse` object. Any parameters, cookies, etc. come from the `WsRequest` object and methods for sending responses are found in the `WsResponse` object.
+WebSockets are handled by marking classes with the `WsController` annotation. Unlike HTTP controllers, a WebSocket controller only handles a single route. Each WebSocket controller can process client connections, disconnections, errors, and messages (text or binary). The route the controller will handle is passed as a parameter to the `WsController` annotation. The methods within the controller can be marked with the `WsConnect`, `WsDisconnect`, `WsError`, `WsMessage`, or `WsBinaryMessage` annotations. Only one instance of each annotation can appear within a class; however, the same method can have multiple annotations.
+
+Similar to HTTP controllers, method parameters can be bound from query strings, path parameters, headers, and cookies. However, there is no such thing as form data in WebSockets. If you want to explicitly bind a value from a particular source, you can use the same `From*` annotations for HTTP. In addition, you can use the `FromMessage` to binary parameters directly from content of messages. The `FromMessage` annotation works for `String` as well as JSON objects. You can also use `FromMessage` to bind binary messages to `byte[]` or `ByteBuffer` parameters.
+
+If a method accepts a `WsContext` object, it will have direct access to the context object. Similarly, you can bind to `WsRequest` and `WsResponse` objects. A method-specific sub-interface exists for each method, so there is a `WsConnectContext`, `WsDisconnectContext`, `WsErrorContext`, `WsMessageContext`, and `WsBinaryMessageContext` that can be used as parameters, as well; however, these will only be initialize if used on the appropriate method.
+
+You can send responses to the client using the `WsResponse.send` methods; however, you can also return an instance of `WsActionResult` from the `WsMessage` handler. Currently, the only support result types are `WsContentResult` for sending plain text, `WsJsonResult` for sending JSON results, and `WsByteArrayResult` and `WsByteBufferResult` for sending binary results. Similar to HTTP controllers, you can also just return from your method and it will be serialized appropriately.
+
+```java
+@WsController(route="/ws/pickles")
+public final class WsPickleController {
+    @Inject
+    public WsPickleController() {
+    }
+
+    @WsConnect
+    public void onConnect(WsConnectContext context) {
+    }
+
+    @WsDisconnect
+    public void onDisconnect(WsDisconnectContext context) {
+    }
+
+    @WsError
+    public void onError(WsErrorContext context) {
+    }
+
+    @WsMessage
+    public WsActionResult onMessage(@FromMessage Payload payload) {
+        return new WsJsonResult(payload);
+    }
+}
+```
