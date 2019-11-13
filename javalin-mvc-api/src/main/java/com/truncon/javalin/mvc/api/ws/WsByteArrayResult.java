@@ -22,6 +22,8 @@ public final class WsByteArrayResult implements WsActionResult {
      * Initializes a new instance of a WsByteArrayResult.
      *
      * @param data The data to send.
+     * @param offset The zero-based offset into the array where the data begins.
+     * @param length The number of bytes making up the data.
      */
     public WsByteArrayResult(byte[] data, int offset, int length) {
         this.data = data;
