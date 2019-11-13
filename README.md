@@ -5,12 +5,12 @@ Build Javalin route handlers at compile time using controllers and action method
 This MVC library utilizes [Javalin](http://javalin.io). It is a very lightweight Java REST API framework that avoids the overhead and complexity of more full-blown web frameworks. That makes it more appropriate for small services that run exclusively behind a reverse proxy (e.g., NGinX). It can also be built with Maven, so can exist nicely with other Java projects.
 
 ### Controllers are awesome!
-While Javalin is pretty straight-forward, it does lack some niceties that improve developer productivity. For one, you don't want to have to manually extract values from URL parameters, query strings, headers and the request body (e.g., JSON). You also don't want to deal with different responses. You don't want to have a 1,000 line block of code at the top of your app registering all of the routes. You don't want to have to deal with dependency injection, request filtering, error handling, logging, etc. That's why this project exists.
+While Javalin is pretty straight-forward, it does lack some niceties that improve developer productivity. For one, you don't want to have to manually extract values from URL parameters, query strings, headers and the request body (e.g., JSON). You also don't want to manually deal with different responses. You don't want to have a 1,000 line block of code at the top of your app registering all of the routes. You don't want to have to deal with dependency injection, request filtering, error handling, logging, etc. That's why this project exists.
 
 Basically, it's a compile-time tool (via Java's [annotation processing](https://medium.com/@jintin/annotation-processing-in-java-3621cb05343a)) that converts decorated classes into Javalin route handlers. The annotation processing tool is implemented in the `javalin-mvc-core` project. The `javalin-mvc-api` project provides only interfaces and annotations (and classes implemented in terms of those interfaces). The `javalin-mvc-core` project takes care of implementing those interfaces and including them in the generated code.
 
 ## Installation
-This project has not yet been published to Maven Central, so you will need to clone the project locally and install to your local maven repository (or simply include the folders in your project). The following dependencies are needed in your web project:
+The following dependencies are needed in your web project:
 
 ```xml
 <!-- Javalin, of course -->
@@ -25,16 +25,16 @@ This project has not yet been published to Maven Central, so you will need to cl
     <artifactId>dagger</artifactId>
     <version>2.25.2</version>
 </dependency>
-<!-- Needed for configuring JSON in Javalin and MVC model binding -->
+<!-- Javalin MVC -->
 <dependency>
-    <groupId>com.fasterxml.jackson.core</groupId>
-    <artifactId>jackson-databind</artifactId>
-    <version>2.9.10</version>
+    <groupId>com.truncon</groupId>
+    <artifactId>javalin-mvc-api</artifact>
+    <version>1.0.1</version>
 </dependency>
 <dependency>
-    <groupId>com.fasterxml.jackson.module</groupId>
-    <artifactId>jackson-module-kotlin</artifactId>
-    <version>2.9.9</version>
+    <groupId>com.truncon</groupId>
+    <artifactId>javalin-mvc-core</artifact>
+    <version>1.0.1</version>
 </dependency>
 <!-- The rest of these dependencies are for OpenAPI support. Optional!!! -->
 <dependency>
@@ -78,7 +78,7 @@ Javalin MVC uses annotation processing (more on this later) so must be setup in 
                     <path>
                         <groupId>com.truncon</groupId>
                         <artifactId>javalin-mvc-core</artifactId>
-                        <version>1.0-SNAPSHOT</version>
+                        <version>1.0.1</version>
                     </path>
                 </annotationProcessorPaths>
             </configuration>
