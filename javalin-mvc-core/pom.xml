@@ -8,13 +8,13 @@
   <parent>
     <groupId>com.truncon</groupId>
     <artifactId>javalin-mvc</artifactId>
-    <version>1.0</version>
+    <version>1.0.1</version>
   </parent>
   <dependencies>
     <dependency>
       <groupId>com.truncon</groupId>
       <artifactId>javalin-mvc-api</artifactId>
-      <version>1.0</version>
+      <version>1.0.1</version>
     </dependency>
     <dependency>
         <groupId>io.javalin</groupId>
