@@ -39,6 +39,7 @@
   <modules>
     <module>javalin-mvc-api</module>
     <module>javalin-mvc-core</module>
+    <module>javalin-mvc-test</module>
   </modules>
   <properties>
     <maven.compiler.source>1.8</maven.compiler.source>
@@ -124,6 +125,10 @@
           <url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
         </repository>
       </distributionManagement>
+      <modules>
+        <module>javalin-mvc-api</module>
+        <module>javalin-mvc-core</module>
+      </modules>
       <build>
         <plugins>
           <plugin>
