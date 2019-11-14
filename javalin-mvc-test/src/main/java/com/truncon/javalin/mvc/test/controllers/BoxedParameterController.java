@@ -5,11 +5,16 @@ import com.truncon.javalin.mvc.api.ContentResult;
 import com.truncon.javalin.mvc.api.Controller;
 import com.truncon.javalin.mvc.api.HttpGet;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.time.*;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.Objects;
 import java.util.TimeZone;
+import java.util.UUID;
 
 @Controller
 public class BoxedParameterController {
@@ -64,7 +69,7 @@ public class BoxedParameterController {
     public static final String DATE_ROUTE = "/api/boxed/date/:value";
     public static final DateFormat DATE_FORMAT = getDateFormatter();
     @HttpGet(route = DATE_ROUTE)
-    public ActionResult getChar(Date value) {
+    public ActionResult getDate(Date value) {
         return new ContentResult(DATE_FORMAT.format(value));
     }
 
@@ -73,5 +78,58 @@ public class BoxedParameterController {
         DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'"); // Quoted "Z" to indicate UTC, no timezone offset
         formatter.setTimeZone(timeZone);
         return formatter;
+    }
+
+    public static final String INSTANT_ROUTE = "/api/boxed/instant/:value";
+    public static final DateTimeFormatter INSTANT_FORMAT = DateTimeFormatter.ISO_INSTANT;
+    @HttpGet(route = INSTANT_ROUTE)
+    public ActionResult getInstant(Instant value) {
+        return new ContentResult(INSTANT_FORMAT.format(value));
+    }
+
+    public static final String ZONED_DATETIME_ROUTE = "/api/boxed/zoned-date-time/:value";
+    public static final DateTimeFormatter ZONED_DATETIME_FORMAT = DateTimeFormatter.ISO_ZONED_DATE_TIME;
+    @HttpGet(route = ZONED_DATETIME_ROUTE)
+    public ActionResult getZonedDateTime(ZonedDateTime value) {
+        return new ContentResult(ZONED_DATETIME_FORMAT.format(value));
+    }
+
+    public static final String OFFSET_DATETIME_ROUTE = "/api/boxed/offset-date-time/:value";
+    public static final DateTimeFormatter OFFSET_DATETIME_FORMAT = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
+    @HttpGet(route = OFFSET_DATETIME_ROUTE)
+    public ActionResult getOffsetDateTime(OffsetDateTime value) {
+        return new ContentResult(OFFSET_DATETIME_FORMAT.format(value));
+    }
+
+    public static final String LOCAL_DATETIME_ROUTE = "/api/boxed/local-date-time/:value";
+    public static final DateTimeFormatter LOCAL_DATETIME_FORMAT = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+    @HttpGet(route = LOCAL_DATETIME_ROUTE)
+    public ActionResult getLocalDateTime(LocalDateTime value) {
+        return new ContentResult(LOCAL_DATETIME_FORMAT.format(value));
+    }
+
+    public static final String LOCAL_DATE_ROUTE = "/api/boxed/local-date/:value";
+    public static final DateTimeFormatter LOCAL_DATE_FORMAT = DateTimeFormatter.ISO_LOCAL_DATE;
+    @HttpGet(route = LOCAL_DATE_ROUTE)
+    public ActionResult getLocalDate(LocalDate value) {
+        return new ContentResult(LOCAL_DATE_FORMAT.format(value));
+    }
+
+    public static final String BIG_INTEGER_ROUTE = "/api/boxed/big-integer/:value";
+    @HttpGet(route = BIG_INTEGER_ROUTE)
+    public ActionResult getBigInteger(BigInteger value) {
+        return new ContentResult(Objects.toString(value));
+    }
+
+    public static final String BIG_DECIMAL_ROUTE = "/api/boxed/big-decimal/:value";
+    @HttpGet(route = BIG_DECIMAL_ROUTE)
+    public ActionResult getBigDecimal(BigDecimal value) {
+        return new ContentResult(Objects.toString(value));
+    }
+
+    public static final String UUID_ROUTE = "/api/boxed/uuid/:value";
+    @HttpGet(route = UUID_ROUTE)
+    public ActionResult getBigDecimal(UUID value) {
+        return new ContentResult(Objects.toString(value));
     }
 }
