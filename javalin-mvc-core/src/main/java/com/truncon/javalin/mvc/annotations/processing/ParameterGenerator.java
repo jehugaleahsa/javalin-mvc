@@ -1,11 +1,10 @@
 package com.truncon.javalin.mvc.annotations.processing;
 
 import com.squareup.javapoet.CodeBlock;
+import com.truncon.javalin.mvc.ConversionUtils;
 import com.truncon.javalin.mvc.api.*;
 import com.truncon.javalin.mvc.api.ws.*;
-import com.truncon.javalin.mvc.ws.DefaultWsModelBinder;
 import io.javalin.http.Context;
-import com.truncon.javalin.mvc.DefaultModelBinder;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.lang.model.element.ExecutableElement;
@@ -95,7 +94,7 @@ final class ParameterGenerator {
             return CodeBlock.of(wrapper + ".getRequest().getFile($S)", parameterName).toString();
         }
         ValueSource valueSource = getValueSource(parameter);
-        for (Class<?> parameterClass : DefaultModelBinder.SUPPORTED_TYPES) {
+        for (Class<?> parameterClass : ConversionUtils.SUPPORTED_TYPES) {
             if (isType(parameterType, parameterClass)) {
                 return bindParameter(parameterName, parameterClass, valueSource);
             } else {
@@ -142,7 +141,7 @@ final class ParameterGenerator {
         }
         String parameterName = getParameterName();
         WsValueSource valueSource = getWsValueSource(parameter);
-        for (Class<?> parameterClass : DefaultWsModelBinder.SUPPORTED_TYPES) {
+        for (Class<?> parameterClass : ConversionUtils.SUPPORTED_TYPES) {
             if (isType(parameterType, parameterClass)) {
                 return bindWsParameter(parameterName, parameterClass, valueSource);
             } else {

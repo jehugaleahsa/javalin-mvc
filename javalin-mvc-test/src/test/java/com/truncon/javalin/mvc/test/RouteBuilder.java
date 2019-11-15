@@ -40,7 +40,9 @@ public final class RouteBuilder {
         }
         String queryString = query.stream().map(p -> {
             try {
-                String value = URLEncoder.encode(p.getValue(), StandardCharsets.UTF_8.name());
+                String value = p.getValue() == null
+                    ? ""
+                    : URLEncoder.encode(p.getValue(), StandardCharsets.UTF_8.name());
                 return p.getKey() + "=" + value;
             } catch (Exception e) {
                 throw new RuntimeException();

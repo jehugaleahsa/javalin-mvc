@@ -1,6 +1,6 @@
 package com.truncon.javalin.mvc.test;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import io.javalin.plugin.json.JavalinJackson;
 import org.apache.http.client.fluent.Request;
 
 import java.io.IOException;
@@ -11,8 +11,7 @@ public final class QueryUtils {
     }
 
     public static String jsonStringify(Object value) throws Exception {
-        ObjectMapper mapper = new ObjectMapper();
-        return mapper.writeValueAsString(value);
+        return JavalinJackson.INSTANCE.toJson(value);
     }
 
     public static String getStringResponse(String route) throws IOException {
@@ -24,7 +23,6 @@ public final class QueryUtils {
 
     public static <T> T getJsonResponse(String route, Class<T> clz) throws IOException {
         String json = getStringResponse(route);
-        ObjectMapper mapper = new ObjectMapper();
-        return mapper.readValue(json, clz);
+        return JavalinJackson.INSTANCE.fromJson(json, clz);
     }
 }

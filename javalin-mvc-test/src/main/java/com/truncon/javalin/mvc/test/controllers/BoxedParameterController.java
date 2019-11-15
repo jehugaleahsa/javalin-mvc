@@ -75,7 +75,7 @@ public class BoxedParameterController {
 
     private static DateFormat getDateFormatter() {
         TimeZone timeZone = TimeZone.getTimeZone("UTC");
-        DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'"); // Quoted "Z" to indicate UTC, no timezone offset
+        DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'"); // Quoted "Z" to indicate UTC, no timezone offset
         formatter.setTimeZone(timeZone);
         return formatter;
     }
