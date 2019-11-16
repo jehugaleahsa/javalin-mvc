@@ -18,6 +18,12 @@ import java.util.UUID;
 
 @Controller
 public class BoxedParameterController {
+    public static final String STRING_ROUTE = "/api/primitives/string/:value";
+    @HttpGet(route = STRING_ROUTE)
+    public ActionResult getString(String value) {
+        return new ContentResult(value);
+    }
+
     public static final String BOOLEAN_ROUTE = "/api/boxed/boolean/:value";
     @HttpGet(route = BOOLEAN_ROUTE)
     public ActionResult getBoolean(Boolean value) {

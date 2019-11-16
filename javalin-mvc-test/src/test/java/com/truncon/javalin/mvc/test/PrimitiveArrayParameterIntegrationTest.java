@@ -15,7 +15,7 @@ public final class PrimitiveArrayParameterIntegrationTest {
             PrimitiveArrayParameterController.BOOLEAN_ROUTE,
             pathParams(),
             queryParams(param("value", "false"), param("value", "true")));
-            boolean[] actual = getJsonResponse(route, boolean[].class);
+            boolean[] actual = getGetJsonResponse(route, boolean[].class);
             boolean[] expected = new boolean[] { false, true };
             Assert.assertArrayEquals(expected, actual);
         }
@@ -28,7 +28,7 @@ public final class PrimitiveArrayParameterIntegrationTest {
                 PrimitiveArrayParameterController.INTEGER_ROUTE,
                 pathParams(),
                 queryParams(param("value", "123"), param("value", "456")));
-            int[] actual = getJsonResponse(route, int[].class);
+            int[] actual = getGetJsonResponse(route, int[].class);
             int[] expected = new int[] { 123, 456 };
             Assert.assertArrayEquals(expected, actual);
         }
@@ -43,7 +43,7 @@ public final class PrimitiveArrayParameterIntegrationTest {
                 queryParams(
                     param("value", Double.toString(Double.MIN_VALUE)),
                     param("value", Double.toString(Double.MAX_VALUE))));
-            double[] actual = getJsonResponse(route, double[].class);
+            double[] actual = getGetJsonResponse(route, double[].class);
             double[] expected = new double[] { Double.MIN_VALUE, Double.MAX_VALUE };
             Assert.assertArrayEquals(expected, actual, 1.0);
         }
@@ -56,7 +56,7 @@ public final class PrimitiveArrayParameterIntegrationTest {
                 PrimitiveArrayParameterController.STRING_ROUTE,
                 pathParams(),
                 queryParams(param("value", "Hello"), param("value", "Goodbye")));
-            String[] actual = getJsonResponse(route, String[].class);
+            String[] actual = getGetJsonResponse(route, String[].class);
             String[] expected = new String[] { "Hello", "Goodbye" };
             Assert.assertArrayEquals(expected, actual);
         }
@@ -71,7 +71,7 @@ public final class PrimitiveArrayParameterIntegrationTest {
                 queryParams(
                     param("value", Byte.toString(Byte.MIN_VALUE)),
                     param("value", Byte.toString(Byte.MAX_VALUE))));
-            byte[] actual = getJsonResponse(route, byte[].class);
+            byte[] actual = getGetJsonResponse(route, byte[].class);
             byte[] expected = new byte[] { Byte.MIN_VALUE, Byte.MAX_VALUE };
             Assert.assertArrayEquals(expected, actual);
         }
@@ -86,7 +86,7 @@ public final class PrimitiveArrayParameterIntegrationTest {
                 queryParams(
                     param("value", Short.toString(Short.MIN_VALUE)),
                     param("value", Short.toString(Short.MAX_VALUE))));
-            short[] actual = getJsonResponse(route, short[].class);
+            short[] actual = getGetJsonResponse(route, short[].class);
             short[] expected = new short[] { Short.MIN_VALUE, Short.MAX_VALUE };
             Assert.assertArrayEquals(expected, actual);
         }
@@ -101,7 +101,7 @@ public final class PrimitiveArrayParameterIntegrationTest {
                 queryParams(
                     param("value", Float.toString(Float.MIN_VALUE)),
                     param("value", Float.toString(Float.MAX_VALUE))));
-            float[] actual = getJsonResponse(route, float[].class);
+            float[] actual = getGetJsonResponse(route, float[].class);
             float[] expected = new float[] { Float.MIN_VALUE, Float.MAX_VALUE };
             Assert.assertArrayEquals(expected, actual, 1.0f);
         }
@@ -116,7 +116,7 @@ public final class PrimitiveArrayParameterIntegrationTest {
                 queryParams(
                     param("value", Character.toString(Character.MIN_VALUE)),
                     param("value", Character.toString(Character.MAX_VALUE))));
-            char[] actual = getJsonResponse(route, char[].class);
+            char[] actual = getGetJsonResponse(route, char[].class);
             char[] expected = new char[] { Character.MIN_VALUE, Character.MAX_VALUE };
             Assert.assertArrayEquals(expected, actual);
         }
@@ -131,7 +131,7 @@ public final class PrimitiveArrayParameterIntegrationTest {
                 queryParams(
                     param("value", Long.toString(Long.MIN_VALUE)),
                     param("value", Long.toString(Long.MAX_VALUE))));
-            long[] actual = getJsonResponse(route, long[].class);
+            long[] actual = getGetJsonResponse(route, long[].class);
             long[] expected = new long[] { Long.MIN_VALUE, Long.MAX_VALUE };
             Assert.assertArrayEquals(expected, actual);
         }

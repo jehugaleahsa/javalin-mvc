@@ -25,12 +25,6 @@ public class PrimitiveParameterController {
         return new ContentResult(Double.toString(value));
     }
 
-    public static final String STRING_ROUTE = "/api/primitives/string/:value";
-    @HttpGet(route = STRING_ROUTE)
-    public ActionResult getString(String value) {
-        return new ContentResult(value);
-    }
-
     public static final String BYTE_ROUTE = "/api/primitives/byte/:value";
     @HttpGet(route = BYTE_ROUTE)
     public ActionResult getString(byte value) {
@@ -57,7 +51,7 @@ public class PrimitiveParameterController {
 
     public static final String LONG_ROUTE = "/api/primitives/long/:value";
     @HttpGet(route = LONG_ROUTE)
-    public ActionResult getChar(long value) {
+    public ActionResult getLong(long value) {
         return new ContentResult(Long.toString(value));
     }
 }

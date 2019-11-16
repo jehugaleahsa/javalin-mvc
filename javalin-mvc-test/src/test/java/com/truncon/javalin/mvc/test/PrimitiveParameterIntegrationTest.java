@@ -44,16 +44,7 @@ public final class PrimitiveParameterIntegrationTest {
         }
     }
 
-    @Test
-    public void testString() throws Exception {
-        try (AppHost app = AppHost.startNew()) {
-            String route = buildRoute(
-                PrimitiveParameterController.STRING_ROUTE,
-                pathParams(param("value", "Hello")));
-            String response = getStringResponse(route);
-            Assert.assertEquals("Hello", response);
-        }
-    }
+
 
     @Test
     public void testByte() throws Exception {

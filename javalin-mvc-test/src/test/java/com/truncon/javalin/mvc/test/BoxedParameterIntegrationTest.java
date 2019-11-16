@@ -14,6 +14,17 @@ import static com.truncon.javalin.mvc.test.RouteBuilder.*;
 
 public final class BoxedParameterIntegrationTest {
     @Test
+    public void testString() throws Exception {
+        try (AppHost app = AppHost.startNew()) {
+            String route = buildRoute(
+                BoxedParameterController.STRING_ROUTE,
+                pathParams(param("value", "Hello")));
+            String response = getStringResponse(route);
+            Assert.assertEquals("Hello", response);
+        }
+    }
+
+    @Test
     public void testBoolean() throws Exception {
         try (AppHost app = AppHost.startNew()) {
             String value = Boolean.toString(Boolean.TRUE);
