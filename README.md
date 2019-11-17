@@ -29,12 +29,12 @@ The following dependencies are needed in your web project:
 <dependency>
     <groupId>com.truncon</groupId>
     <artifactId>javalin-mvc-api</artifact>
-    <version>1.0.1</version>
+    <version>1.0.2</version>
 </dependency>
 <dependency>
     <groupId>com.truncon</groupId>
     <artifactId>javalin-mvc-core</artifact>
-    <version>1.0.1</version>
+    <version>1.0.2</version>
 </dependency>
 <!-- The rest of these dependencies are for OpenAPI support. Optional!!! -->
 <dependency>
@@ -78,7 +78,7 @@ Javalin MVC uses annotation processing (more on this later) so must be setup in 
                     <path>
                         <groupId>com.truncon</groupId>
                         <artifactId>javalin-mvc-core</artifactId>
-                        <version>1.0.1</version>
+                        <version>1.0.2</version>
                     </path>
                 </annotationProcessorPaths>
             </configuration>
