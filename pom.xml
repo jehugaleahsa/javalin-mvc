@@ -7,6 +7,17 @@
   <packaging>pom</packaging>
   <version>${revision}</version>
   <name>javalin-mvc</name>
+  <properties>
+    <maven.compiler.source>1.8</maven.compiler.source>
+    <maven.compiler.target>1.8</maven.compiler.target>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <revision>1.0.2</revision>
+  </properties>
+  <modules>
+    <module>javalin-mvc-api</module>
+    <module>javalin-mvc-core</module>
+    <module>javalin-mvc-test</module>
+  </modules>
   <description>
     Generates and configures Javalin route handlers from annotated controller classes and methods at compile time.
   </description>
@@ -36,17 +47,6 @@
       <url>https://github.com/jehugaleahsa</url>
     </developer>
   </developers>
-  <modules>
-    <module>javalin-mvc-api</module>
-    <module>javalin-mvc-core</module>
-    <module>javalin-mvc-test</module>
-  </modules>
-  <properties>
-    <maven.compiler.source>1.8</maven.compiler.source>
-    <maven.compiler.target>1.8</maven.compiler.target>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <revision>1.0.2</revision>
-  </properties>
   <dependencies>
     <dependency>
       <groupId>junit</groupId>
