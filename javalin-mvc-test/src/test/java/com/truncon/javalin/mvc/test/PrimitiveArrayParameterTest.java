@@ -7,10 +7,10 @@ import org.junit.Test;
 import static com.truncon.javalin.mvc.test.QueryUtils.*;
 import static com.truncon.javalin.mvc.test.RouteBuilder.*;
 
-public final class PrimitiveArrayParameterIntegrationTest {
+public final class PrimitiveArrayParameterTest {
     @Test
     public void testBoolean() throws Exception {
-        try (AppHost app = AppHost.startNew()) {
+        AsyncTestUtils.runTest(app -> {
             String route = buildRoute(
             PrimitiveArrayParameterController.BOOLEAN_ROUTE,
             pathParams(),
@@ -18,12 +18,12 @@ public final class PrimitiveArrayParameterIntegrationTest {
             boolean[] actual = getGetJsonResponse(route, boolean[].class);
             boolean[] expected = new boolean[] { false, true };
             Assert.assertArrayEquals(expected, actual);
-        }
+        }).join();
     }
 
     @Test
     public void testInteger() throws Exception {
-        try (AppHost app = AppHost.startNew()) {
+        AsyncTestUtils.runTest(app -> {
             String route = buildRoute(
                 PrimitiveArrayParameterController.INTEGER_ROUTE,
                 pathParams(),
@@ -31,12 +31,12 @@ public final class PrimitiveArrayParameterIntegrationTest {
             int[] actual = getGetJsonResponse(route, int[].class);
             int[] expected = new int[] { 123, 456 };
             Assert.assertArrayEquals(expected, actual);
-        }
+        }).join();
     }
 
     @Test
     public void testDouble() throws Exception {
-        try (AppHost app = AppHost.startNew()) {
+        AsyncTestUtils.runTest(app -> {
             String route = buildRoute(
                 PrimitiveArrayParameterController.DOUBLE_ROUTE,
                 pathParams(),
@@ -46,12 +46,12 @@ public final class PrimitiveArrayParameterIntegrationTest {
             double[] actual = getGetJsonResponse(route, double[].class);
             double[] expected = new double[] { Double.MIN_VALUE, Double.MAX_VALUE };
             Assert.assertArrayEquals(expected, actual, 1.0);
-        }
+        }).join();
     }
 
     @Test
     public void testString() throws Exception {
-        try (AppHost app = AppHost.startNew()) {
+        AsyncTestUtils.runTest(app -> {
             String route = buildRoute(
                 PrimitiveArrayParameterController.STRING_ROUTE,
                 pathParams(),
@@ -59,12 +59,12 @@ public final class PrimitiveArrayParameterIntegrationTest {
             String[] actual = getGetJsonResponse(route, String[].class);
             String[] expected = new String[] { "Hello", "Goodbye" };
             Assert.assertArrayEquals(expected, actual);
-        }
+        }).join();
     }
 
     @Test
     public void testByte() throws Exception {
-        try (AppHost app = AppHost.startNew()) {
+        AsyncTestUtils.runTest(app -> {
             String route = buildRoute(
                 PrimitiveArrayParameterController.BYTE_ROUTE,
                 pathParams(),
@@ -74,12 +74,12 @@ public final class PrimitiveArrayParameterIntegrationTest {
             byte[] actual = getGetJsonResponse(route, byte[].class);
             byte[] expected = new byte[] { Byte.MIN_VALUE, Byte.MAX_VALUE };
             Assert.assertArrayEquals(expected, actual);
-        }
+        }).join();
     }
 
     @Test
     public void testShort() throws Exception {
-        try (AppHost app = AppHost.startNew()) {
+        AsyncTestUtils.runTest(app -> {
             String route = buildRoute(
                 PrimitiveArrayParameterController.SHORT_ROUTE,
                 pathParams(),
@@ -89,12 +89,12 @@ public final class PrimitiveArrayParameterIntegrationTest {
             short[] actual = getGetJsonResponse(route, short[].class);
             short[] expected = new short[] { Short.MIN_VALUE, Short.MAX_VALUE };
             Assert.assertArrayEquals(expected, actual);
-        }
+        }).join();
     }
 
     @Test
     public void testFloat() throws Exception {
-        try (AppHost app = AppHost.startNew()) {
+        AsyncTestUtils.runTest(app -> {
             String route = buildRoute(
                 PrimitiveArrayParameterController.FLOAT_ROUTE,
                 pathParams(),
@@ -104,12 +104,12 @@ public final class PrimitiveArrayParameterIntegrationTest {
             float[] actual = getGetJsonResponse(route, float[].class);
             float[] expected = new float[] { Float.MIN_VALUE, Float.MAX_VALUE };
             Assert.assertArrayEquals(expected, actual, 1.0f);
-        }
+        }).join();
     }
 
     @Test
     public void testChar() throws Exception {
-        try (AppHost app = AppHost.startNew()) {
+        AsyncTestUtils.runTest(app -> {
             String route = buildRoute(
                 PrimitiveArrayParameterController.CHAR_ROUTE,
                 pathParams(),
@@ -119,12 +119,12 @@ public final class PrimitiveArrayParameterIntegrationTest {
             char[] actual = getGetJsonResponse(route, char[].class);
             char[] expected = new char[] { Character.MIN_VALUE, Character.MAX_VALUE };
             Assert.assertArrayEquals(expected, actual);
-        }
+        }).join();
     }
 
     @Test
     public void testLong() throws Exception {
-        try (AppHost app = AppHost.startNew()) {
+        AsyncTestUtils.runTest(app -> {
             String route = buildRoute(
                 PrimitiveArrayParameterController.LONG_ROUTE,
                 pathParams(),
@@ -134,6 +134,6 @@ public final class PrimitiveArrayParameterIntegrationTest {
             long[] actual = getGetJsonResponse(route, long[].class);
             long[] expected = new long[] { Long.MIN_VALUE, Long.MAX_VALUE };
             Assert.assertArrayEquals(expected, actual);
-        }
+        }).join();
     }
 }

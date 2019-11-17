@@ -18,6 +18,7 @@ import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.util.Properties;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
 public final class App {
@@ -60,9 +61,12 @@ public final class App {
         this.app = app;
     }
 
-    public void start() throws IOException {
+    public CompletableFuture<Void> start() throws IOException {
         Properties appSettings = getAppSettings();
+        CompletableFuture<Void> future = new CompletableFuture<>();
+        app.events(events -> events.serverStarted(() -> future.complete(null)));
         app.start(getPort(appSettings));
+        return future;
     }
 
     private static Properties getAppSettings() throws IOException {
@@ -71,8 +75,13 @@ public final class App {
             "./config/application-test.properties");
     }
 
-    public void stop() {
+    public CompletableFuture<Void> stop() {
+        CompletableFuture<Void> future = new CompletableFuture<>();
+        app.events(events -> events.serverStopped(() -> {
+            future.complete(null);
+        }));
         app.stop();
+        return future;
     }
 
     private static OpenApiOptions getOpenApiOptions() {

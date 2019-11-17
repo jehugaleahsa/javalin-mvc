@@ -16,10 +16,10 @@ import java.util.UUID;
 import static com.truncon.javalin.mvc.test.QueryUtils.getGetJsonResponse;
 import static com.truncon.javalin.mvc.test.RouteBuilder.*;
 
-public final class BoxedArrayParameterIntegrationTest {
+public final class BoxedArrayParameterTest {
     @Test
     public void testBoolean() throws Exception {
-        try (AppHost app = AppHost.startNew()) {
+        AsyncTestUtils.runTest(app -> {
             String route = buildRoute(
                 BoxedArrayParameterController.BOOLEAN_ROUTE,
                 pathParams(),
@@ -27,12 +27,12 @@ public final class BoxedArrayParameterIntegrationTest {
             Boolean[] actual = getGetJsonResponse(route, Boolean[].class);
             Boolean[] expected = new Boolean[] { false, null, true };
             Assert.assertArrayEquals(expected, actual);
-        }
+        }).join();
     }
 
     @Test
     public void testInteger() throws Exception {
-        try (AppHost app = AppHost.startNew()) {
+        AsyncTestUtils.runTest(app -> {
             String route = buildRoute(
                 BoxedArrayParameterController.INTEGER_ROUTE,
                 pathParams(),
@@ -43,12 +43,12 @@ public final class BoxedArrayParameterIntegrationTest {
             Integer[] actual = getGetJsonResponse(route, Integer[].class);
             Integer[] expected = new Integer[] { Integer.MIN_VALUE, null, Integer.MAX_VALUE };
             Assert.assertArrayEquals(expected, actual);
-        }
+        }).join();
     }
 
     @Test
     public void testDouble() throws Exception {
-        try (AppHost app = AppHost.startNew()) {
+        AsyncTestUtils.runTest(app -> {
             String route = buildRoute(
                 BoxedArrayParameterController.DOUBLE_ROUTE,
                 pathParams(),
@@ -59,12 +59,12 @@ public final class BoxedArrayParameterIntegrationTest {
             Double[] actual = getGetJsonResponse(route, Double[].class);
             Double[] expected = new Double[] { Double.MIN_VALUE, null, Double.MAX_VALUE };
             Assert.assertArrayEquals(expected, actual);
-        }
+        }).join();
     }
 
     @Test
     public void testByte() throws Exception {
-        try (AppHost app = AppHost.startNew()) {
+        AsyncTestUtils.runTest(app -> {
             String route = buildRoute(
                 BoxedArrayParameterController.BYTE_ROUTE,
                 pathParams(),
@@ -75,12 +75,12 @@ public final class BoxedArrayParameterIntegrationTest {
             Byte[] actual = getGetJsonResponse(route, Byte[].class);
             Byte[] expected = new Byte[] { Byte.MIN_VALUE, null, Byte.MAX_VALUE };
             Assert.assertArrayEquals(expected, actual);
-        }
+        }).join();
     }
 
     @Test
     public void testShort() throws Exception {
-        try (AppHost app = AppHost.startNew()) {
+        AsyncTestUtils.runTest(app -> {
             String route = buildRoute(
                 BoxedArrayParameterController.SHORT_ROUTE,
                 pathParams(),
@@ -91,12 +91,12 @@ public final class BoxedArrayParameterIntegrationTest {
             Short[] actual = getGetJsonResponse(route, Short[].class);
             Short[] expected = new Short[] { Short.MIN_VALUE, null, Short.MAX_VALUE };
             Assert.assertArrayEquals(expected, actual);
-        }
+        }).join();
     }
 
     @Test
     public void testFloat() throws Exception {
-        try (AppHost app = AppHost.startNew()) {
+        AsyncTestUtils.runTest(app -> {
             String route = buildRoute(
                 BoxedArrayParameterController.FLOAT_ROUTE,
                 pathParams(),
@@ -107,12 +107,12 @@ public final class BoxedArrayParameterIntegrationTest {
             Float[] actual = getGetJsonResponse(route, Float[].class);
             Float[] expected = new Float[] { Float.MIN_VALUE, null, Float.MAX_VALUE };
             Assert.assertArrayEquals(expected, actual);
-        }
+        }).join();
     }
 
     @Test
     public void testChar() throws Exception {
-        try (AppHost app = AppHost.startNew()) {
+        AsyncTestUtils.runTest(app -> {
             String route = buildRoute(
                 BoxedArrayParameterController.CHAR_ROUTE,
                 pathParams(),
@@ -123,12 +123,12 @@ public final class BoxedArrayParameterIntegrationTest {
             Character[] actual = getGetJsonResponse(route, Character[].class);
             Character[] expected = new Character[] { Character.MIN_VALUE, null, Character.MAX_VALUE };
             Assert.assertArrayEquals(expected, actual);
-        }
+        }).join();
     }
 
     @Test
     public void testLong() throws Exception {
-        try (AppHost app = AppHost.startNew()) {
+        AsyncTestUtils.runTest(app -> {
             String route = buildRoute(
                 BoxedArrayParameterController.LONG_ROUTE,
                 pathParams(),
@@ -139,12 +139,12 @@ public final class BoxedArrayParameterIntegrationTest {
             Long[] actual = getGetJsonResponse(route, Long[].class);
             Long[] expected = new Long[] { Long.MIN_VALUE, null, Long.MAX_VALUE };
             Assert.assertArrayEquals(expected, actual);
-        }
+        }).join();
     }
 
     @Test
     public void testDate() throws Exception {
-        try (AppHost app = AppHost.startNew()) {
+        AsyncTestUtils.runTest(app -> {
             Date value = DateUtils.truncate(new Date(), Calendar.SECOND);
             String route = buildRoute(
                 BoxedArrayParameterController.DATE_ROUTE,
@@ -155,12 +155,12 @@ public final class BoxedArrayParameterIntegrationTest {
             Date[] actual = getGetJsonResponse(route, Date[].class);
             Date[] expected = new Date[] { value, null };
             Assert.assertArrayEquals(expected, actual);
-        }
+        }).join();
     }
 
     @Test
     public void testInstant() throws Exception {
-        try (AppHost app = AppHost.startNew()) {
+        AsyncTestUtils.runTest(app -> {
             Instant value = Instant.now();
             String route = buildRoute(
                 BoxedArrayParameterController.INSTANT_ROUTE,
@@ -171,12 +171,12 @@ public final class BoxedArrayParameterIntegrationTest {
             Instant[] actual = getGetJsonResponse(route, Instant[].class);
             Instant[] expected = new Instant[] { value, null };
             Assert.assertArrayEquals(expected, actual);
-        }
+        }).join();
     }
 
     @Test
     public void testZonedDateTime() throws Exception {
-        try (AppHost app = AppHost.startNew()) {
+        AsyncTestUtils.runTest(app -> {
             // It appears Jackson normalizes all dates to UTC when round-tripping.
             // For now, I am just converting now to UTC to verify the behavior.
             ZonedDateTime value = ZonedDateTime.ofInstant(ZonedDateTime.now().toInstant(), ZoneId.of("UTC"));
@@ -189,14 +189,14 @@ public final class BoxedArrayParameterIntegrationTest {
             ZonedDateTime[] actual = getGetJsonResponse(route, ZonedDateTime[].class);
             ZonedDateTime[] expected = new ZonedDateTime[] { value, null };
             Assert.assertArrayEquals(expected, actual);
-        }
+        }).join();
     }
 
     @Test
     public void testOffsetDateTime() throws Exception {
         // It appears Jackson normalizes all dates to UTC when round-tripping.
         // For now, I am just converting now to UTC to verify the behavior.
-        try (AppHost app = AppHost.startNew()) {
+        AsyncTestUtils.runTest(app -> {
             OffsetDateTime value = OffsetDateTime.ofInstant(OffsetDateTime.now().toInstant(), ZoneOffset.UTC);
             String route = buildRoute(
                 BoxedArrayParameterController.OFFSET_DATETIME_ROUTE,
@@ -207,12 +207,12 @@ public final class BoxedArrayParameterIntegrationTest {
             OffsetDateTime[] actual = getGetJsonResponse(route, OffsetDateTime[].class);
             OffsetDateTime[] expected = new OffsetDateTime[] { value, null };
             Assert.assertArrayEquals(expected, actual);
-        }
+        }).join();
     }
 
     @Test
     public void testLocalDateTime() throws Exception {
-        try (AppHost app = AppHost.startNew()) {
+        AsyncTestUtils.runTest(app -> {
             LocalDateTime value = LocalDateTime.now();
             String route = buildRoute(
                 BoxedArrayParameterController.LOCAL_DATETIME_ROUTE,
@@ -223,12 +223,12 @@ public final class BoxedArrayParameterIntegrationTest {
             LocalDateTime[] actual = getGetJsonResponse(route, LocalDateTime[].class);
             LocalDateTime[] expected = new LocalDateTime[] { value, null };
             Assert.assertArrayEquals(expected, actual);
-        }
+        }).join();
     }
 
     @Test
     public void testLocalDate() throws Exception {
-        try (AppHost app = AppHost.startNew()) {
+        AsyncTestUtils.runTest(app -> {
             LocalDate value = LocalDate.now();
             String route = buildRoute(
                 BoxedArrayParameterController.LOCAL_DATE_ROUTE,
@@ -239,12 +239,12 @@ public final class BoxedArrayParameterIntegrationTest {
             LocalDate[] actual = getGetJsonResponse(route, LocalDate[].class);
             LocalDate[] expected = new LocalDate[] { value, null };
             Assert.assertArrayEquals(expected, actual);
-        }
+        }).join();
     }
 
     @Test
     public void testBigInteger() throws Exception {
-        try (AppHost app = AppHost.startNew()) {
+        AsyncTestUtils.runTest(app -> {
             BigInteger value = new BigInteger("12345678901234567890");
             String route = buildRoute(
                 BoxedArrayParameterController.BIG_INTEGER_ROUTE,
@@ -255,12 +255,12 @@ public final class BoxedArrayParameterIntegrationTest {
             BigInteger[] actual = getGetJsonResponse(route, BigInteger[].class);
             BigInteger[] expected = new BigInteger[] { value, null };
             Assert.assertArrayEquals(expected, actual);
-        }
+        }).join();
     }
 
     @Test
     public void testBigDecimal() throws Exception {
-        try (AppHost app = AppHost.startNew()) {
+        AsyncTestUtils.runTest(app -> {
             BigDecimal value = new BigDecimal("12345678901234567890.123456789");
             String route = buildRoute(
                 BoxedArrayParameterController.BIG_DECIMAL_ROUTE,
@@ -271,12 +271,12 @@ public final class BoxedArrayParameterIntegrationTest {
             BigDecimal[] actual = getGetJsonResponse(route, BigDecimal[].class);
             BigDecimal[] expected = new BigDecimal[] { value, null };
             Assert.assertArrayEquals(expected, actual);
-        }
+        }).join();
     }
 
     @Test
     public void testUUID() throws Exception {
-        try (AppHost app = AppHost.startNew()) {
+        AsyncTestUtils.runTest(app -> {
             UUID value = UUID.randomUUID();
             String route = buildRoute(
                 BoxedArrayParameterController.UUID_ROUTE,
@@ -287,6 +287,6 @@ public final class BoxedArrayParameterIntegrationTest {
             UUID[] actual = getGetJsonResponse(route, UUID[].class);
             UUID[] expected = new UUID[] { value, null };
             Assert.assertArrayEquals(expected, actual);
-        }
+        }).join();
     }
 }

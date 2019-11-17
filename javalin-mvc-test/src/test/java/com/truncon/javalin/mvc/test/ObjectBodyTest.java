@@ -15,10 +15,10 @@ import java.util.UUID;
 import static com.truncon.javalin.mvc.test.QueryUtils.getPostJsonResponse;
 import static com.truncon.javalin.mvc.test.RouteBuilder.*;
 
-public final class ObjectBodyIntegrationTest {
+public final class ObjectBodyTest {
     @Test
     public void testPrimitiveModel() throws Exception {
-        try (AppHost app = AppHost.startNew()) {
+        AsyncTestUtils.runTest(app -> {
             PrimitiveModel model = new PrimitiveModel();
             model.setBoolean(true);
             model.setInteger(Integer.MAX_VALUE);
@@ -38,12 +38,12 @@ public final class ObjectBodyIntegrationTest {
             Assert.assertEquals(model.getFloat(), response.getFloat(), 1);
             Assert.assertEquals(model.getChar(), response.getChar());
             Assert.assertEquals(model.getLong(), response.getLong());
-        }
+        }).join();
     }
 
     @Test
     public void testBoxedModel() throws Exception {
-        try (AppHost app = AppHost.startNew()) {
+        AsyncTestUtils.runTest(app -> {
             BoxedModel model = new BoxedModel();
             model.setString("Hello");
             model.setBoolean(true);
@@ -85,6 +85,6 @@ public final class ObjectBodyIntegrationTest {
             Assert.assertEquals(model.getBigInteger(), response.getBigInteger());
             Assert.assertEquals(model.getBigDecimal(), response.getBigDecimal());
             Assert.assertEquals(model.getUuid(), response.getUuid());
-        }
+        }).join();
     }
 }

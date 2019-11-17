@@ -1,25 +1,25 @@
 package com.truncon.javalin.mvc.test;
 
 import java.io.IOException;
+import java.util.concurrent.CompletableFuture;
 
-public final class AppHost implements AutoCloseable {
+public final class AppHost {
     private final App app;
 
     private AppHost(App app) {
         this.app = app;
     }
 
-    public static AppHost startNew() throws IOException {
+    public static CompletableFuture<AppHost> startNew() throws IOException {
         AppHost app = new AppHost(App.newInstance());
-        app.start();
-        return app;
+        return app.start().thenApply(v -> app);
     }
 
-    private void start() throws IOException {
-        app.start();
+    private CompletableFuture<Void> start() throws IOException {
+        return app.start();
     }
 
-    public void close() {
-        app.stop();
+    public CompletableFuture<Void> close() {
+        return app.stop();
     }
 }

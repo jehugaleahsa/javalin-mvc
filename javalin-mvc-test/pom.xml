@@ -108,6 +108,11 @@
             <artifactId>commons-collections4</artifactId>
             <version>4.0</version>
         </dependency>
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>2.6</version>
+        </dependency>
         <!-- REST Client -->
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
