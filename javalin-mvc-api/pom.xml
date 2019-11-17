@@ -8,6 +8,6 @@
   <parent>
     <groupId>com.truncon</groupId>
     <artifactId>javalin-mvc</artifactId>
-    <version>1.0.1</version>
+    <version>${revision}</version>
   </parent>
 </project>

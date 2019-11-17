@@ -5,7 +5,7 @@
   <groupId>com.truncon</groupId>
   <artifactId>javalin-mvc</artifactId>
   <packaging>pom</packaging>
-  <version>1.0.1</version>
+  <version>${revision}</version>
   <name>javalin-mvc</name>
   <description>
     Generates and configures Javalin route handlers from annotated controller classes and methods at compile time.
@@ -45,6 +45,7 @@
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <revision>1.0.2</revision>
   </properties>
   <dependencies>
     <dependency>

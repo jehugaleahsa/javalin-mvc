@@ -8,7 +8,7 @@
     <parent>
         <groupId>com.truncon</groupId>
         <artifactId>javalin-mvc</artifactId>
-        <version>1.0.1</version>
+        <version>${revision}</version>
     </parent>
     <dependencies>
         <!-- REST Middleware -->
@@ -27,12 +27,12 @@
         <dependency>
             <groupId>com.truncon</groupId>
             <artifactId>javalin-mvc-api</artifactId>
-            <version>1.0.1</version>
+            <version>${revision}</version>
         </dependency>
         <dependency>
             <groupId>com.truncon</groupId>
             <artifactId>javalin-mvc-core</artifactId>
-            <version>1.0.1</version>
+            <version>${revision}</version>
         </dependency>
         <!-- JSON -->
         <dependency>
@@ -137,12 +137,22 @@
                         <path>
                             <groupId>com.truncon</groupId>
                             <artifactId>javalin-mvc-core</artifactId>
-                            <version>1.0.1</version>
+                            <version>${revision}</version>
                         </path>
                     </annotationProcessorPaths>
                 </configuration>
             </plugin>
-            <!-- Ensure config files available to integration tests -->
+            <!-- Ensure config files available to unit/integration tests -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.0.0-M1</version>
+                <configuration>
+                    <additionalClasspathElements>
+                        <additionalClasspathElement>${project.basedir}/config</additionalClasspathElement>
+                    </additionalClasspathElements>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
