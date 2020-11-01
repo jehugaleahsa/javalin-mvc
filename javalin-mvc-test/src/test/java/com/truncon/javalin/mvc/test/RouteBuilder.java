@@ -88,6 +88,11 @@ public final class RouteBuilder {
         return Arrays.asList(pairs);
     }
 
+    @SafeVarargs
+    public static Collection<Pair<String, String>> formData(Pair<String, String> ...pairs) {
+        return Arrays.asList(pairs);
+    }
+
     public static Pair<String, String> param(String key, String value) {
         return Pair.of(key, value);
     }
