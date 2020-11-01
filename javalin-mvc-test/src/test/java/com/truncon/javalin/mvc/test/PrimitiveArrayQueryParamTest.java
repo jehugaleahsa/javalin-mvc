@@ -4,16 +4,16 @@ import com.truncon.javalin.mvc.test.controllers.PrimitiveArrayParameterControlle
 import org.junit.Assert;
 import org.junit.Test;
 
-import static com.truncon.javalin.mvc.test.QueryUtils.*;
-import static com.truncon.javalin.mvc.test.RouteBuilder.*;
+import static com.truncon.javalin.mvc.test.QueryUtils.getGetJsonResponse;
+import static com.truncon.javalin.mvc.test.RouteBuilder.param;
+import static com.truncon.javalin.mvc.test.RouteBuilder.queryParams;
 
-public final class PrimitiveArrayParameterTest {
+public final class PrimitiveArrayQueryParamTest {
     @Test
-    public void testBoolean() throws Exception {
+    public void testBoolean() {
         AsyncTestUtils.runTest(app -> {
-            String route = buildRoute(
+            String route = RouteBuilder.buildRouteWithQueryParams(
             PrimitiveArrayParameterController.BOOLEAN_ROUTE,
-            pathParams(),
             queryParams(param("value", "false"), param("value", "true")));
             boolean[] actual = getGetJsonResponse(route, boolean[].class);
             boolean[] expected = new boolean[] { false, true };
@@ -22,11 +22,10 @@ public final class PrimitiveArrayParameterTest {
     }
 
     @Test
-    public void testInteger() throws Exception {
+    public void testInteger() {
         AsyncTestUtils.runTest(app -> {
-            String route = buildRoute(
+            String route = RouteBuilder.buildRouteWithQueryParams(
                 PrimitiveArrayParameterController.INTEGER_ROUTE,
-                pathParams(),
                 queryParams(param("value", "123"), param("value", "456")));
             int[] actual = getGetJsonResponse(route, int[].class);
             int[] expected = new int[] { 123, 456 };
@@ -35,11 +34,10 @@ public final class PrimitiveArrayParameterTest {
     }
 
     @Test
-    public void testDouble() throws Exception {
+    public void testDouble() {
         AsyncTestUtils.runTest(app -> {
-            String route = buildRoute(
+            String route = RouteBuilder.buildRouteWithQueryParams(
                 PrimitiveArrayParameterController.DOUBLE_ROUTE,
-                pathParams(),
                 queryParams(
                     param("value", Double.toString(Double.MIN_VALUE)),
                     param("value", Double.toString(Double.MAX_VALUE))));
@@ -50,11 +48,10 @@ public final class PrimitiveArrayParameterTest {
     }
 
     @Test
-    public void testString() throws Exception {
+    public void testString() {
         AsyncTestUtils.runTest(app -> {
-            String route = buildRoute(
+            String route = RouteBuilder.buildRouteWithQueryParams(
                 PrimitiveArrayParameterController.STRING_ROUTE,
-                pathParams(),
                 queryParams(param("value", "Hello"), param("value", "Goodbye")));
             String[] actual = getGetJsonResponse(route, String[].class);
             String[] expected = new String[] { "Hello", "Goodbye" };
@@ -63,11 +60,10 @@ public final class PrimitiveArrayParameterTest {
     }
 
     @Test
-    public void testByte() throws Exception {
+    public void testByte() {
         AsyncTestUtils.runTest(app -> {
-            String route = buildRoute(
+            String route = RouteBuilder.buildRouteWithQueryParams(
                 PrimitiveArrayParameterController.BYTE_ROUTE,
-                pathParams(),
                 queryParams(
                     param("value", Byte.toString(Byte.MIN_VALUE)),
                     param("value", Byte.toString(Byte.MAX_VALUE))));
@@ -78,11 +74,10 @@ public final class PrimitiveArrayParameterTest {
     }
 
     @Test
-    public void testShort() throws Exception {
+    public void testShort() {
         AsyncTestUtils.runTest(app -> {
-            String route = buildRoute(
+            String route = RouteBuilder.buildRouteWithQueryParams(
                 PrimitiveArrayParameterController.SHORT_ROUTE,
-                pathParams(),
                 queryParams(
                     param("value", Short.toString(Short.MIN_VALUE)),
                     param("value", Short.toString(Short.MAX_VALUE))));
@@ -93,11 +88,10 @@ public final class PrimitiveArrayParameterTest {
     }
 
     @Test
-    public void testFloat() throws Exception {
+    public void testFloat() {
         AsyncTestUtils.runTest(app -> {
-            String route = buildRoute(
+            String route = RouteBuilder.buildRouteWithQueryParams(
                 PrimitiveArrayParameterController.FLOAT_ROUTE,
-                pathParams(),
                 queryParams(
                     param("value", Float.toString(Float.MIN_VALUE)),
                     param("value", Float.toString(Float.MAX_VALUE))));
@@ -108,11 +102,10 @@ public final class PrimitiveArrayParameterTest {
     }
 
     @Test
-    public void testChar() throws Exception {
+    public void testChar() {
         AsyncTestUtils.runTest(app -> {
-            String route = buildRoute(
+            String route = RouteBuilder.buildRouteWithQueryParams(
                 PrimitiveArrayParameterController.CHAR_ROUTE,
-                pathParams(),
                 queryParams(
                     param("value", Character.toString(Character.MIN_VALUE)),
                     param("value", Character.toString(Character.MAX_VALUE))));
@@ -123,11 +116,10 @@ public final class PrimitiveArrayParameterTest {
     }
 
     @Test
-    public void testLong() throws Exception {
+    public void testLong() {
         AsyncTestUtils.runTest(app -> {
-            String route = buildRoute(
+            String route = RouteBuilder.buildRouteWithQueryParams(
                 PrimitiveArrayParameterController.LONG_ROUTE,
-                pathParams(),
                 queryParams(
                     param("value", Long.toString(Long.MIN_VALUE)),
                     param("value", Long.toString(Long.MAX_VALUE))));

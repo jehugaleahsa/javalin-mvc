@@ -1,12 +1,11 @@
 package com.truncon.javalin.mvc.test;
 
-import java.io.IOException;
 import java.net.SocketException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 
 public class AsyncTestUtils {
-    public static CompletableFuture<Void> runTest(TestRunner runner) throws IOException {
+    public static CompletableFuture<Void> runTest(TestRunner runner) {
         return AppHost.startNew().thenCompose(a -> {
             Throwable ex = null;
             // Try to run the test N times if a SocketException is thrown.

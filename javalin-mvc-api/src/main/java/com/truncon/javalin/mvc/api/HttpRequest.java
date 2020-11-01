@@ -1,6 +1,6 @@
 package com.truncon.javalin.mvc.api;
 
-import java.util.List;
+import java.util.Collection;
 import java.util.Map;
 
 /**
@@ -25,7 +25,7 @@ public interface HttpRequest {
      * Gets the key/value pairs for any parameters in the URL.
      * @return the key/value pair lookup of the parameters.
      */
-    Map<String, List<String>> getPathLookup();
+    Map<String, Collection<String>> getPathLookup();
 
     /**
      * Specifies whether a query parameter with the given name exists in the URL.
@@ -45,7 +45,7 @@ public interface HttpRequest {
      * Gets the key/value pairs for any query string parameters in the URL.
      * @return the key/value pair lookup of the parameters.
      */
-    Map<String, List<String>> getQueryLookup();
+    Map<String, Collection<String>> getQueryLookup();
 
     /**
      * Specifies whether a form field (URL encoded) with the given name exists in the URL.
@@ -65,7 +65,7 @@ public interface HttpRequest {
      * Gets the key/value pairs for any form fields.
      * @return the key/value pair lookup of the form fields.
      */
-    Map<String, List<String>> getFormLookup();
+    Map<String, Collection<String>> getFormLookup();
 
     /**
      * Specifies whether a header with the given name exists.
@@ -85,7 +85,7 @@ public interface HttpRequest {
      * Gets the key/value pairs for any headers.
      * @return the key/value pair lookup of the headers.
      */
-    Map<String, List<String>> getHeaderLookup();
+    Map<String, Collection<String>> getHeaderLookup();
 
     /**
      * Gets the length (in bytes) of the request body.
@@ -161,7 +161,7 @@ public interface HttpRequest {
      * Gets the key/value pairs for the cookies.
      * @return the key/value pair lookup.
      */
-    Map<String, List<String>> getCookieLookup();
+    Map<String, Collection<String>> getCookieLookup();
 
     /**
      * Gets whether this is a multi-part form data request.

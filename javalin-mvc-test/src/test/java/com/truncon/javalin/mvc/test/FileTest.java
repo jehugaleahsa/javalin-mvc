@@ -23,7 +23,7 @@ public final class FileTest {
     public void testFileStream() throws Exception {
         AsyncTestUtils.runTest(app -> {
             String route = RouteBuilder.buildRoute(FileController.GET_STREAM_ROUTE);
-            String actual = QueryUtils.getStringResponse(route);
+            String actual = QueryUtils.getGetStringResponse(route);
             Path path = Paths.get("./public/index.html");
             String expected = IOUtils.toString(Files.newInputStream(path), Charset.defaultCharset());
             Assert.assertEquals(expected, actual);
@@ -38,7 +38,7 @@ public final class FileTest {
             Header dispositionHeader = response.getFirstHeader("Content-Disposition");
             String disposition = dispositionHeader.getValue();
             Assert.assertEquals("attachment;fileName=" + FileController.CONTENT_DISPOSITION, disposition);
-            String actual = QueryUtils.getStringResponse(route);
+            String actual = QueryUtils.getGetStringResponse(route);
             Path path = Paths.get("./public/index.html");
             String expected = IOUtils.toString(Files.newInputStream(path), Charset.defaultCharset());
             Assert.assertEquals(expected, actual);
@@ -59,7 +59,7 @@ public final class FileTest {
                 .execute()
                 .returnContent()
                 .asString(StandardCharsets.UTF_8);
-            FileUploadDetails actual = QueryUtils.jsonParse(json, FileUploadDetails.class);
+            FileUploadDetails actual = QueryUtils.parseJson(json, FileUploadDetails.class);
             Assert.assertEquals(ContentType.TEXT_HTML.toString(), actual.getContentType());
             Assert.assertEquals("index.html", actual.getFileName());
             Assert.assertEquals(fileData.length, actual.getLength());

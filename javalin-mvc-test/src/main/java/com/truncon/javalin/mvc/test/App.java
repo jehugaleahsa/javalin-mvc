@@ -13,11 +13,8 @@ import io.javalin.plugin.openapi.ui.SwaggerOptions;
 import io.swagger.v3.oas.models.info.Info;
 import io.javalin.Javalin;
 import io.javalin.http.staticfiles.Location;
-import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.log4j.Logger;
 
-import java.io.IOException;
-import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
@@ -25,9 +22,9 @@ public final class App {
     private static final Logger logger = Logger.getLogger(App.class);
     private final Javalin app;
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         App app = App.newInstance();
-        app.start();
+        app.start(5001);
     }
 
     public static App newInstance() {
@@ -61,25 +58,16 @@ public final class App {
         this.app = app;
     }
 
-    public CompletableFuture<Void> start() throws IOException {
-        Properties appSettings = getAppSettings();
+    public CompletableFuture<Void> start(int port) {
         CompletableFuture<Void> future = new CompletableFuture<>();
         app.events(events -> events.serverStarted(() -> future.complete(null)));
-        app.start(getPort(appSettings));
+        app.start(port);
         return future;
-    }
-
-    private static Properties getAppSettings() throws IOException {
-        return SettingsUtilities.loadSettings(
-            "./config/application.properties",
-            "./config/application-test.properties");
     }
 
     public CompletableFuture<Void> stop() {
         CompletableFuture<Void> future = new CompletableFuture<>();
-        app.events(events -> events.serverStopped(() -> {
-            future.complete(null);
-        }));
+        app.events(events -> events.serverStopped(() -> future.complete(null)));
         app.stop();
         return future;
     }
@@ -92,13 +80,5 @@ public final class App {
             .swagger(new SwaggerOptions("/swagger-ui")
                 .title("Pickle Web API Documentation"))
             .activateAnnotationScanningFor("net.pinnacle21.web");
-    }
-
-    private static int getPort(Properties properties) {
-        String portString = properties.getProperty("port");
-        if (NumberUtils.isParsable(portString)) {
-            return Integer.parseInt(portString);
-        }
-        return 5001;
     }
 }

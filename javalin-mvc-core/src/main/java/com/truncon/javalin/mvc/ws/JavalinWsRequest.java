@@ -4,6 +4,8 @@ import com.truncon.javalin.mvc.api.ws.WsRequest;
 import io.javalin.websocket.WsContext;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -26,7 +28,7 @@ public final class JavalinWsRequest implements WsRequest {
     }
 
     @Override
-    public Map<String, List<String>> getPathLookup() {
+    public Map<String, Collection<String>> getPathLookup() {
         return explode(context.pathParamMap());
     }
 
@@ -41,8 +43,8 @@ public final class JavalinWsRequest implements WsRequest {
     }
 
     @Override
-    public Map<String, List<String>> getQueryLookup() {
-        return context.queryParamMap();
+    public Map<String, Collection<String>> getQueryLookup() {
+        return Collections.unmodifiableMap(context.queryParamMap());
     }
 
     @Override
@@ -56,7 +58,7 @@ public final class JavalinWsRequest implements WsRequest {
     }
 
     @Override
-    public Map<String, List<String>> getHeaderLookup() {
+    public Map<String, Collection<String>> getHeaderLookup() {
         return explode(context.headerMap());
     }
 
@@ -71,11 +73,11 @@ public final class JavalinWsRequest implements WsRequest {
     }
 
     @Override
-    public Map<String, List<String>> getCookieLookup() {
+    public Map<String, Collection<String>> getCookieLookup() {
         return explode(context.cookieMap());
     }
 
-    private static Map<String, List<String>> explode(Map<String, String> map) {
+    private static Map<String, Collection<String>> explode(Map<String, String> map) {
         return map.keySet().stream().collect(Collectors.toMap(k -> k, k -> listOf(map.get(k))));
     }
 

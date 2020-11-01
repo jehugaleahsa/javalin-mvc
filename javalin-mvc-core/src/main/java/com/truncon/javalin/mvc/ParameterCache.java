@@ -5,46 +5,48 @@ import com.truncon.javalin.mvc.api.Named;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 public final class ParameterCache {
-    private final Supplier<Map<String, List<String>>> getter;
-    private Map<String, List<String>> lookup;
+    private final Supplier<Map<String, Collection<String>>> getter;
+    private Map<String, Collection<String>> lookup;
 
-    public ParameterCache(Supplier<Map<String, List<String>>> getter) {
+    public ParameterCache(Supplier<Map<String, Collection<String>>> getter) {
         this.getter = getter;
     }
 
     public Collection<String> getKeys() {
-        Map<String, List<String>> lookup = getLookup();
+        Map<String, Collection<String>> lookup = getLookup();
         return lookup.keySet();
     }
 
     public boolean hasValue(String name) {
-        Map<String, List<String>> lookup = getLookup();
+        Map<String, Collection<String>> lookup = getLookup();
         return lookup.containsKey(sterilize(name));
     }
 
-    public List<String> getValues(String name) {
-        Map<String, List<String>> lookup = getLookup();
+    public Collection<String> getValues(String name) {
+        Map<String, Collection<String>> lookup = getLookup();
         return lookup.get(sterilize(name));
     }
 
-    private Map<String, List<String>> getLookup() {
+    private Map<String, Collection<String>> getLookup() {
         if (lookup != null) {
             return lookup;
         }
-        Map<String, List<String>> cache = new HashMap<>();
-        Map<String, List<String>> source = getter.get();
+        Map<String, Collection<String>> cache = new LinkedHashMap<>();
+        Map<String, Collection<String>> source = getter.get();
         for (String name : source.keySet()) {
             String sterilized = sterilize(name);
-            List<String> values = source.get(name);
-            if (cache.containsKey(sterilized)) {
-                cache.get(sterilized).addAll(values);  // fold overlapping values together
-            } else {
-                cache.put(sterilized, values);
-            }
+            Collection<String> values = source.get(name);
+            cache.computeIfAbsent(sterilized, k -> new ArrayList<>()).addAll(values);
         }
         lookup = cache;
         return lookup;
@@ -72,7 +74,7 @@ public final class ParameterCache {
             Method method = getMethodForKey(type, key);
             if (method != null) {
                 method.setAccessible(true);
-                List<String> rawValues = getValues(key);
+                Collection<String> rawValues = getValues(key);
                 Class<?> parameterType = method.getParameters()[0].getType();
                 Optional<Object> value = ConversionUtils.toParameterValue(parameterType, rawValues);
                 if (value.isPresent()) {
@@ -83,7 +85,7 @@ public final class ParameterCache {
             Field field = getFieldForKey(type, key);
             if (field != null) {
                 field.setAccessible(true);
-                List<String> rawValues = getValues(key);
+                Collection<String> rawValues = getValues(key);
                 Optional<Object> value = ConversionUtils.toParameterValue(field.getType(), rawValues);
                 if (value.isPresent()) {
                     field.set(instance, value.get());

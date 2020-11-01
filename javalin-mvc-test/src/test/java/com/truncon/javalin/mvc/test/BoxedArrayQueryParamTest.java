@@ -8,7 +8,13 @@ import org.junit.Test;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.time.*;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.UUID;
@@ -16,13 +22,12 @@ import java.util.UUID;
 import static com.truncon.javalin.mvc.test.QueryUtils.getGetJsonResponse;
 import static com.truncon.javalin.mvc.test.RouteBuilder.*;
 
-public final class BoxedArrayParameterTest {
+public final class BoxedArrayQueryParamTest {
     @Test
-    public void testBoolean() throws Exception {
+    public void testBoolean() {
         AsyncTestUtils.runTest(app -> {
-            String route = buildRoute(
+            String route = RouteBuilder.buildRouteWithQueryParams(
                 BoxedArrayParameterController.BOOLEAN_ROUTE,
-                pathParams(),
                 queryParams(param("value", "false"), param("value", null), param("value", "true")));
             Boolean[] actual = getGetJsonResponse(route, Boolean[].class);
             Boolean[] expected = new Boolean[] { false, null, true };
@@ -31,11 +36,10 @@ public final class BoxedArrayParameterTest {
     }
 
     @Test
-    public void testInteger() throws Exception {
+    public void testInteger() {
         AsyncTestUtils.runTest(app -> {
-            String route = buildRoute(
+            String route = RouteBuilder.buildRouteWithQueryParams(
                 BoxedArrayParameterController.INTEGER_ROUTE,
-                pathParams(),
                 queryParams(
                     param("value", Integer.toString(Integer.MIN_VALUE)),
                     param("value", null),
@@ -47,11 +51,10 @@ public final class BoxedArrayParameterTest {
     }
 
     @Test
-    public void testDouble() throws Exception {
+    public void testDouble() {
         AsyncTestUtils.runTest(app -> {
-            String route = buildRoute(
+            String route = RouteBuilder.buildRouteWithQueryParams(
                 BoxedArrayParameterController.DOUBLE_ROUTE,
-                pathParams(),
                 queryParams(
                     param("value", Double.toString(Double.MIN_VALUE)),
                     param("value", null),
@@ -63,11 +66,10 @@ public final class BoxedArrayParameterTest {
     }
 
     @Test
-    public void testByte() throws Exception {
+    public void testByte() {
         AsyncTestUtils.runTest(app -> {
-            String route = buildRoute(
+            String route = RouteBuilder.buildRouteWithQueryParams(
                 BoxedArrayParameterController.BYTE_ROUTE,
-                pathParams(),
                 queryParams(
                     param("value", Byte.toString(Byte.MIN_VALUE)),
                     param("value", null),
@@ -79,11 +81,10 @@ public final class BoxedArrayParameterTest {
     }
 
     @Test
-    public void testShort() throws Exception {
+    public void testShort() {
         AsyncTestUtils.runTest(app -> {
-            String route = buildRoute(
+            String route = RouteBuilder.buildRouteWithQueryParams(
                 BoxedArrayParameterController.SHORT_ROUTE,
-                pathParams(),
                 queryParams(
                     param("value", Short.toString(Short.MIN_VALUE)),
                     param("value", null),
@@ -95,11 +96,10 @@ public final class BoxedArrayParameterTest {
     }
 
     @Test
-    public void testFloat() throws Exception {
+    public void testFloat() {
         AsyncTestUtils.runTest(app -> {
-            String route = buildRoute(
+            String route = RouteBuilder.buildRouteWithQueryParams(
                 BoxedArrayParameterController.FLOAT_ROUTE,
-                pathParams(),
                 queryParams(
                     param("value", Float.toString(Float.MIN_VALUE)),
                     param("value", null),
@@ -111,11 +111,10 @@ public final class BoxedArrayParameterTest {
     }
 
     @Test
-    public void testChar() throws Exception {
+    public void testChar() {
         AsyncTestUtils.runTest(app -> {
-            String route = buildRoute(
+            String route = RouteBuilder.buildRouteWithQueryParams(
                 BoxedArrayParameterController.CHAR_ROUTE,
-                pathParams(),
                 queryParams(
                     param("value", Character.toString(Character.MIN_VALUE)),
                     param("value", null),
@@ -127,11 +126,10 @@ public final class BoxedArrayParameterTest {
     }
 
     @Test
-    public void testLong() throws Exception {
+    public void testLong() {
         AsyncTestUtils.runTest(app -> {
-            String route = buildRoute(
+            String route = RouteBuilder.buildRouteWithQueryParams(
                 BoxedArrayParameterController.LONG_ROUTE,
-                pathParams(),
                 queryParams(
                     param("value", Long.toString(Long.MIN_VALUE)),
                     param("value", null),
@@ -143,12 +141,11 @@ public final class BoxedArrayParameterTest {
     }
 
     @Test
-    public void testDate() throws Exception {
+    public void testDate() {
         AsyncTestUtils.runTest(app -> {
             Date value = DateUtils.truncate(new Date(), Calendar.SECOND);
-            String route = buildRoute(
+            String route = RouteBuilder.buildRouteWithQueryParams(
                 BoxedArrayParameterController.DATE_ROUTE,
-                pathParams(),
                 queryParams(
                     param("value", BoxedParameterController.DATE_FORMAT.format(value)),
                     param("value", null)));
@@ -159,12 +156,11 @@ public final class BoxedArrayParameterTest {
     }
 
     @Test
-    public void testInstant() throws Exception {
+    public void testInstant() {
         AsyncTestUtils.runTest(app -> {
             Instant value = Instant.now();
-            String route = buildRoute(
+            String route = RouteBuilder.buildRouteWithQueryParams(
                 BoxedArrayParameterController.INSTANT_ROUTE,
-                pathParams(),
                 queryParams(
                     param("value", BoxedParameterController.INSTANT_FORMAT.format(value)),
                     param("value", null)));
@@ -175,14 +171,13 @@ public final class BoxedArrayParameterTest {
     }
 
     @Test
-    public void testZonedDateTime() throws Exception {
+    public void testZonedDateTime() {
         AsyncTestUtils.runTest(app -> {
             // It appears Jackson normalizes all dates to UTC when round-tripping.
             // For now, I am just converting now to UTC to verify the behavior.
             ZonedDateTime value = ZonedDateTime.ofInstant(ZonedDateTime.now().toInstant(), ZoneId.of("UTC"));
-            String route = buildRoute(
+            String route = RouteBuilder.buildRouteWithQueryParams(
                 BoxedArrayParameterController.ZONED_DATETIME_ROUTE,
-                pathParams(),
                 queryParams(
                     param("value", BoxedParameterController.ZONED_DATETIME_FORMAT.format(value)),
                     param("value", null)));
@@ -193,14 +188,13 @@ public final class BoxedArrayParameterTest {
     }
 
     @Test
-    public void testOffsetDateTime() throws Exception {
+    public void testOffsetDateTime() {
         // It appears Jackson normalizes all dates to UTC when round-tripping.
         // For now, I am just converting now to UTC to verify the behavior.
         AsyncTestUtils.runTest(app -> {
             OffsetDateTime value = OffsetDateTime.ofInstant(OffsetDateTime.now().toInstant(), ZoneOffset.UTC);
-            String route = buildRoute(
+            String route = RouteBuilder.buildRouteWithQueryParams(
                 BoxedArrayParameterController.OFFSET_DATETIME_ROUTE,
-                pathParams(),
                 queryParams(
                     param("value", BoxedParameterController.OFFSET_DATETIME_FORMAT.format(value)),
                     param("value", null)));
@@ -211,12 +205,11 @@ public final class BoxedArrayParameterTest {
     }
 
     @Test
-    public void testLocalDateTime() throws Exception {
+    public void testLocalDateTime() {
         AsyncTestUtils.runTest(app -> {
             LocalDateTime value = LocalDateTime.now();
-            String route = buildRoute(
+            String route = RouteBuilder.buildRouteWithQueryParams(
                 BoxedArrayParameterController.LOCAL_DATETIME_ROUTE,
-                pathParams(),
                 queryParams(
                     param("value", BoxedParameterController.LOCAL_DATETIME_FORMAT.format(value)),
                     param("value", null)));
@@ -227,12 +220,11 @@ public final class BoxedArrayParameterTest {
     }
 
     @Test
-    public void testLocalDate() throws Exception {
+    public void testLocalDate() {
         AsyncTestUtils.runTest(app -> {
             LocalDate value = LocalDate.now();
-            String route = buildRoute(
+            String route = RouteBuilder.buildRouteWithQueryParams(
                 BoxedArrayParameterController.LOCAL_DATE_ROUTE,
-                pathParams(),
                 queryParams(
                     param("value", BoxedParameterController.LOCAL_DATE_FORMAT.format(value)),
                     param("value", null)));
@@ -243,12 +235,11 @@ public final class BoxedArrayParameterTest {
     }
 
     @Test
-    public void testBigInteger() throws Exception {
+    public void testBigInteger() {
         AsyncTestUtils.runTest(app -> {
             BigInteger value = new BigInteger("12345678901234567890");
-            String route = buildRoute(
+            String route = RouteBuilder.buildRouteWithQueryParams(
                 BoxedArrayParameterController.BIG_INTEGER_ROUTE,
-                pathParams(),
                 queryParams(
                     param("value", value.toString()),
                     param("value", null)));
@@ -259,12 +250,11 @@ public final class BoxedArrayParameterTest {
     }
 
     @Test
-    public void testBigDecimal() throws Exception {
+    public void testBigDecimal() {
         AsyncTestUtils.runTest(app -> {
             BigDecimal value = new BigDecimal("12345678901234567890.123456789");
-            String route = buildRoute(
+            String route = RouteBuilder.buildRouteWithQueryParams(
                 BoxedArrayParameterController.BIG_DECIMAL_ROUTE,
-                pathParams(),
                 queryParams(
                     param("value", value.toString()),
                     param("value", null)));
@@ -275,12 +265,11 @@ public final class BoxedArrayParameterTest {
     }
 
     @Test
-    public void testUUID() throws Exception {
+    public void testUUID() {
         AsyncTestUtils.runTest(app -> {
             UUID value = UUID.randomUUID();
-            String route = buildRoute(
+            String route = RouteBuilder.buildRouteWithQueryParams(
                 BoxedArrayParameterController.UUID_ROUTE,
-                pathParams(),
                 queryParams(
                     param("value", value.toString()),
                     param("value", null)));

@@ -49,8 +49,7 @@ final class RouteGenerator {
             getPatchCodeBlock(controller, method),
             getHeadCodeBlock(controller, method),
             getConnectCodeBlock(controller, method),
-            getOptionsCodeBlock(controller, method),
-            getTraceCodeBlock(controller, method)
+            getOptionsCodeBlock(controller, method)
         ).filter(Objects::nonNull).collect(Collectors.toList());
     }
 
@@ -92,11 +91,6 @@ final class RouteGenerator {
     private static RouteGenerator getPatchCodeBlock(ControllerSource controller, ExecutableElement method) {
         HttpPatch annotation = method.getAnnotation(HttpPatch.class);
         return annotation == null ? null : new RouteGenerator(controller, method, "patch", annotation.route());
-    }
-
-    private static RouteGenerator getTraceCodeBlock(ControllerSource controller, ExecutableElement method) {
-        HttpTrace annotation = method.getAnnotation(HttpTrace.class);
-        return annotation == null ? null : new RouteGenerator(controller, method, "trace", annotation.route());
     }
 
     public <T extends Annotation> T findAnnotation(Class<T> annotationClass) {

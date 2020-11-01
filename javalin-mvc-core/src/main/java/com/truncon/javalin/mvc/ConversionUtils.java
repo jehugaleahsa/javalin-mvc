@@ -87,7 +87,7 @@ public final class ConversionUtils {
         return date.atStartOfDay().toInstant(ZonedDateTime.now().getOffset());
     }
 
-    public static Optional<Object> toParameterValue(Class<?> type, List<String> rawValues) {
+    public static Optional<Object> toParameterValue(Class<?> type, Collection<String> rawValues) {
         if (type.isArray()) {
             Class<?> elementType = type.getComponentType();
             List<Object> values = rawValues.stream()
