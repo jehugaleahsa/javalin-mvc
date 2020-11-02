@@ -52,6 +52,10 @@ final class ControllerSource {
         return controllerElement;
     }
 
+    public String getControllerClassName() {
+        return controllerElement.getSimpleName().toString();
+    }
+
     public List<RouteGenerator> getRouteGenerators() {
         return controllerElement.getEnclosedElements().stream()
                 .filter(e -> e.getKind() == ElementKind.METHOD)

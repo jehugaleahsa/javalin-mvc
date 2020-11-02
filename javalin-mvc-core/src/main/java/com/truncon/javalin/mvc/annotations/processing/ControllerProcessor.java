@@ -43,6 +43,12 @@ public final class ControllerProcessor extends AbstractProcessor {
                 controllers,
                 wsControllers);
             generator.generateRoutes(filer);
+        } catch (ProcessingMultiException exception) {
+            for (ProcessingException subException : exception.getExceptions()) {
+                for (Element element : subException.getElements()) {
+                    messager.printMessage(Diagnostic.Kind.ERROR, subException.getMessage(), element);
+                }
+            }
         } catch (ProcessingException exception) {
             for (Element element : exception.getElements()) {
                 messager.printMessage(Diagnostic.Kind.ERROR, exception.toString(), element);

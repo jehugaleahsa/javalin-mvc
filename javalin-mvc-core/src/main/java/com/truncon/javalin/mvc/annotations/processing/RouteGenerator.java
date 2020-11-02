@@ -32,12 +32,28 @@ final class RouteGenerator {
         this.route = route;
     }
 
+    public String getQualifiedMethodName() {
+        return controller.getControllerClassName() + "." + method.getSimpleName().toString();
+    }
+
+    public String getMethodType() {
+        return methodType;
+    }
+
+    public String getRoute() {
+        return route;
+    }
+
     Types getTypeUtils() {
         return typeUtils;
     }
 
     Elements getElementUtils() {
         return elementUtils;
+    }
+
+    Element getMethodElement() {
+        return method;
     }
 
     public static List<RouteGenerator> getGenerators(ControllerSource controller, ExecutableElement method) {
