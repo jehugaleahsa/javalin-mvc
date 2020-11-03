@@ -73,8 +73,9 @@ public class DefaultWsModelBinder implements WsModelBinder {
         // A value with that name exists in the specific source, so try to bind it directly.
         // We can bind the value if it is an array or a "primitive".
         // Otherwise, try to bind the value inside of an object.
+        ParameterCache finalCache = cache;
         return ConversionUtils.toParameterValue(parameterClass, cache.getValues(name))
-            .orElse(cache.bindValues(parameterClass));
+            .orElseGet(() -> finalCache.bindValues(parameterClass));
     }
 
     private Object getDeserializedBody(Class<?> paramType) {

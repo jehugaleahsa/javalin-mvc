@@ -15,6 +15,21 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 public final class ParameterCache {
+    private static final Map<Class<?>, Object> defaultPrimitives = getDefaultPrimitiveValues();
+
+    private static Map<Class<?>, Object> getDefaultPrimitiveValues() {
+        Map<Class<?>, Object> maps = new HashMap<>(9);
+        maps.put(int.class, 0);
+        maps.put(long.class, 0L);
+        maps.put(short.class, (short) 0);
+        maps.put(byte.class, (byte) 0);
+        maps.put(char.class, '\0');
+        maps.put(float.class, 0.0f);
+        maps.put(double.class, 0.0);
+        maps.put(boolean.class, false);
+        return maps;
+    }
+
     private final Supplier<Map<String, Collection<String>>> getter;
     private Map<String, Collection<String>> lookup;
 
@@ -57,6 +72,9 @@ public final class ParameterCache {
     }
 
     public Object bindValues(Class<?> type) {
+        if (type.isPrimitive()) {
+            return defaultPrimitives.get(type);
+        }
         try {
             Object instance = type.newInstance();
             for (String key : getKeys()) {
