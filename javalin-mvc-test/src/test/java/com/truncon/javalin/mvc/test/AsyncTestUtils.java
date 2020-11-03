@@ -28,7 +28,7 @@ public class AsyncTestUtils {
                 }
             }
             Throwable error = ex;
-            return a.close().handle((v, closeError) -> {
+            return a.stop().handle((v, closeError) -> {
                 if (error != null) {
                     throw new CompletionException(error);
                 } else if (closeError != null) {

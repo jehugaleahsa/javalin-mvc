@@ -38,11 +38,54 @@ public final class QueryUtils {
     }
 
     public static String getGetStringResponse(String route) throws IOException {
-        return getGetStringResponseWithHeaders(route, Collections.emptyList());
+        return getStringResponseWithHeaders(route, Collections.emptyList());
     }
 
-    public static String getGetStringResponseWithHeaders(String route, Collection<Pair<String, String>> headers) throws IOException {
-        Request request = Request.Get(route);
+    // region Headers
+
+    public static String getStringResponseWithHeaders(String route, Collection<Pair<String, String>> headers) throws IOException {
+        return getStringResponseWithHeadersForMethod(Request::Get, route, headers);
+    }
+
+    public static String postStringResponseWithHeaders(String route, Collection<Pair<String, String>> headers) throws IOException {
+        return getStringResponseWithHeadersForMethod(Request::Post, route, headers);
+    }
+
+    public static String putStringResponseWithHeaders(String route, Collection<Pair<String, String>> headers) throws IOException {
+        return getStringResponseWithHeadersForMethod(Request::Put, route, headers);
+    }
+
+    public static String patchStringResponseWithHeaders(String route, Collection<Pair<String, String>> headers) throws IOException {
+        return getStringResponseWithHeadersForMethod(Request::Patch, route, headers);
+    }
+
+    public static String deleteStringResponseWithHeaders(String route, Collection<Pair<String, String>> headers) throws IOException {
+        return getStringResponseWithHeadersForMethod(Request::Delete, route, headers);
+    }
+
+    public static String headStringResponseWithHeaders(String route, Collection<Pair<String, String>> headers) throws IOException {
+        // HEAD is different in that the body will always be blank. It seems this is either
+        // enforced by the Jetty server or is the Apache HTTP library. Rather than fight it,
+        // we just implement HEAD to return the response as a header.
+        Request request = Request.Head(route);
+        for (Pair<String, String> header : headers) {
+            request = request.addHeader(header.getLeft(), header.getRight());
+        }
+        Response response = request.execute();
+        HttpResponse rawResponse = response.returnResponse();
+        Header header = rawResponse.getFirstHeader("result");
+        return header.getValue();
+    }
+
+    public static String optionsStringResponseWithHeaders(String route, Collection<Pair<String, String>> headers) throws IOException {
+        return getStringResponseWithHeadersForMethod(Request::Options, route, headers);
+    }
+
+    private static String getStringResponseWithHeadersForMethod(
+            Function<String, Request> requestGetter,
+            String route,
+            Collection<Pair<String, String>> headers) throws IOException {
+        Request request = requestGetter.apply(route);
         for (Pair<String, String> header : headers) {
             request = request.addHeader(header.getKey(), header.getValue());
         }
@@ -50,6 +93,10 @@ public final class QueryUtils {
             .returnContent()
             .asString(StandardCharsets.UTF_8);
     }
+
+    // endregion
+
+    // region Cookies
 
     public static String getStringResponseWithCookies(String route, Collection<Pair<String, String>> cookies) throws IOException {
         return getStringResponseWithCookiesForMethod(Request::Get, route, cookies);
@@ -103,6 +150,8 @@ public final class QueryUtils {
         Content content = response.returnContent();
         return content.asString(StandardCharsets.UTF_8);
     }
+
+    // endregion
 
     public static String getGetStringResponseWithFormData(String route, Collection<Pair<String, String>> formData) throws IOException {
         HttpGetWithEntity request = new HttpGetWithEntity(route);

@@ -19,7 +19,7 @@ public final class AppHost {
         return app.start(PORT);
     }
 
-    public CompletableFuture<Void> close() {
+    public CompletableFuture<Void> stop() {
         return app.stop();
     }
 }
