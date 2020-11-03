@@ -2,12 +2,14 @@
 Build Javalin route handlers at compile time using controllers and action methods.
 
 ## Javalin
-This MVC library utilizes [Javalin](http://javalin.io). It is a very lightweight Java REST API framework that avoids the overhead and complexity of more full-blown web frameworks. That makes it more appropriate for small services that run exclusively behind a reverse proxy (e.g., NGinX). It can also be built with Maven, so can exist nicely with other Java projects.
+This MVC library utilizes [Javalin](http://javalin.io). It is a very lightweight Java/Kotlin REST API framework that avoids the overhead and complexity of more full-blown web frameworks. That makes it more appropriate for small services that run exclusively behind a reverse proxy (e.g., NGinX). It can also be built with Maven, so can exist nicely with other Java projects.
 
 ### Controllers are awesome!
 While Javalin is pretty straight-forward, it does lack some niceties that improve developer productivity. For one, you don't want to have to manually extract values from URL parameters, query strings, headers and the request body (e.g., JSON). You also don't want to manually deal with different responses. You don't want to have a 1,000 line block of code at the top of your app registering all of the routes. You don't want to have to deal with dependency injection, request filtering, error handling, logging, etc. That's why this project exists.
 
 Basically, it's a compile-time tool (via Java's [annotation processing](https://medium.com/@jintin/annotation-processing-in-java-3621cb05343a)) that converts decorated classes into Javalin route handlers. The annotation processing tool is implemented in the `javalin-mvc-core` project. The `javalin-mvc-api` project provides only interfaces and annotations (and classes implemented in terms of those interfaces). The `javalin-mvc-core` project takes care of implementing those interfaces and including them in the generated code.
+
+One of the major benefits to Javalin MVC being a compile time tool is that there's absolutely no runtime overhead for using this library. It's as fast as if you wrote all the Javalin route handlers by hand. Not only that, but it's a compile-time error if you try to register two method/routes multiple times -- with raw Javalin you'd only discover that error at runtime!
 
 ## Installation
 The following dependencies are needed in your web project:
@@ -115,7 +117,7 @@ app.start(5000);
 ```
 
 #### Controller Actions
-If a controller method is found that's decorated with `@HttpGet`, `@HttpPost`, etc., the processor will add a Javalin route that instantiates the controller and calls the method automatically. The route handler generation happens at compile time, so there's almost no runtime overhead. It's as if you wrote it all by hand.
+If a controller method is found that's decorated with `@HttpGet`, `@HttpPost`, etc., the processor will add a Javalin route that instantiates the controller and calls the method automatically. The route handler generation happens at compile time, so there's no runtime overhead. It's as if you wrote it all by hand.
 
 Action method parameters can be bound to values coming from your request headers, route parameters, query strings, form fields (url encoded) or the request body (JSON, etc.). By default, the method parameter and the request parameter are matched by name, but the `@Named` annotation can used to override this behavior. Furthermore, you can say explicitly where to bind a parameter from using the `@FromForm`, `@FromHeader`, `@FromPath` or `@FromQuery` annotations.
 
