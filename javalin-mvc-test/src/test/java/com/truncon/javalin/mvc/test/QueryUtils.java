@@ -66,23 +66,23 @@ public final class QueryUtils {
     }
 
     public static String getStringForPut(String route) throws IOException {
-        return getStringForHeadersAndPost(route, Collections.emptyList());
+        return getStringForHeadersAndPut(route, Collections.emptyList());
     }
 
     public static String getStringForPatch(String route) throws IOException {
-        return getStringForHeadersAndPost(route, Collections.emptyList());
+        return getStringForHeadersAndPatch(route, Collections.emptyList());
     }
 
     public static String getStringForDelete(String route) throws IOException {
-        return getStringForHeadersAndPost(route, Collections.emptyList());
+        return getStringForHeadersAndDelete(route, Collections.emptyList());
     }
 
     public static String getStringForHead(String route) throws IOException {
-        return getStringForHeadersAndPost(route, Collections.emptyList());
+        return getStringForHeadersAndHead(route, Collections.emptyList());
     }
 
     public static String getStringForOptions(String route) throws IOException {
-        return getStringForHeadersAndPost(route, Collections.emptyList());
+        return getStringForHeadersAndOptions(route, Collections.emptyList());
     }
 
     // endregion
