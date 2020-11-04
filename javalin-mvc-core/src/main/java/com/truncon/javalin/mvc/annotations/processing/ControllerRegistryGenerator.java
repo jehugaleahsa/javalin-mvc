@@ -9,6 +9,7 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
+import com.truncon.javalin.mvc.ControllerRegistry;
 import io.javalin.Javalin;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 
@@ -46,8 +47,9 @@ final class ControllerRegistryGenerator {
     }
 
     public void generateRoutes(Filer filer) throws IOException, ProcessingException {
-        TypeSpec.Builder registryTypeBuilder = TypeSpec.classBuilder("ControllerRegistry")
-            .addModifiers(Modifier.PUBLIC, Modifier.FINAL);
+        TypeSpec.Builder registryTypeBuilder = TypeSpec.classBuilder("JavalinControllerRegistry")
+            .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
+            .addSuperinterface(ControllerRegistry.class);
 
         AnnotationSpec generatedAnnotation = AnnotationSpec.builder(Generated.class)
             .addMember("value", "$S", ControllerProcessor.class.getCanonicalName())
@@ -69,6 +71,7 @@ final class ControllerRegistryGenerator {
 
         final String APP_NAME = "app";
         MethodSpec register = MethodSpec.methodBuilder("register")
+            .addAnnotation(Override.class)
             .addModifiers(Modifier.PUBLIC)
             .addParameter(Javalin.class, APP_NAME, Modifier.FINAL)
             .addCode(createActionMethods(APP_NAME))
@@ -80,7 +83,7 @@ final class ControllerRegistryGenerator {
         JavaFile registryFile = JavaFile.builder("com.truncon.javalin.mvc", registryType)
             .indent("    ")
             .build();
-        JavaFileObject file = filer.createSourceFile("com.truncon.javalin.mvc.ControllerRegistry");
+        JavaFileObject file = filer.createSourceFile("com.truncon.javalin.mvc.JavalinControllerRegistry");
         try (Writer writer = file.openWriter()) {
             registryFile.writeTo(writer);
         }

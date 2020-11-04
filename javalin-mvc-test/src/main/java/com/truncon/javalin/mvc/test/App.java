@@ -6,6 +6,7 @@ import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
 import com.truncon.javalin.mvc.ControllerRegistry;
+import com.truncon.javalin.mvc.JavalinControllerRegistry;
 import io.javalin.plugin.json.JavalinJackson;
 import io.javalin.plugin.openapi.OpenApiOptions;
 import io.javalin.plugin.openapi.OpenApiPlugin;
@@ -43,7 +44,7 @@ public final class App {
 
         // Provide method of constructing a new DI container
         Supplier<WebContainer> scopeFactory = () -> DaggerWebContainer.builder().build();
-        ControllerRegistry registry = new ControllerRegistry(scopeFactory);
+        ControllerRegistry registry = new JavalinControllerRegistry(scopeFactory);
         registry.register(app);
 
         // Prevent unhandled exceptions from taking down the web server
