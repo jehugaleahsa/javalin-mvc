@@ -36,16 +36,14 @@ public final class RouteBuilder {
             Collection<Pair<String, String>> query) throws IOException {
         if (path == null) {
             path = "";
-        } else if (!path.startsWith("/")) {
-            path = "/" + path;
+        } else {
+            path = StringUtils.prependIfMissing(path, "/");
         }
         for (String pathKey : pathReplacements.keySet()) {
             String replacement = pathReplacements.get(pathKey);
             replacement = URLEncoder.encode(replacement, StandardCharsets.UTF_8.name());
-            if (!pathKey.startsWith(":")) {
-                pathKey = ":" + pathKey;
-            }
-            path = path.replaceAll(pathKey, replacement);
+            String placeholder = StringUtils.prependIfMissing(pathKey, ":");
+            path = path.replaceAll(placeholder, replacement);
         }
         String queryString = query.stream().map(pair -> {
             try {

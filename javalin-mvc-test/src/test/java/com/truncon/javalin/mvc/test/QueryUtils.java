@@ -38,10 +38,6 @@ public final class QueryUtils {
         return JavalinJackson.INSTANCE.fromJson(json, clz);
     }
 
-    public static String getStringForGet(String route) throws IOException {
-        return getStringForHeadersAndGet(route, Collections.emptyList());
-    }
-
     public static <T> T getJsonResponseForGet(String route, Class<T> clz) throws Exception {
         String json = Request.Get(route)
             .execute()
@@ -58,6 +54,38 @@ public final class QueryUtils {
             .asString(StandardCharsets.UTF_8);
         return parseJson(json, clz);
     }
+
+    // region URL
+
+    public static String getStringForGet(String route) throws IOException {
+        return getStringForHeadersAndGet(route, Collections.emptyList());
+    }
+
+    public static String getStringForPost(String route) throws IOException {
+        return getStringForHeadersAndPost(route, Collections.emptyList());
+    }
+
+    public static String getStringForPut(String route) throws IOException {
+        return getStringForHeadersAndPost(route, Collections.emptyList());
+    }
+
+    public static String getStringForPatch(String route) throws IOException {
+        return getStringForHeadersAndPost(route, Collections.emptyList());
+    }
+
+    public static String getStringForDelete(String route) throws IOException {
+        return getStringForHeadersAndPost(route, Collections.emptyList());
+    }
+
+    public static String getStringForHead(String route) throws IOException {
+        return getStringForHeadersAndPost(route, Collections.emptyList());
+    }
+
+    public static String getStringForOptions(String route) throws IOException {
+        return getStringForHeadersAndPost(route, Collections.emptyList());
+    }
+
+    // endregion
 
     // region Headers
 
