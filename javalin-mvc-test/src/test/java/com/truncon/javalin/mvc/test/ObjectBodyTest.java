@@ -12,7 +12,7 @@ import java.time.*;
 import java.util.Date;
 import java.util.UUID;
 
-import static com.truncon.javalin.mvc.test.QueryUtils.getPostJsonResponse;
+import static com.truncon.javalin.mvc.test.QueryUtils.getJsonResponseForPost;
 import static com.truncon.javalin.mvc.test.RouteBuilder.*;
 
 public final class ObjectBodyTest {
@@ -29,7 +29,7 @@ public final class ObjectBodyTest {
             model.setChar(Character.MAX_VALUE);
             model.setLong(Long.MAX_VALUE);
             String route = buildRoute(ObjectBodyController.PRIMITIVE_BODY_ROUTE);
-            PrimitiveModel response = getPostJsonResponse(route, model, PrimitiveModel.class);
+            PrimitiveModel response = getJsonResponseForPost(route, model, PrimitiveModel.class);
             Assert.assertEquals(model.getBoolean(), response.getBoolean());
             Assert.assertEquals(model.getInteger(), response.getInteger());
             Assert.assertEquals(model.getDouble(), response.getDouble(), 1);
@@ -66,7 +66,7 @@ public final class ObjectBodyTest {
             model.setBigDecimal(new BigDecimal("12345678901234567890.123"));
             model.setUuid(UUID.randomUUID());
             String route = buildRoute(ObjectBodyController.BOXED_BODY_ROUTE);
-            BoxedModel response = getPostJsonResponse(route, model, BoxedModel.class);
+            BoxedModel response = getJsonResponseForPost(route, model, BoxedModel.class);
             Assert.assertEquals(model.getString(), response.getString());
             Assert.assertEquals(model.getBoolean(), response.getBoolean());
             Assert.assertEquals(model.getInteger(), response.getInteger());

@@ -4,13 +4,13 @@ import com.truncon.javalin.mvc.test.controllers.PrimitiveCookieParamController;
 import org.junit.Assert;
 import org.junit.Test;
 
-import static com.truncon.javalin.mvc.test.QueryUtils.deleteStringResponseWithCookies;
-import static com.truncon.javalin.mvc.test.QueryUtils.getStringResponseWithCookies;
-import static com.truncon.javalin.mvc.test.QueryUtils.headStringResponseWithCookies;
-import static com.truncon.javalin.mvc.test.QueryUtils.optionsStringResponseWithCookies;
-import static com.truncon.javalin.mvc.test.QueryUtils.patchStringResponseWithCookies;
-import static com.truncon.javalin.mvc.test.QueryUtils.postStringResponseWithCookies;
-import static com.truncon.javalin.mvc.test.QueryUtils.putStringResponseWithCookies;
+import static com.truncon.javalin.mvc.test.QueryUtils.getStringForCookiesAndDelete;
+import static com.truncon.javalin.mvc.test.QueryUtils.getStringForCookiesAndGet;
+import static com.truncon.javalin.mvc.test.QueryUtils.getStringForCookiesAndHead;
+import static com.truncon.javalin.mvc.test.QueryUtils.getStringForCookiesAndOptions;
+import static com.truncon.javalin.mvc.test.QueryUtils.getStringForCookiesAndPatch;
+import static com.truncon.javalin.mvc.test.QueryUtils.getStringForCookiesAndPost;
+import static com.truncon.javalin.mvc.test.QueryUtils.getStringForCookiesAndPut;
 import static com.truncon.javalin.mvc.test.RouteBuilder.buildRoute;
 import static com.truncon.javalin.mvc.test.RouteBuilder.cookieParams;
 import static com.truncon.javalin.mvc.test.RouteBuilder.param;
@@ -23,7 +23,7 @@ public final class PrimitiveCookieParamTest {
         AsyncTestUtils.runTest(app -> {
             String value = Boolean.toString(Boolean.TRUE);
             String route = buildRoute(PrimitiveCookieParamController.BOOLEAN_ROUTE);
-            String response = getStringResponseWithCookies(route, cookieParams(param("value", value)));
+            String response = getStringForCookiesAndGet(route, cookieParams(param("value", value)));
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -33,7 +33,7 @@ public final class PrimitiveCookieParamTest {
         AsyncTestUtils.runTest(app -> {
             String value = Integer.toString(Integer.MAX_VALUE);
             String route = buildRoute(PrimitiveCookieParamController.INTEGER_ROUTE);
-            String response = getStringResponseWithCookies(route, cookieParams(param("value", value)));
+            String response = getStringForCookiesAndGet(route, cookieParams(param("value", value)));
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -43,7 +43,7 @@ public final class PrimitiveCookieParamTest {
         AsyncTestUtils.runTest(app -> {
             String value = Double.toString(Double.MAX_VALUE);
             String route = buildRoute(PrimitiveCookieParamController.DOUBLE_ROUTE);
-            String response = getStringResponseWithCookies(route, cookieParams(param("value", value)));
+            String response = getStringForCookiesAndGet(route, cookieParams(param("value", value)));
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -53,7 +53,7 @@ public final class PrimitiveCookieParamTest {
         AsyncTestUtils.runTest(app -> {
             String value = Byte.toString(Byte.MAX_VALUE);
             String route = buildRoute(PrimitiveCookieParamController.BYTE_ROUTE);
-            String response = getStringResponseWithCookies(route, cookieParams(param("value", value)));
+            String response = getStringForCookiesAndGet(route, cookieParams(param("value", value)));
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -63,7 +63,7 @@ public final class PrimitiveCookieParamTest {
         AsyncTestUtils.runTest(app -> {
             String value = Short.toString(Short.MAX_VALUE);
             String route = buildRoute(PrimitiveCookieParamController.SHORT_ROUTE);
-            String response = getStringResponseWithCookies(route, cookieParams(param("value", value)));
+            String response = getStringForCookiesAndGet(route, cookieParams(param("value", value)));
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -73,7 +73,7 @@ public final class PrimitiveCookieParamTest {
         AsyncTestUtils.runTest(app -> {
             String value = Float.toString(Float.MAX_VALUE);
             String route = buildRoute(PrimitiveCookieParamController.FLOAT_ROUTE);
-            String response = getStringResponseWithCookies(route, cookieParams(param("value", value)));
+            String response = getStringForCookiesAndGet(route, cookieParams(param("value", value)));
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -83,7 +83,7 @@ public final class PrimitiveCookieParamTest {
         AsyncTestUtils.runTest(app -> {
             String value = "a";
             String route = buildRoute(PrimitiveCookieParamController.CHAR_ROUTE);
-            String response = getStringResponseWithCookies(route, cookieParams(param("value", value)));
+            String response = getStringForCookiesAndGet(route, cookieParams(param("value", value)));
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -93,7 +93,7 @@ public final class PrimitiveCookieParamTest {
         AsyncTestUtils.runTest(app -> {
             String value = Long.toString(Long.MAX_VALUE);
             String route = buildRoute(PrimitiveCookieParamController.LONG_ROUTE);
-            String response = getStringResponseWithCookies(route, cookieParams(param("value", value)));
+            String response = getStringForCookiesAndGet(route, cookieParams(param("value", value)));
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -107,7 +107,7 @@ public final class PrimitiveCookieParamTest {
         AsyncTestUtils.runTest(app -> {
             String value = Boolean.toString(Boolean.TRUE);
             String route = buildRoute(PrimitiveCookieParamController.BOOLEAN_ROUTE);
-            String response = postStringResponseWithCookies(route, cookieParams(param("value", value)));
+            String response = getStringForCookiesAndPost(route, cookieParams(param("value", value)));
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -117,7 +117,7 @@ public final class PrimitiveCookieParamTest {
         AsyncTestUtils.runTest(app -> {
             String value = Integer.toString(Integer.MAX_VALUE);
             String route = buildRoute(PrimitiveCookieParamController.INTEGER_ROUTE);
-            String response = postStringResponseWithCookies(route, cookieParams(param("value", value)));
+            String response = getStringForCookiesAndPost(route, cookieParams(param("value", value)));
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -127,7 +127,7 @@ public final class PrimitiveCookieParamTest {
         AsyncTestUtils.runTest(app -> {
             String value = Double.toString(Double.MAX_VALUE);
             String route = buildRoute(PrimitiveCookieParamController.DOUBLE_ROUTE);
-            String response = postStringResponseWithCookies(route, cookieParams(param("value", value)));
+            String response = getStringForCookiesAndPost(route, cookieParams(param("value", value)));
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -137,7 +137,7 @@ public final class PrimitiveCookieParamTest {
         AsyncTestUtils.runTest(app -> {
             String value = Byte.toString(Byte.MAX_VALUE);
             String route = buildRoute(PrimitiveCookieParamController.BYTE_ROUTE);
-            String response = postStringResponseWithCookies(route, cookieParams(param("value", value)));
+            String response = getStringForCookiesAndPost(route, cookieParams(param("value", value)));
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -147,7 +147,7 @@ public final class PrimitiveCookieParamTest {
         AsyncTestUtils.runTest(app -> {
             String value = Short.toString(Short.MAX_VALUE);
             String route = buildRoute(PrimitiveCookieParamController.SHORT_ROUTE);
-            String response = postStringResponseWithCookies(route, cookieParams(param("value", value)));
+            String response = getStringForCookiesAndPost(route, cookieParams(param("value", value)));
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -157,7 +157,7 @@ public final class PrimitiveCookieParamTest {
         AsyncTestUtils.runTest(app -> {
             String value = Float.toString(Float.MAX_VALUE);
             String route = buildRoute(PrimitiveCookieParamController.FLOAT_ROUTE);
-            String response = postStringResponseWithCookies(route, cookieParams(param("value", value)));
+            String response = getStringForCookiesAndPost(route, cookieParams(param("value", value)));
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -167,7 +167,7 @@ public final class PrimitiveCookieParamTest {
         AsyncTestUtils.runTest(app -> {
             String value = "a";
             String route = buildRoute(PrimitiveCookieParamController.CHAR_ROUTE);
-            String response = postStringResponseWithCookies(route, cookieParams(param("value", value)));
+            String response = getStringForCookiesAndPost(route, cookieParams(param("value", value)));
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -177,7 +177,7 @@ public final class PrimitiveCookieParamTest {
         AsyncTestUtils.runTest(app -> {
             String value = Long.toString(Long.MAX_VALUE);
             String route = buildRoute(PrimitiveCookieParamController.LONG_ROUTE);
-            String response = postStringResponseWithCookies(route, cookieParams(param("value", value)));
+            String response = getStringForCookiesAndPost(route, cookieParams(param("value", value)));
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -191,7 +191,7 @@ public final class PrimitiveCookieParamTest {
         AsyncTestUtils.runTest(app -> {
             String value = Boolean.toString(Boolean.TRUE);
             String route = buildRoute(PrimitiveCookieParamController.BOOLEAN_ROUTE);
-            String response = putStringResponseWithCookies(route, cookieParams(param("value", value)));
+            String response = getStringForCookiesAndPut(route, cookieParams(param("value", value)));
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -201,7 +201,7 @@ public final class PrimitiveCookieParamTest {
         AsyncTestUtils.runTest(app -> {
             String value = Integer.toString(Integer.MAX_VALUE);
             String route = buildRoute(PrimitiveCookieParamController.INTEGER_ROUTE);
-            String response = putStringResponseWithCookies(route, cookieParams(param("value", value)));
+            String response = getStringForCookiesAndPut(route, cookieParams(param("value", value)));
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -211,7 +211,7 @@ public final class PrimitiveCookieParamTest {
         AsyncTestUtils.runTest(app -> {
             String value = Double.toString(Double.MAX_VALUE);
             String route = buildRoute(PrimitiveCookieParamController.DOUBLE_ROUTE);
-            String response = putStringResponseWithCookies(route, cookieParams(param("value", value)));
+            String response = getStringForCookiesAndPut(route, cookieParams(param("value", value)));
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -221,7 +221,7 @@ public final class PrimitiveCookieParamTest {
         AsyncTestUtils.runTest(app -> {
             String value = Byte.toString(Byte.MAX_VALUE);
             String route = buildRoute(PrimitiveCookieParamController.BYTE_ROUTE);
-            String response = putStringResponseWithCookies(route, cookieParams(param("value", value)));
+            String response = getStringForCookiesAndPut(route, cookieParams(param("value", value)));
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -231,7 +231,7 @@ public final class PrimitiveCookieParamTest {
         AsyncTestUtils.runTest(app -> {
             String value = Short.toString(Short.MAX_VALUE);
             String route = buildRoute(PrimitiveCookieParamController.SHORT_ROUTE);
-            String response = putStringResponseWithCookies(route, cookieParams(param("value", value)));
+            String response = getStringForCookiesAndPut(route, cookieParams(param("value", value)));
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -241,7 +241,7 @@ public final class PrimitiveCookieParamTest {
         AsyncTestUtils.runTest(app -> {
             String value = Float.toString(Float.MAX_VALUE);
             String route = buildRoute(PrimitiveCookieParamController.FLOAT_ROUTE);
-            String response = putStringResponseWithCookies(route, cookieParams(param("value", value)));
+            String response = getStringForCookiesAndPut(route, cookieParams(param("value", value)));
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -251,7 +251,7 @@ public final class PrimitiveCookieParamTest {
         AsyncTestUtils.runTest(app -> {
             String value = "a";
             String route = buildRoute(PrimitiveCookieParamController.CHAR_ROUTE);
-            String response = putStringResponseWithCookies(route, cookieParams(param("value", value)));
+            String response = getStringForCookiesAndPut(route, cookieParams(param("value", value)));
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -261,7 +261,7 @@ public final class PrimitiveCookieParamTest {
         AsyncTestUtils.runTest(app -> {
             String value = Long.toString(Long.MAX_VALUE);
             String route = buildRoute(PrimitiveCookieParamController.LONG_ROUTE);
-            String response = putStringResponseWithCookies(route, cookieParams(param("value", value)));
+            String response = getStringForCookiesAndPut(route, cookieParams(param("value", value)));
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -275,7 +275,7 @@ public final class PrimitiveCookieParamTest {
         AsyncTestUtils.runTest(app -> {
             String value = Boolean.toString(Boolean.TRUE);
             String route = buildRoute(PrimitiveCookieParamController.BOOLEAN_ROUTE);
-            String response = patchStringResponseWithCookies(route, cookieParams(param("value", value)));
+            String response = getStringForCookiesAndPatch(route, cookieParams(param("value", value)));
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -285,7 +285,7 @@ public final class PrimitiveCookieParamTest {
         AsyncTestUtils.runTest(app -> {
             String value = Integer.toString(Integer.MAX_VALUE);
             String route = buildRoute(PrimitiveCookieParamController.INTEGER_ROUTE);
-            String response = patchStringResponseWithCookies(route, cookieParams(param("value", value)));
+            String response = getStringForCookiesAndPatch(route, cookieParams(param("value", value)));
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -295,7 +295,7 @@ public final class PrimitiveCookieParamTest {
         AsyncTestUtils.runTest(app -> {
             String value = Double.toString(Double.MAX_VALUE);
             String route = buildRoute(PrimitiveCookieParamController.DOUBLE_ROUTE);
-            String response = patchStringResponseWithCookies(route, cookieParams(param("value", value)));
+            String response = getStringForCookiesAndPatch(route, cookieParams(param("value", value)));
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -305,7 +305,7 @@ public final class PrimitiveCookieParamTest {
         AsyncTestUtils.runTest(app -> {
             String value = Byte.toString(Byte.MAX_VALUE);
             String route = buildRoute(PrimitiveCookieParamController.BYTE_ROUTE);
-            String response = patchStringResponseWithCookies(route, cookieParams(param("value", value)));
+            String response = getStringForCookiesAndPatch(route, cookieParams(param("value", value)));
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -315,7 +315,7 @@ public final class PrimitiveCookieParamTest {
         AsyncTestUtils.runTest(app -> {
             String value = Short.toString(Short.MAX_VALUE);
             String route = buildRoute(PrimitiveCookieParamController.SHORT_ROUTE);
-            String response = patchStringResponseWithCookies(route, cookieParams(param("value", value)));
+            String response = getStringForCookiesAndPatch(route, cookieParams(param("value", value)));
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -325,7 +325,7 @@ public final class PrimitiveCookieParamTest {
         AsyncTestUtils.runTest(app -> {
             String value = Float.toString(Float.MAX_VALUE);
             String route = buildRoute(PrimitiveCookieParamController.FLOAT_ROUTE);
-            String response = patchStringResponseWithCookies(route, cookieParams(param("value", value)));
+            String response = getStringForCookiesAndPatch(route, cookieParams(param("value", value)));
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -335,7 +335,7 @@ public final class PrimitiveCookieParamTest {
         AsyncTestUtils.runTest(app -> {
             String value = "a";
             String route = buildRoute(PrimitiveCookieParamController.CHAR_ROUTE);
-            String response = patchStringResponseWithCookies(route, cookieParams(param("value", value)));
+            String response = getStringForCookiesAndPatch(route, cookieParams(param("value", value)));
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -345,7 +345,7 @@ public final class PrimitiveCookieParamTest {
         AsyncTestUtils.runTest(app -> {
             String value = Long.toString(Long.MAX_VALUE);
             String route = buildRoute(PrimitiveCookieParamController.LONG_ROUTE);
-            String response = patchStringResponseWithCookies(route, cookieParams(param("value", value)));
+            String response = getStringForCookiesAndPatch(route, cookieParams(param("value", value)));
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -359,7 +359,7 @@ public final class PrimitiveCookieParamTest {
         AsyncTestUtils.runTest(app -> {
             String value = Boolean.toString(Boolean.TRUE);
             String route = buildRoute(PrimitiveCookieParamController.BOOLEAN_ROUTE);
-            String response = deleteStringResponseWithCookies(route, cookieParams(param("value", value)));
+            String response = getStringForCookiesAndDelete(route, cookieParams(param("value", value)));
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -369,7 +369,7 @@ public final class PrimitiveCookieParamTest {
         AsyncTestUtils.runTest(app -> {
             String value = Integer.toString(Integer.MAX_VALUE);
             String route = buildRoute(PrimitiveCookieParamController.INTEGER_ROUTE);
-            String response = deleteStringResponseWithCookies(route, cookieParams(param("value", value)));
+            String response = getStringForCookiesAndDelete(route, cookieParams(param("value", value)));
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -379,7 +379,7 @@ public final class PrimitiveCookieParamTest {
         AsyncTestUtils.runTest(app -> {
             String value = Double.toString(Double.MAX_VALUE);
             String route = buildRoute(PrimitiveCookieParamController.DOUBLE_ROUTE);
-            String response = deleteStringResponseWithCookies(route, cookieParams(param("value", value)));
+            String response = getStringForCookiesAndDelete(route, cookieParams(param("value", value)));
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -389,7 +389,7 @@ public final class PrimitiveCookieParamTest {
         AsyncTestUtils.runTest(app -> {
             String value = Byte.toString(Byte.MAX_VALUE);
             String route = buildRoute(PrimitiveCookieParamController.BYTE_ROUTE);
-            String response = deleteStringResponseWithCookies(route, cookieParams(param("value", value)));
+            String response = getStringForCookiesAndDelete(route, cookieParams(param("value", value)));
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -399,7 +399,7 @@ public final class PrimitiveCookieParamTest {
         AsyncTestUtils.runTest(app -> {
             String value = Short.toString(Short.MAX_VALUE);
             String route = buildRoute(PrimitiveCookieParamController.SHORT_ROUTE);
-            String response = deleteStringResponseWithCookies(route, cookieParams(param("value", value)));
+            String response = getStringForCookiesAndDelete(route, cookieParams(param("value", value)));
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -409,7 +409,7 @@ public final class PrimitiveCookieParamTest {
         AsyncTestUtils.runTest(app -> {
             String value = Float.toString(Float.MAX_VALUE);
             String route = buildRoute(PrimitiveCookieParamController.FLOAT_ROUTE);
-            String response = deleteStringResponseWithCookies(route, cookieParams(param("value", value)));
+            String response = getStringForCookiesAndDelete(route, cookieParams(param("value", value)));
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -419,7 +419,7 @@ public final class PrimitiveCookieParamTest {
         AsyncTestUtils.runTest(app -> {
             String value = "a";
             String route = buildRoute(PrimitiveCookieParamController.CHAR_ROUTE);
-            String response = deleteStringResponseWithCookies(route, cookieParams(param("value", value)));
+            String response = getStringForCookiesAndDelete(route, cookieParams(param("value", value)));
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -429,7 +429,7 @@ public final class PrimitiveCookieParamTest {
         AsyncTestUtils.runTest(app -> {
             String value = Long.toString(Long.MAX_VALUE);
             String route = buildRoute(PrimitiveCookieParamController.LONG_ROUTE);
-            String response = deleteStringResponseWithCookies(route, cookieParams(param("value", value)));
+            String response = getStringForCookiesAndDelete(route, cookieParams(param("value", value)));
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -443,7 +443,7 @@ public final class PrimitiveCookieParamTest {
         AsyncTestUtils.runTest(app -> {
             String value = Boolean.toString(Boolean.TRUE);
             String route = buildRoute(PrimitiveCookieParamController.BOOLEAN_ROUTE);
-            String response = headStringResponseWithCookies(route, cookieParams(param("value", value)));
+            String response = getStringForCookiesAndHead(route, cookieParams(param("value", value)));
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -453,7 +453,7 @@ public final class PrimitiveCookieParamTest {
         AsyncTestUtils.runTest(app -> {
             String value = Integer.toString(Integer.MAX_VALUE);
             String route = buildRoute(PrimitiveCookieParamController.INTEGER_ROUTE);
-            String response = headStringResponseWithCookies(route, cookieParams(param("value", value)));
+            String response = getStringForCookiesAndHead(route, cookieParams(param("value", value)));
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -463,7 +463,7 @@ public final class PrimitiveCookieParamTest {
         AsyncTestUtils.runTest(app -> {
             String value = Double.toString(Double.MAX_VALUE);
             String route = buildRoute(PrimitiveCookieParamController.DOUBLE_ROUTE);
-            String response = headStringResponseWithCookies(route, cookieParams(param("value", value)));
+            String response = getStringForCookiesAndHead(route, cookieParams(param("value", value)));
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -473,7 +473,7 @@ public final class PrimitiveCookieParamTest {
         AsyncTestUtils.runTest(app -> {
             String value = Byte.toString(Byte.MAX_VALUE);
             String route = buildRoute(PrimitiveCookieParamController.BYTE_ROUTE);
-            String response = headStringResponseWithCookies(route, cookieParams(param("value", value)));
+            String response = getStringForCookiesAndHead(route, cookieParams(param("value", value)));
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -483,7 +483,7 @@ public final class PrimitiveCookieParamTest {
         AsyncTestUtils.runTest(app -> {
             String value = Short.toString(Short.MAX_VALUE);
             String route = buildRoute(PrimitiveCookieParamController.SHORT_ROUTE);
-            String response = headStringResponseWithCookies(route, cookieParams(param("value", value)));
+            String response = getStringForCookiesAndHead(route, cookieParams(param("value", value)));
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -493,7 +493,7 @@ public final class PrimitiveCookieParamTest {
         AsyncTestUtils.runTest(app -> {
             String value = Float.toString(Float.MAX_VALUE);
             String route = buildRoute(PrimitiveCookieParamController.FLOAT_ROUTE);
-            String response = headStringResponseWithCookies(route, cookieParams(param("value", value)));
+            String response = getStringForCookiesAndHead(route, cookieParams(param("value", value)));
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -503,7 +503,7 @@ public final class PrimitiveCookieParamTest {
         AsyncTestUtils.runTest(app -> {
             String value = "a";
             String route = buildRoute(PrimitiveCookieParamController.CHAR_ROUTE);
-            String response = headStringResponseWithCookies(route, cookieParams(param("value", value)));
+            String response = getStringForCookiesAndHead(route, cookieParams(param("value", value)));
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -513,7 +513,7 @@ public final class PrimitiveCookieParamTest {
         AsyncTestUtils.runTest(app -> {
             String value = Long.toString(Long.MAX_VALUE);
             String route = buildRoute(PrimitiveCookieParamController.LONG_ROUTE);
-            String response = headStringResponseWithCookies(route, cookieParams(param("value", value)));
+            String response = getStringForCookiesAndHead(route, cookieParams(param("value", value)));
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -527,7 +527,7 @@ public final class PrimitiveCookieParamTest {
         AsyncTestUtils.runTest(app -> {
             String value = Boolean.toString(Boolean.TRUE);
             String route = buildRoute(PrimitiveCookieParamController.BOOLEAN_ROUTE);
-            String response = optionsStringResponseWithCookies(route, cookieParams(param("value", value)));
+            String response = getStringForCookiesAndOptions(route, cookieParams(param("value", value)));
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -537,7 +537,7 @@ public final class PrimitiveCookieParamTest {
         AsyncTestUtils.runTest(app -> {
             String value = Integer.toString(Integer.MAX_VALUE);
             String route = buildRoute(PrimitiveCookieParamController.INTEGER_ROUTE);
-            String response = optionsStringResponseWithCookies(route, cookieParams(param("value", value)));
+            String response = getStringForCookiesAndOptions(route, cookieParams(param("value", value)));
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -547,7 +547,7 @@ public final class PrimitiveCookieParamTest {
         AsyncTestUtils.runTest(app -> {
             String value = Double.toString(Double.MAX_VALUE);
             String route = buildRoute(PrimitiveCookieParamController.DOUBLE_ROUTE);
-            String response = optionsStringResponseWithCookies(route, cookieParams(param("value", value)));
+            String response = getStringForCookiesAndOptions(route, cookieParams(param("value", value)));
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -557,7 +557,7 @@ public final class PrimitiveCookieParamTest {
         AsyncTestUtils.runTest(app -> {
             String value = Byte.toString(Byte.MAX_VALUE);
             String route = buildRoute(PrimitiveCookieParamController.BYTE_ROUTE);
-            String response = optionsStringResponseWithCookies(route, cookieParams(param("value", value)));
+            String response = getStringForCookiesAndOptions(route, cookieParams(param("value", value)));
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -567,7 +567,7 @@ public final class PrimitiveCookieParamTest {
         AsyncTestUtils.runTest(app -> {
             String value = Short.toString(Short.MAX_VALUE);
             String route = buildRoute(PrimitiveCookieParamController.SHORT_ROUTE);
-            String response = optionsStringResponseWithCookies(route, cookieParams(param("value", value)));
+            String response = getStringForCookiesAndOptions(route, cookieParams(param("value", value)));
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -577,7 +577,7 @@ public final class PrimitiveCookieParamTest {
         AsyncTestUtils.runTest(app -> {
             String value = Float.toString(Float.MAX_VALUE);
             String route = buildRoute(PrimitiveCookieParamController.FLOAT_ROUTE);
-            String response = optionsStringResponseWithCookies(route, cookieParams(param("value", value)));
+            String response = getStringForCookiesAndOptions(route, cookieParams(param("value", value)));
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -587,7 +587,7 @@ public final class PrimitiveCookieParamTest {
         AsyncTestUtils.runTest(app -> {
             String value = "a";
             String route = buildRoute(PrimitiveCookieParamController.CHAR_ROUTE);
-            String response = optionsStringResponseWithCookies(route, cookieParams(param("value", value)));
+            String response = getStringForCookiesAndOptions(route, cookieParams(param("value", value)));
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -597,7 +597,7 @@ public final class PrimitiveCookieParamTest {
         AsyncTestUtils.runTest(app -> {
             String value = Long.toString(Long.MAX_VALUE);
             String route = buildRoute(PrimitiveCookieParamController.LONG_ROUTE);
-            String response = optionsStringResponseWithCookies(route, cookieParams(param("value", value)));
+            String response = getStringForCookiesAndOptions(route, cookieParams(param("value", value)));
             Assert.assertEquals(value, response);
         }).join();
     }

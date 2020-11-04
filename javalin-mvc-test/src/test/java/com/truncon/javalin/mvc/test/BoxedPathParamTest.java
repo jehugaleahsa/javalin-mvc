@@ -9,7 +9,7 @@ import java.math.BigInteger;
 import java.time.*;
 import java.util.*;
 
-import static com.truncon.javalin.mvc.test.QueryUtils.getGetStringResponse;
+import static com.truncon.javalin.mvc.test.QueryUtils.getStringForGet;
 import static com.truncon.javalin.mvc.test.RouteBuilder.*;
 
 public final class BoxedPathParamTest {
@@ -19,7 +19,7 @@ public final class BoxedPathParamTest {
             String route = buildRouteWithPathParams(
                 BoxedParameterController.STRING_ROUTE,
                 pathParams(param("value", "Hello")));
-            String response = getGetStringResponse(route);
+            String response = getStringForGet(route);
             Assert.assertEquals("Hello", response);
         }).join();
     }
@@ -31,7 +31,7 @@ public final class BoxedPathParamTest {
             String route = buildRouteWithPathParams(
                 BoxedParameterController.BOOLEAN_ROUTE,
                 pathParams(param("value", value)));
-            String response = getGetStringResponse(route);
+            String response = getStringForGet(route);
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -43,7 +43,7 @@ public final class BoxedPathParamTest {
             String route = buildRouteWithPathParams(
                 BoxedParameterController.INTEGER_ROUTE,
                 pathParams(param("value", value)));
-            String response = getGetStringResponse(route);
+            String response = getStringForGet(route);
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -55,7 +55,7 @@ public final class BoxedPathParamTest {
             String route = buildRouteWithPathParams(
                 BoxedParameterController.DOUBLE_ROUTE,
                 pathParams(param("value", value)));
-            String response = getGetStringResponse(route);
+            String response = getStringForGet(route);
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -67,7 +67,7 @@ public final class BoxedPathParamTest {
             String route = buildRouteWithPathParams(
                 BoxedParameterController.BYTE_ROUTE,
                 pathParams(param("value", value)));
-            String response = getGetStringResponse(route);
+            String response = getStringForGet(route);
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -79,7 +79,7 @@ public final class BoxedPathParamTest {
             String route = buildRouteWithPathParams(
                 BoxedParameterController.SHORT_ROUTE,
                 pathParams(param("value", value)));
-            String response = getGetStringResponse(route);
+            String response = getStringForGet(route);
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -91,7 +91,7 @@ public final class BoxedPathParamTest {
             String route = buildRouteWithPathParams(
                 BoxedParameterController.FLOAT_ROUTE,
                 pathParams(param("value", value)));
-            String response = getGetStringResponse(route);
+            String response = getStringForGet(route);
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -103,7 +103,7 @@ public final class BoxedPathParamTest {
             String route = buildRouteWithPathParams(
                 BoxedParameterController.CHAR_ROUTE,
                 pathParams(param("value", value)));
-            String response = getGetStringResponse(route);
+            String response = getStringForGet(route);
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -115,7 +115,7 @@ public final class BoxedPathParamTest {
             String route = buildRouteWithPathParams(
                 BoxedParameterController.LONG_ROUTE,
                 pathParams(param("value", value)));
-            String response = getGetStringResponse(route);
+            String response = getStringForGet(route);
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -127,7 +127,7 @@ public final class BoxedPathParamTest {
             String route = buildRouteWithPathParams(
                 BoxedParameterController.DATE_ROUTE,
                 pathParams(param("value", value)));
-            String response = getGetStringResponse(route);
+            String response = getStringForGet(route);
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -139,7 +139,7 @@ public final class BoxedPathParamTest {
             String route = buildRouteWithPathParams(
                 BoxedParameterController.INSTANT_ROUTE,
                 pathParams(param("value", value)));
-            String response = getGetStringResponse(route);
+            String response = getStringForGet(route);
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -151,7 +151,7 @@ public final class BoxedPathParamTest {
             String route = buildRouteWithPathParams(
                 BoxedParameterController.ZONED_DATETIME_ROUTE,
                 pathParams(param("value", value)));
-            String response = getGetStringResponse(route);
+            String response = getStringForGet(route);
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -163,7 +163,7 @@ public final class BoxedPathParamTest {
             String route = buildRouteWithPathParams(
                 BoxedParameterController.OFFSET_DATETIME_ROUTE,
                 pathParams(param("value", value)));
-            String response = getGetStringResponse(route);
+            String response = getStringForGet(route);
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -175,7 +175,7 @@ public final class BoxedPathParamTest {
             String route = buildRouteWithPathParams(
                 BoxedParameterController.LOCAL_DATETIME_ROUTE,
                 pathParams(param("value", value)));
-            String response = getGetStringResponse(route);
+            String response = getStringForGet(route);
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -187,7 +187,7 @@ public final class BoxedPathParamTest {
             String route = buildRouteWithPathParams(
                 BoxedParameterController.LOCAL_DATE_ROUTE,
                 pathParams(param("value", value)));
-            String response = getGetStringResponse(route);
+            String response = getStringForGet(route);
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -199,7 +199,7 @@ public final class BoxedPathParamTest {
             String route = buildRouteWithPathParams(
                 BoxedParameterController.BIG_INTEGER_ROUTE,
                 pathParams(param("value", value)));
-            String response = getGetStringResponse(route);
+            String response = getStringForGet(route);
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -211,7 +211,7 @@ public final class BoxedPathParamTest {
             String route = buildRouteWithPathParams(
                 BoxedParameterController.BIG_DECIMAL_ROUTE,
                 pathParams(param("value", value)));
-            String response = getGetStringResponse(route);
+            String response = getStringForGet(route);
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -223,7 +223,7 @@ public final class BoxedPathParamTest {
             String route = buildRouteWithPathParams(
                 BoxedParameterController.UUID_ROUTE,
                 pathParams(param("value", value)));
-            String response = getGetStringResponse(route);
+            String response = getStringForGet(route);
             Assert.assertEquals(value, response);
         }).join();
     }

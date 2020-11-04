@@ -20,10 +20,10 @@ import java.nio.file.Paths;
 
 public final class FileTest {
     @Test
-    public void testFileStream() throws Exception {
+    public void testFileStream() {
         AsyncTestUtils.runTest(app -> {
             String route = RouteBuilder.buildRoute(FileController.GET_STREAM_ROUTE);
-            String actual = QueryUtils.getGetStringResponse(route);
+            String actual = QueryUtils.getStringForGet(route);
             Path path = Paths.get("./public/index.html");
             String expected = IOUtils.toString(Files.newInputStream(path), Charset.defaultCharset());
             Assert.assertEquals(expected, actual);
@@ -38,7 +38,7 @@ public final class FileTest {
             Header dispositionHeader = response.getFirstHeader("Content-Disposition");
             String disposition = dispositionHeader.getValue();
             Assert.assertEquals("attachment;fileName=" + FileController.CONTENT_DISPOSITION, disposition);
-            String actual = QueryUtils.getGetStringResponse(route);
+            String actual = QueryUtils.getStringForGet(route);
             Path path = Paths.get("./public/index.html");
             String expected = IOUtils.toString(Files.newInputStream(path), Charset.defaultCharset());
             Assert.assertEquals(expected, actual);

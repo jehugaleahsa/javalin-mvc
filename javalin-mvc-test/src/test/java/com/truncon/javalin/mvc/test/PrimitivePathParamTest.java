@@ -4,7 +4,7 @@ import com.truncon.javalin.mvc.test.controllers.PrimitivePathParamController;
 import org.junit.Assert;
 import org.junit.Test;
 
-import static com.truncon.javalin.mvc.test.QueryUtils.getGetStringResponse;
+import static com.truncon.javalin.mvc.test.QueryUtils.getStringForGet;
 import static com.truncon.javalin.mvc.test.RouteBuilder.*;
 
 public final class PrimitivePathParamTest {
@@ -15,7 +15,7 @@ public final class PrimitivePathParamTest {
             String route = buildRouteWithPathParams(
                 PrimitivePathParamController.BOOLEAN_ROUTE,
                 pathParams(param("value", value)));
-            String response = getGetStringResponse(route);
+            String response = getStringForGet(route);
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -27,7 +27,7 @@ public final class PrimitivePathParamTest {
             String route = buildRouteWithPathParams(
                 PrimitivePathParamController.INTEGER_ROUTE,
                 pathParams(param("value", value)));
-            String response = getGetStringResponse(route);
+            String response = getStringForGet(route);
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -39,7 +39,7 @@ public final class PrimitivePathParamTest {
             String route = buildRouteWithPathParams(
                 PrimitivePathParamController.DOUBLE_ROUTE,
                 pathParams(param("value", value)));
-            String response = getGetStringResponse(route);
+            String response = getStringForGet(route);
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -51,7 +51,7 @@ public final class PrimitivePathParamTest {
             String route = buildRouteWithPathParams(
                 PrimitivePathParamController.BYTE_ROUTE,
                 pathParams(param("value", value)));
-            String response = getGetStringResponse(route);
+            String response = getStringForGet(route);
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -63,7 +63,7 @@ public final class PrimitivePathParamTest {
             String route = buildRouteWithPathParams(
                 PrimitivePathParamController.SHORT_ROUTE,
                 pathParams(param("value", value)));
-            String response = getGetStringResponse(route);
+            String response = getStringForGet(route);
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -75,7 +75,7 @@ public final class PrimitivePathParamTest {
             String route = buildRouteWithPathParams(
                 PrimitivePathParamController.FLOAT_ROUTE,
                 pathParams(param("value", value)));
-            String response = getGetStringResponse(route);
+            String response = getStringForGet(route);
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -87,7 +87,7 @@ public final class PrimitivePathParamTest {
             String route = buildRouteWithPathParams(
                 PrimitivePathParamController.CHAR_ROUTE,
                 pathParams(param("value", value)));
-            String response = getGetStringResponse(route);
+            String response = getStringForGet(route);
             Assert.assertEquals(value, response);
         }).join();
     }
@@ -99,7 +99,7 @@ public final class PrimitivePathParamTest {
             String route = buildRouteWithPathParams(
                 PrimitivePathParamController.LONG_ROUTE,
                 pathParams(param("value", value)));
-            String response = getGetStringResponse(route);
+            String response = getStringForGet(route);
             Assert.assertEquals(value, response);
         }).join();
     }

@@ -19,7 +19,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.UUID;
 
-import static com.truncon.javalin.mvc.test.QueryUtils.getGetJsonResponse;
+import static com.truncon.javalin.mvc.test.QueryUtils.getJsonResponseForGet;
 import static com.truncon.javalin.mvc.test.RouteBuilder.*;
 
 public final class BoxedArrayQueryParamTest {
@@ -29,7 +29,7 @@ public final class BoxedArrayQueryParamTest {
             String route = RouteBuilder.buildRouteWithQueryParams(
                 BoxedArrayParameterController.BOOLEAN_ROUTE,
                 queryParams(param("value", "false"), param("value", null), param("value", "true")));
-            Boolean[] actual = getGetJsonResponse(route, Boolean[].class);
+            Boolean[] actual = getJsonResponseForGet(route, Boolean[].class);
             Boolean[] expected = new Boolean[] { false, null, true };
             Assert.assertArrayEquals(expected, actual);
         }).join();
@@ -44,7 +44,7 @@ public final class BoxedArrayQueryParamTest {
                     param("value", Integer.toString(Integer.MIN_VALUE)),
                     param("value", null),
                     param("value", Integer.toString(Integer.MAX_VALUE))));
-            Integer[] actual = getGetJsonResponse(route, Integer[].class);
+            Integer[] actual = getJsonResponseForGet(route, Integer[].class);
             Integer[] expected = new Integer[] { Integer.MIN_VALUE, null, Integer.MAX_VALUE };
             Assert.assertArrayEquals(expected, actual);
         }).join();
@@ -59,7 +59,7 @@ public final class BoxedArrayQueryParamTest {
                     param("value", Double.toString(Double.MIN_VALUE)),
                     param("value", null),
                     param("value", Double.toString(Double.MAX_VALUE))));
-            Double[] actual = getGetJsonResponse(route, Double[].class);
+            Double[] actual = getJsonResponseForGet(route, Double[].class);
             Double[] expected = new Double[] { Double.MIN_VALUE, null, Double.MAX_VALUE };
             Assert.assertArrayEquals(expected, actual);
         }).join();
@@ -74,7 +74,7 @@ public final class BoxedArrayQueryParamTest {
                     param("value", Byte.toString(Byte.MIN_VALUE)),
                     param("value", null),
                     param("value", Byte.toString(Byte.MAX_VALUE))));
-            Byte[] actual = getGetJsonResponse(route, Byte[].class);
+            Byte[] actual = getJsonResponseForGet(route, Byte[].class);
             Byte[] expected = new Byte[] { Byte.MIN_VALUE, null, Byte.MAX_VALUE };
             Assert.assertArrayEquals(expected, actual);
         }).join();
@@ -89,7 +89,7 @@ public final class BoxedArrayQueryParamTest {
                     param("value", Short.toString(Short.MIN_VALUE)),
                     param("value", null),
                     param("value", Short.toString(Short.MAX_VALUE))));
-            Short[] actual = getGetJsonResponse(route, Short[].class);
+            Short[] actual = getJsonResponseForGet(route, Short[].class);
             Short[] expected = new Short[] { Short.MIN_VALUE, null, Short.MAX_VALUE };
             Assert.assertArrayEquals(expected, actual);
         }).join();
@@ -104,7 +104,7 @@ public final class BoxedArrayQueryParamTest {
                     param("value", Float.toString(Float.MIN_VALUE)),
                     param("value", null),
                     param("value", Float.toString(Float.MAX_VALUE))));
-            Float[] actual = getGetJsonResponse(route, Float[].class);
+            Float[] actual = getJsonResponseForGet(route, Float[].class);
             Float[] expected = new Float[] { Float.MIN_VALUE, null, Float.MAX_VALUE };
             Assert.assertArrayEquals(expected, actual);
         }).join();
@@ -119,7 +119,7 @@ public final class BoxedArrayQueryParamTest {
                     param("value", Character.toString(Character.MIN_VALUE)),
                     param("value", null),
                     param("value", Character.toString(Character.MAX_VALUE))));
-            Character[] actual = getGetJsonResponse(route, Character[].class);
+            Character[] actual = getJsonResponseForGet(route, Character[].class);
             Character[] expected = new Character[] { Character.MIN_VALUE, null, Character.MAX_VALUE };
             Assert.assertArrayEquals(expected, actual);
         }).join();
@@ -134,7 +134,7 @@ public final class BoxedArrayQueryParamTest {
                     param("value", Long.toString(Long.MIN_VALUE)),
                     param("value", null),
                     param("value", Long.toString(Long.MAX_VALUE))));
-            Long[] actual = getGetJsonResponse(route, Long[].class);
+            Long[] actual = getJsonResponseForGet(route, Long[].class);
             Long[] expected = new Long[] { Long.MIN_VALUE, null, Long.MAX_VALUE };
             Assert.assertArrayEquals(expected, actual);
         }).join();
@@ -149,7 +149,7 @@ public final class BoxedArrayQueryParamTest {
                 queryParams(
                     param("value", BoxedParameterController.DATE_FORMAT.format(value)),
                     param("value", null)));
-            Date[] actual = getGetJsonResponse(route, Date[].class);
+            Date[] actual = getJsonResponseForGet(route, Date[].class);
             Date[] expected = new Date[] { value, null };
             Assert.assertArrayEquals(expected, actual);
         }).join();
@@ -164,7 +164,7 @@ public final class BoxedArrayQueryParamTest {
                 queryParams(
                     param("value", BoxedParameterController.INSTANT_FORMAT.format(value)),
                     param("value", null)));
-            Instant[] actual = getGetJsonResponse(route, Instant[].class);
+            Instant[] actual = getJsonResponseForGet(route, Instant[].class);
             Instant[] expected = new Instant[] { value, null };
             Assert.assertArrayEquals(expected, actual);
         }).join();
@@ -181,7 +181,7 @@ public final class BoxedArrayQueryParamTest {
                 queryParams(
                     param("value", BoxedParameterController.ZONED_DATETIME_FORMAT.format(value)),
                     param("value", null)));
-            ZonedDateTime[] actual = getGetJsonResponse(route, ZonedDateTime[].class);
+            ZonedDateTime[] actual = getJsonResponseForGet(route, ZonedDateTime[].class);
             ZonedDateTime[] expected = new ZonedDateTime[] { value, null };
             Assert.assertArrayEquals(expected, actual);
         }).join();
@@ -198,7 +198,7 @@ public final class BoxedArrayQueryParamTest {
                 queryParams(
                     param("value", BoxedParameterController.OFFSET_DATETIME_FORMAT.format(value)),
                     param("value", null)));
-            OffsetDateTime[] actual = getGetJsonResponse(route, OffsetDateTime[].class);
+            OffsetDateTime[] actual = getJsonResponseForGet(route, OffsetDateTime[].class);
             OffsetDateTime[] expected = new OffsetDateTime[] { value, null };
             Assert.assertArrayEquals(expected, actual);
         }).join();
@@ -213,7 +213,7 @@ public final class BoxedArrayQueryParamTest {
                 queryParams(
                     param("value", BoxedParameterController.LOCAL_DATETIME_FORMAT.format(value)),
                     param("value", null)));
-            LocalDateTime[] actual = getGetJsonResponse(route, LocalDateTime[].class);
+            LocalDateTime[] actual = getJsonResponseForGet(route, LocalDateTime[].class);
             LocalDateTime[] expected = new LocalDateTime[] { value, null };
             Assert.assertArrayEquals(expected, actual);
         }).join();
@@ -228,7 +228,7 @@ public final class BoxedArrayQueryParamTest {
                 queryParams(
                     param("value", BoxedParameterController.LOCAL_DATE_FORMAT.format(value)),
                     param("value", null)));
-            LocalDate[] actual = getGetJsonResponse(route, LocalDate[].class);
+            LocalDate[] actual = getJsonResponseForGet(route, LocalDate[].class);
             LocalDate[] expected = new LocalDate[] { value, null };
             Assert.assertArrayEquals(expected, actual);
         }).join();
@@ -243,7 +243,7 @@ public final class BoxedArrayQueryParamTest {
                 queryParams(
                     param("value", value.toString()),
                     param("value", null)));
-            BigInteger[] actual = getGetJsonResponse(route, BigInteger[].class);
+            BigInteger[] actual = getJsonResponseForGet(route, BigInteger[].class);
             BigInteger[] expected = new BigInteger[] { value, null };
             Assert.assertArrayEquals(expected, actual);
         }).join();
@@ -258,7 +258,7 @@ public final class BoxedArrayQueryParamTest {
                 queryParams(
                     param("value", value.toString()),
                     param("value", null)));
-            BigDecimal[] actual = getGetJsonResponse(route, BigDecimal[].class);
+            BigDecimal[] actual = getJsonResponseForGet(route, BigDecimal[].class);
             BigDecimal[] expected = new BigDecimal[] { value, null };
             Assert.assertArrayEquals(expected, actual);
         }).join();
@@ -273,7 +273,7 @@ public final class BoxedArrayQueryParamTest {
                 queryParams(
                     param("value", value.toString()),
                     param("value", null)));
-            UUID[] actual = getGetJsonResponse(route, UUID[].class);
+            UUID[] actual = getJsonResponseForGet(route, UUID[].class);
             UUID[] expected = new UUID[] { value, null };
             Assert.assertArrayEquals(expected, actual);
         }).join();
