@@ -25,7 +25,6 @@ public class PrimitivePathParamController {
     public static final String CHAR_ROUTE = "/api/primitives/path/char/:value";
     public static final String LONG_ROUTE = "/api/primitives/path/long/:value";
 
-
     // region GET
 
     @HttpGet(route = BOOLEAN_ROUTE)

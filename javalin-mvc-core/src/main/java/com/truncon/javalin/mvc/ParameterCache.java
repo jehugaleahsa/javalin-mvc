@@ -1,65 +1,45 @@
 package com.truncon.javalin.mvc;
 
-import com.truncon.javalin.mvc.api.Named;
+import com.truncon.javalin.mvc.api.ValueSource;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.Supplier;
 
 public final class ParameterCache {
-    private static final Map<Class<?>, Object> defaultPrimitives = getDefaultPrimitiveValues();
-
-    private static Map<Class<?>, Object> getDefaultPrimitiveValues() {
-        Map<Class<?>, Object> maps = new HashMap<>(9);
-        maps.put(int.class, 0);
-        maps.put(long.class, 0L);
-        maps.put(short.class, (short) 0);
-        maps.put(byte.class, (byte) 0);
-        maps.put(char.class, '\0');
-        maps.put(float.class, 0.0f);
-        maps.put(double.class, 0.0);
-        maps.put(boolean.class, false);
-        return maps;
-    }
-
+    private final ValueSource valueSource;
     private final Supplier<Map<String, Collection<String>>> getter;
     private Map<String, Collection<String>> lookup;
 
-    public ParameterCache(Supplier<Map<String, Collection<String>>> getter) {
+    public ParameterCache(ValueSource valueSource, Supplier<Map<String, Collection<String>>> getter) {
+        this.valueSource = valueSource;
         this.getter = getter;
     }
 
-    public Collection<String> getKeys() {
-        Map<String, Collection<String>> lookup = getLookup();
-        return lookup.keySet();
+    public ValueSource getValueSource() {
+        return valueSource;
     }
 
     public boolean hasValue(String name) {
         Map<String, Collection<String>> lookup = getLookup();
-        return lookup.containsKey(sterilize(name));
+        return lookup.containsKey(normalize(name));
     }
 
     public Collection<String> getValues(String name) {
         Map<String, Collection<String>> lookup = getLookup();
-        return lookup.get(sterilize(name));
+        return lookup.get(normalize(name));
     }
 
-    private Map<String, Collection<String>> getLookup() {
+    public Map<String, Collection<String>> getLookup() {
         if (lookup != null) {
             return lookup;
         }
         Map<String, Collection<String>> cache = new LinkedHashMap<>();
         Map<String, Collection<String>> source = getter.get();
         for (String name : source.keySet()) {
-            String sterilized = sterilize(name);
+            String sterilized = normalize(name);
             Collection<String> values = source.get(name);
             cache.computeIfAbsent(sterilized, k -> new ArrayList<>()).addAll(values);
         }
@@ -67,91 +47,7 @@ public final class ParameterCache {
         return lookup;
     }
 
-    private static String sterilize(String name) {
+    public static String normalize(String name) {
         return name == null ? null : name.trim().toUpperCase();
-    }
-
-    public Object bindValues(Class<?> type) {
-        if (type.isPrimitive()) {
-            return defaultPrimitives.get(type);
-        }
-        try {
-            Object instance = type.newInstance();
-            for (String key : getKeys()) {
-                bindValue(type, instance, key);
-            }
-            return instance;
-        } catch (Exception exception) {
-            // swallow any deserialization errors
-            return null;
-        }
-    }
-
-    private void bindValue(Class<?> type, Object instance, String key) {
-        try {
-            Method method = getMethodForKey(type, key);
-            if (method != null) {
-                method.setAccessible(true);
-                Collection<String> rawValues = getValues(key);
-                Class<?> parameterType = method.getParameters()[0].getType();
-                Optional<Object> value = ConversionUtils.toParameterValue(parameterType, rawValues);
-                if (value.isPresent()) {
-                    method.invoke(instance, value.get());
-                    return;
-                }
-            }
-            Field field = getFieldForKey(type, key);
-            if (field != null) {
-                field.setAccessible(true);
-                Collection<String> rawValues = getValues(key);
-                Optional<Object> value = ConversionUtils.toParameterValue(field.getType(), rawValues);
-                if (value.isPresent()) {
-                    field.set(instance, value.get());
-                }
-            }
-        } catch (Exception exception) {
-            // Swallow any binding errors
-        }
-    }
-
-    private static Method getMethodForKey(Class<?> type, String key) {
-        return Arrays.stream(type.getDeclaredMethods())
-            .filter(m -> !Modifier.isStatic(m.getModifiers()))
-            .filter(m -> m.getParameterCount() == 1)
-            .filter(m -> hasMatchingName(m, key))
-            .findAny()
-            .orElse(null);
-    }
-
-    private static boolean hasMatchingName(Method method, String key) {
-        Named annotation = method.getAnnotation(Named.class);
-        if (annotation == null) {
-            // The method is not named, so we look for exact matches or leading "set"
-            return method.getName().equalsIgnoreCase(key)
-                    || method.getName().equalsIgnoreCase("set" + key);
-        } else {
-            // If the setter is named, the name must match exactly, ignoring case.
-            return annotation.value().equalsIgnoreCase(key);
-        }
-    }
-
-    private static Field getFieldForKey(Class<?> type, String key) {
-        return Arrays.stream(type.getDeclaredFields())
-            .filter(f -> !Modifier.isStatic(f.getModifiers()))
-            .filter(f -> !Modifier.isFinal(f.getModifiers()))
-            .filter(f -> hasMatchingName(f, key))
-            .findAny()
-            .orElse(null);
-    }
-
-    private static boolean hasMatchingName(Field method, String key) {
-        Named annotation = method.getAnnotation(Named.class);
-        if (annotation == null) {
-            // The field is not named, so we look for exact matches, ignoring case.
-            return method.getName().equalsIgnoreCase(key);
-        } else {
-            // If the setter is named, the name must match exactly, ignoring case.
-            return annotation.value().equalsIgnoreCase(key);
-        }
     }
 }

@@ -15,6 +15,7 @@ public class DefaultModelBinder implements ModelBinder {
     private final ParameterCache pathParameters;
     private final ParameterCache queryStrings;
     private final ParameterCache formFields;
+    private final ParameterLookup lookup;
 
     /**
      * Instantiates a new instance of a DefaultModelBinder.
@@ -22,11 +23,17 @@ public class DefaultModelBinder implements ModelBinder {
      */
     public DefaultModelBinder(HttpRequest request) {
         this.request = request;
-        this.headers = new ParameterCache(request::getHeaderLookup);
-        this.cookies = new ParameterCache(request::getCookieLookup);
-        this.pathParameters = new ParameterCache(request::getPathLookup);
-        this.queryStrings = new ParameterCache(request::getQueryLookup);
-        this.formFields = new ParameterCache(request::getFormLookup);
+        this.headers = new ParameterCache(ValueSource.Header, request::getHeaderLookup);
+        this.cookies = new ParameterCache(ValueSource.Cookie, request::getCookieLookup);
+        this.pathParameters = new ParameterCache(ValueSource.Path, request::getPathLookup);
+        this.queryStrings = new ParameterCache(ValueSource.QueryString, request::getQueryLookup);
+        this.formFields = new ParameterCache(ValueSource.FormData, request::getFormLookup);
+        this.lookup = new ParameterLookup();
+        this.lookup.addCache(this.headers);
+        this.lookup.addCache(this.cookies);
+        this.lookup.addCache(this.pathParameters);
+        this.lookup.addCache(this.queryStrings);
+        this.lookup.addCache(this.formFields);
     }
 
     /**
@@ -51,8 +58,12 @@ public class DefaultModelBinder implements ModelBinder {
             // Either the source is not specified explicitly or the value should come from the body.
             cache = getParameterCache(name);
             if (cache == null) {
-                // There was not a specific source, so we fallback on JSON deserialization.
-                return getDeserializedBody(parameterClass);
+                if (ParameterLookup.hasBindings(parameterClass)) {
+                    return lookup.bindValues(parameterClass, ValueSource.Any);
+                } else {
+                    // There was not a specific source, so we fallback on JSON deserialization.
+                    return getDeserializedBody(parameterClass);
+                }
             } else {
                 return ConversionUtils.toParameterValue(parameterClass, cache.getValues(name)).orElse(null);
             }
@@ -63,14 +74,14 @@ public class DefaultModelBinder implements ModelBinder {
             // We are being asked to pull from a specific source.
             // However, that source does not contain a parameter with that name or its value is nonsense.
             // We are probably being asked to bind values inside of an object.
-            return cache.bindValues(parameterClass);
+            return lookup.bindValues(parameterClass, cache.getValueSource());
         }
         // A value with that name exists in the specific source, so try to bind it directly.
         // We can bind the value if it is an array or a "primitive".
         // Otherwise, try to bind the value inside of an object.
         ParameterCache finalCache = cache;
         return ConversionUtils.toParameterValue(parameterClass, cache.getValues(name))
-            .orElseGet(() -> finalCache.bindValues(parameterClass));
+            .orElseGet(() -> lookup.bindValues(parameterClass, finalCache.getValueSource()));
     }
 
     private Object getDeserializedBody(Class<?> paramType) {

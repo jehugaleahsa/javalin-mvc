@@ -17,7 +17,7 @@ import static com.truncon.javalin.mvc.test.RouteBuilder.*;
 
 public final class ObjectBodyTest {
     @Test
-    public void testPrimitiveModel() throws Exception {
+    public void testPrimitiveModel() {
         AsyncTestUtils.runTest(app -> {
             PrimitiveModel model = new PrimitiveModel();
             model.setBoolean(true);
@@ -42,7 +42,7 @@ public final class ObjectBodyTest {
     }
 
     @Test
-    public void testBoxedModel() throws Exception {
+    public void testBoxedModel() {
         AsyncTestUtils.runTest(app -> {
             BoxedModel model = new BoxedModel();
             model.setString("Hello");

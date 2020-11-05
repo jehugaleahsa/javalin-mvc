@@ -163,12 +163,12 @@ Here is a list of supported and/or desired features. An `x` means it is already 
     * [x] Arrays
     * [x] File uploads
 * [x] Bind Java object from request body (JSON)
-* [ ] Bind Java object from other sources
+* [x] Bind Java object from other sources
     * [x] Support `Named` annotation on fields and setter methods
     * [x] Support setting int, short, byte, char, String, Date, etc.
     * [x] Support setting arrays of int, short, byte, char, String, Date, etc.
     * [x] Support binding values from headers, cookies, URL parameters, query strings, and form data
-    * [ ] Support overriding binding source using `From*` annotations on a specific member.
+    * [x] Support overriding binding source using `From*` annotations on a specific member.
 * [x] Override where parameters are bound from.
 * [x] Support returning `ActionResult` implementations
     * [x] ContentResult - return plain strings
@@ -231,8 +231,8 @@ public static void main(String[] args) throws IOException {
     // Provide method of constructing a new DI container
     // Dagger prepends "Dagger" automatically at compile time
     Supplier<WebContainer> scopeFactory = () -> DaggerWebContainer.builder().build();
-    // Javalin MVC generates "com.truncon.javalin.mvc.ControllerRegistry" automatically at compile time
-    ControllerRegistry registry = new ControllerRegistry(scopeFactory);
+    // Javalin MVC generates "com.truncon.javalin.mvc.JavalinControllerRegistry" automatically at compile time
+    ControllerRegistry registry = new JavalinControllerRegistry(scopeFactory);
     registry.register(app);
 
     // Prevent unhandled exceptions from taking down the web server
