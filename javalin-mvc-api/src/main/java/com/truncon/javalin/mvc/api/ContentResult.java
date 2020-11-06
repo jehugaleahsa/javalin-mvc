@@ -26,6 +26,22 @@ public final class ContentResult implements ActionResult {
     }
 
     /**
+     * Gets the response content.
+     * @return The response content.
+     */
+    public String getContent() {
+        return content;
+    }
+
+    /**
+     * Gets the response status code.
+     * @return The status code.
+     */
+    public int getStatusCode() {
+        return statusCode;
+    }
+
+    /**
      * Sets the content as the response with the status code.
      * @param context The request context.
      */

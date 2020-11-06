@@ -26,6 +26,22 @@ public final class JsonResult implements ActionResult {
     }
 
     /**
+     * Gets the object being serializes as JSON.
+     * @return The object being serialized as JSON.
+     */
+    public Object getData() {
+        return data;
+    }
+
+    /**
+     * Gets the response status code.
+     * @return The response status code.
+     */
+    public int getStatusCode() {
+        return statusCode;
+    }
+
+    /**
      * Sets the JSON serialized object as the response with the status code.
      * @param context The request context.
      */
