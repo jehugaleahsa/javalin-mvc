@@ -1,5 +1,6 @@
 package com.truncon.javalin.mvc.api;
 
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.Objects;
 
@@ -27,6 +28,32 @@ public final class DownloadResult implements ActionResult {
     public DownloadResult(InputStream inputStream, String contentType) {
         this.inputStream = Objects.requireNonNull(inputStream);
         this.contentType = contentType;
+    }
+
+    public DownloadResult(byte[] data) {
+        this(data, 0, data.length, null);
+    }
+
+    public DownloadResult(byte[] data, String contentType) {
+        this(data, 0, data.length, contentType);
+    }
+
+    public DownloadResult(byte[] data, int offset, int length) {
+        this(data, offset, length, null);
+    }
+
+    public DownloadResult(byte[] data, int offset, int length, String contentType) {
+        Objects.requireNonNull(data);
+        this.inputStream = new ByteArrayInputStream(data, offset, length);
+        this.contentType = contentType;
+    }
+
+    /**
+     * Gets the input stream that will streamed as the result.
+     * @return The input stream.
+     */
+    public InputStream getInputStream() {
+        return inputStream;
     }
 
     /**

@@ -55,6 +55,13 @@ public final class QueryUtils {
         return parseJson(json, clz);
     }
 
+    public static DownloadDetails downloadForGet(String route) throws Exception {
+        Content content = Request.Get(route)
+            .execute()
+            .returnContent();
+        return new DownloadDetails(content.asBytes(), content.getType().getMimeType());
+    }
+
     // region URL
 
     public static String getStringForGet(String route) throws IOException {
