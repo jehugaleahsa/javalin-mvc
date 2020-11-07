@@ -133,7 +133,8 @@ final class JavalinHttpRequest implements HttpRequest {
     }
 
     private static Map<String, Collection<String>> explode(Map<String, String> map) {
-        return map.keySet().stream().collect(Collectors.toMap(k -> k, k -> listOf(map.get(k))));
+        return map.entrySet().stream()
+            .collect(Collectors.toMap(Map.Entry::getKey, e -> listOf(e.getValue())));
     }
 
     private static List<String> listOf(String item) {

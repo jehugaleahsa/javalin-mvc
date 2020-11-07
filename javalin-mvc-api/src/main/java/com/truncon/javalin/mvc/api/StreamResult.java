@@ -1,5 +1,7 @@
 package com.truncon.javalin.mvc.api;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.io.InputStream;
 import java.util.Objects;
 
@@ -8,7 +10,15 @@ import java.util.Objects;
  */
 public final class StreamResult implements ActionResult {
     private final InputStream stream;
-    private final String contentType;
+    private String contentType;
+
+    /**
+     * Initializes a new instance of a StreamResult.
+     * @param stream The stream to send as a response.
+     */
+    public StreamResult(InputStream stream) {
+        this(stream, null);
+    }
 
     /**
      * Initializes a new instance of a StreamResult.
@@ -17,7 +27,27 @@ public final class StreamResult implements ActionResult {
      */
     public StreamResult(InputStream stream, String contentType) {
         this.stream = Objects.requireNonNull(stream);
-        this.contentType = contentType;
+        this.setContentType(contentType);
+    }
+
+    /**
+     * Gets the {@link InputStream} that sources the data included in the response.
+     * @return The {@link InputStream} that sources the data included in the response.
+     */
+    public InputStream getInputStream() {
+        return stream;
+    }
+
+    /**
+     * Gets the MIME type of the response.
+     * @return The MIME type of the response.
+     */
+    public String getContentType() {
+        return contentType;
+    }
+
+    public void setContentType(String contentType) {
+        this.contentType = StringUtils.isBlank(contentType) ? "application/octet-stream" : contentType;
     }
 
     /**

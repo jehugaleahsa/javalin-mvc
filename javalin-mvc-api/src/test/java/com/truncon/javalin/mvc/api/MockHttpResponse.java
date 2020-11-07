@@ -84,7 +84,7 @@ public final class MockHttpResponse implements HttpResponse {
 
     @Override
     public HttpResponse redirect(String location) {
-        this.redirectLocation = redirectLocation;
+        this.redirectLocation = location;
         return this;
     }
 

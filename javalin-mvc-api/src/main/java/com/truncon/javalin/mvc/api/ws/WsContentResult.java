@@ -15,6 +15,14 @@ public final class WsContentResult implements WsActionResult {
     }
 
     /**
+     * Gets the contents sent with the response.
+     * @return The contents sent with the response.
+     */
+    public String getContent() {
+        return this.content;
+    }
+
+    /**
      * Sets the content as the response.
      * @param context The context.
      */

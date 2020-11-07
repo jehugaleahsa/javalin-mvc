@@ -15,6 +15,14 @@ public final class StatusCodeResult implements ActionResult {
     }
 
     /**
+     * Gets the status code of the response.
+     * @return The status code.
+     */
+    public int getStatusCode() {
+        return statusCode;
+    }
+
+    /**
      * Sets the status code.
      * @param context The request context.
      */

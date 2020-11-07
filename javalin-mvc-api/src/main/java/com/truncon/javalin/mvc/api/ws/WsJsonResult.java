@@ -15,6 +15,14 @@ public final class WsJsonResult implements WsActionResult {
     }
 
     /**
+     * Gets the data to be serialized as JSON.
+     * @return The data to be serialized as JSON.
+     */
+    public Object getData() {
+        return data;
+    }
+
+    /**
      * Sets the JSON serialized object as the response.
      * @param context The context.
      */
