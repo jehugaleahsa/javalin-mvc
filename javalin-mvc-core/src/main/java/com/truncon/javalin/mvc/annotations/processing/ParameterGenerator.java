@@ -8,6 +8,7 @@ import io.javalin.http.Context;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.ArrayType;
 import javax.lang.model.type.TypeKind;
@@ -41,10 +42,11 @@ final class ParameterGenerator {
             Elements elementUtils,
             ExecutableElement method,
             String context,
-            String wrapper) {
+            String wrapper,
+            HelperMethodBuilder helperBuilder) {
         String[] arguments = method.getParameters().stream()
             .map(p -> ParameterGenerator.getParameterGenerator(typeUtils, elementUtils, p))
-            .map(g -> g.generateParameter(context, wrapper))
+            .map(g -> g.generateParameter(context, wrapper, helperBuilder))
             .toArray(String[]::new);
         return String.join(", ", arguments);
     }
@@ -79,31 +81,46 @@ final class ParameterGenerator {
 
     public boolean isBinderNeeded() {
         TypeMirror parameterType = parameter.asType();
-        String parameter = getNonBinderParameter("context", "wrapper", parameterType);
-        return StringUtils.isBlank(parameter);
+        if (isType(parameterType, Context.class)) {
+            return false;
+        } else if (isType(parameterType, HttpContext.class)) {
+            return false;
+        } else if (isType(parameterType, HttpRequest.class)) {
+            return false;
+        } else if (isType(parameterType, HttpResponse.class)) {
+            return false;
+        } else if (isType(parameterType, FileUpload.class)) {
+            return false;
+        } else {
+            return true;
+        }
     }
 
-    public String generateParameter(String context, String wrapper) {
+    public String generateParameter(String context, String wrapper, HelperMethodBuilder helperBuilder) {
         TypeMirror parameterType = parameter.asType();
         String nonBinderParameter = getNonBinderParameter(context, wrapper, parameterType);
         if (!StringUtils.isBlank(nonBinderParameter)) {
             return nonBinderParameter;
         }
         String parameterName = getParameterName();
-        if (isType(parameterType, FileUpload.class)) {
-            return CodeBlock.of(wrapper + ".getRequest().getFile($S)", parameterName).toString();
-        }
         ValueSource valueSource = getValueSource(parameter);
-        for (Class<?> parameterClass : ConversionUtils.SUPPORTED_TYPES) {
+        // First check if we can provide a simple converter for the parameter type.
+        for (Class<?> parameterClass : HelperMethodBuilder.HELPER_LOOKUP.keySet()) {
             if (isType(parameterType, parameterClass)) {
+                helperBuilder.addConvertToMethod(parameterClass);
                 return bindParameter(parameterName, parameterClass, valueSource);
             } else {
                 Class<?> arrayClass = getArrayClass(parameterClass);
                 if (isType(parameterType, arrayClass)) {
+                    helperBuilder.addConvertToMethod(parameterClass);
                     return bindParameter(parameterName, arrayClass, valueSource);
                 }
             }
         }
+        // Next, check if this is an object with a @From* annotation or if one of the type's
+        // public members has a @From* annotation decorating it.
+
+        // Lastly, assume the type should be converted using JSON.
         return CodeBlock.of(
                 "($T)binder.getValue($S, $T.class, $T.$L)",
                 parameterType,
@@ -122,6 +139,8 @@ final class ParameterGenerator {
             return wrapper + ".getRequest()";
         } else if (isType(parameterType, HttpResponse.class)) {
             return wrapper + ".getResponse()";
+        } else if (isType(parameterType, FileUpload.class)) {
+            return CodeBlock.of(wrapper + ".getRequest().getFile($S)", getParameterName()).toString();
         } else {
             return null;
         }
@@ -208,8 +227,41 @@ final class ParameterGenerator {
             return false;
         } else if (parameterType.getKind() == TypeKind.ARRAY) {
             return type.isArray() && isType(((ArrayType)parameterType).getComponentType(), type.getComponentType());
+        } else if (type.isPrimitive()) {
+            Class<?> primitiveType = getPrimitiveType(parameterType);
+            return primitiveType == type;
+        } else if (!type.isArray()) {
+            TypeElement typeElement = elementUtils.getTypeElement(type.getCanonicalName());
+            if (typeElement == null) {
+                return false;
+            }
+            TypeMirror checkType = typeElement.asType();
+            return typeUtils.isSameType(parameterType, checkType);
         } else {
-            return !type.isArray() && typeUtils.isSameType(parameterType, elementUtils.getTypeElement(type.getCanonicalName()).asType());
+            return false;
+        }
+    }
+
+    private static Class<?> getPrimitiveType(TypeMirror parameterType) {
+        switch (parameterType.getKind()) {
+            case BOOLEAN:
+                return boolean.class;
+            case BYTE:
+                return byte.class;
+            case CHAR:
+                return char.class;
+            case DOUBLE:
+                return double.class;
+            case FLOAT:
+                return float.class;
+            case INT:
+                return int.class;
+            case LONG:
+                return long.class;
+            case SHORT:
+                return short.class;
+            default:
+                return void.class;
         }
     }
 

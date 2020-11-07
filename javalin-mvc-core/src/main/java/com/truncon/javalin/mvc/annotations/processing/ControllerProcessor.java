@@ -13,6 +13,7 @@ import javax.lang.model.util.Types;
 import javax.tools.Diagnostic;
 
 import com.truncon.javalin.mvc.api.Controller;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 
 public final class ControllerProcessor extends AbstractProcessor {
     private Types typeUtils;
@@ -53,8 +54,10 @@ public final class ControllerProcessor extends AbstractProcessor {
             for (Element element : exception.getElements()) {
                 messager.printMessage(Diagnostic.Kind.ERROR, exception.toString(), element);
             }
-        } catch (Exception exception) {
-            messager.printMessage(Diagnostic.Kind.ERROR, exception.toString());
+        } catch (Throwable exception) {
+            messager.printMessage(
+                Diagnostic.Kind.ERROR,
+                ExceptionUtils.getMessage(exception) + ": " + ExceptionUtils.getStackTrace(exception));
         }
         return true;
     }

@@ -70,12 +70,16 @@ final class ControllerRegistryGenerator {
         registryTypeBuilder.addMethod(constructor);
 
         final String APP_NAME = "app";
+        HelperMethodBuilder helperBuilder = new HelperMethodBuilder(
+            container.getTypeUtils(),
+            container.getElementUtils(),
+            registryTypeBuilder);
         MethodSpec register = MethodSpec.methodBuilder("register")
             .addAnnotation(Override.class)
             .addModifiers(Modifier.PUBLIC)
             .addParameter(Javalin.class, APP_NAME, Modifier.FINAL)
-            .addCode(createActionMethods(APP_NAME))
-            .addCode(createWsEndpoints(APP_NAME))
+            .addCode(createActionMethods(APP_NAME, helperBuilder))
+            .addCode(createWsEndpoints(APP_NAME, helperBuilder))
             .build();
         registryTypeBuilder.addMethod(register);
 
@@ -89,7 +93,7 @@ final class ControllerRegistryGenerator {
         }
     }
 
-    private CodeBlock createActionMethods(String app) {
+    private CodeBlock createActionMethods(String app, HelperMethodBuilder helperBuilder) {
         AtomicInteger index = new AtomicInteger();
         Collection<RouteGenerator> generators = controllers.stream()
             .map(ControllerSource::getRouteGenerators)
@@ -97,7 +101,7 @@ final class ControllerRegistryGenerator {
             .collect(Collectors.toList());
         detectDuplicateRoutes(generators);
         return generators.stream()
-            .map(g -> g.generateRoute(container, app, index.getAndIncrement()))
+            .map(g -> g.generateRoute(container, app, index.getAndIncrement(), helperBuilder))
             .collect(CodeBlock.joining("\n"));
     }
 
@@ -137,7 +141,7 @@ final class ControllerRegistryGenerator {
         }
     }
 
-    private CodeBlock createWsEndpoints(String app) throws ProcessingException {
+    private CodeBlock createWsEndpoints(String app, HelperMethodBuilder helperBuilder) throws ProcessingException {
         return wsControllers.stream()
             .map(s -> s.generateEndpoint(container, app))
             .filter(Objects::nonNull)

@@ -113,7 +113,11 @@ final class RouteGenerator {
         return method.getAnnotation(annotationClass);
     }
 
-    public CodeBlock generateRoute(ContainerSource container, String app, int index) {
+    public CodeBlock generateRoute(
+            ContainerSource container,
+            String app,
+            int index,
+            HelperMethodBuilder helperBuilder) {
         CodeBlock.Builder handlerBuilder = CodeBlock.builder();
         handlerBuilder.beginControlFlow("$T handler$L = (ctx) ->", Handler.class, index);
 
@@ -139,7 +143,7 @@ final class RouteGenerator {
             handlerBuilder.addStatement("Exception caughtException = null;");
             handlerBuilder.beginControlFlow("try");
         }
-        String parameters = bindParameters("ctx", "wrapper");
+        String parameters = bindParameters("ctx", "wrapper", helperBuilder);
         MethodUtils methodUtils = new MethodUtils(typeUtils, elementUtils);
         if (methodUtils.hasVoidReturnType(method)) {
             handlerBuilder.addStatement(
@@ -204,8 +208,8 @@ final class RouteGenerator {
         }
     }
 
-    private String bindParameters(String context, String wrapper) {
-        return ParameterGenerator.bindParameters(typeUtils, elementUtils, method, context, wrapper);
+    private String bindParameters(String context, String wrapper, HelperMethodBuilder helperBuilder) {
+        return ParameterGenerator.bindParameters(typeUtils, elementUtils, method, context, wrapper, helperBuilder);
     }
 
     private static void generateAfterHandlers(
