@@ -42,7 +42,7 @@ final class WsControllerSource {
         }
     }
 
-    public CodeBlock generateEndpoint(ContainerSource container, String app) throws ProcessingException {
+    public CodeBlock generateEndpoint(ContainerSource container, String app, HelperMethodBuilder helperBuilder) throws ProcessingException {
         ExecutableElement connectMethod = getAnnotatedMethod(WsConnect.class);
         ExecutableElement disconnectMethod = getAnnotatedMethod(WsDisconnect.class);
         ExecutableElement errorMethod = getAnnotatedMethod(WsError.class);
@@ -59,11 +59,11 @@ final class WsControllerSource {
         CodeBlock.Builder handlerBuilder = CodeBlock.builder();
         handlerBuilder.beginControlFlow("$N.ws($S, (ws) ->", app, getRoute());
 
-        addOnConnectHandler(container, handlerBuilder, connectMethod);
-        addOnDisconnectHandler(container, handlerBuilder, disconnectMethod);
-        addOnErrorHandler(container, handlerBuilder, errorMethod);
-        addOnMessageHandler(container, handlerBuilder, messageMethod);
-        addOnBinaryMessageHandler(container, handlerBuilder, binaryMessageMethod);
+        addOnConnectHandler(container, handlerBuilder, connectMethod, helperBuilder);
+        addOnDisconnectHandler(container, handlerBuilder, disconnectMethod, helperBuilder);
+        addOnErrorHandler(container, handlerBuilder, errorMethod, helperBuilder);
+        addOnMessageHandler(container, handlerBuilder, messageMethod, helperBuilder);
+        addOnBinaryMessageHandler(container, handlerBuilder, binaryMessageMethod, helperBuilder);
 
         handlerBuilder.endControlFlow(")");
         return handlerBuilder.build();
@@ -95,66 +95,76 @@ final class WsControllerSource {
     private void addOnConnectHandler(
             ContainerSource container,
             CodeBlock.Builder handlerBuilder,
-            ExecutableElement method) {
+            ExecutableElement method,
+            HelperMethodBuilder helperBuilder) {
         addHandler(
             container,
             handlerBuilder,
             "onConnect",
             WsConnectContext.class,
             JavalinWsConnectContext.class,
-            method);
+            method,
+            helperBuilder);
     }
 
     private void addOnDisconnectHandler(
             ContainerSource container,
             CodeBlock.Builder handlerBuilder,
-            ExecutableElement method) {
+            ExecutableElement method,
+            HelperMethodBuilder helperBuilder) {
         addHandler(
             container,
             handlerBuilder,
             "onClose",
             WsDisconnectContext.class,
             JavalinWsDisconnectContext.class,
-            method);
+            method,
+            helperBuilder);
     }
 
     private void addOnErrorHandler(
             ContainerSource container,
             CodeBlock.Builder handlerBuilder,
-            ExecutableElement method) {
+            ExecutableElement method,
+            HelperMethodBuilder helperBuilder) {
         addHandler(
             container,
             handlerBuilder,
             "onError",
             WsErrorContext.class,
             JavalinWsErrorContext.class,
-            method);
+            method,
+            helperBuilder);
     }
 
     private void addOnMessageHandler(
             ContainerSource container,
             CodeBlock.Builder handlerBuilder,
-            ExecutableElement method) {
+            ExecutableElement method,
+            HelperMethodBuilder helperBuilder) {
         addHandler(
             container,
             handlerBuilder,
             "onMessage",
             WsMessageContext.class,
             JavalinWsMessageContext.class,
-            method);
+            method,
+            helperBuilder);
     }
 
     private void addOnBinaryMessageHandler(
             ContainerSource container,
             CodeBlock.Builder handlerBuilder,
-            ExecutableElement method) {
+            ExecutableElement method,
+            HelperMethodBuilder helperBuilder) {
         addHandler(
             container,
             handlerBuilder,
             "onBinaryMessage",
             WsBinaryMessageContext.class,
             JavalinWsBinaryMessageContext.class,
-            method);
+            method,
+            helperBuilder);
     }
 
     private void addHandler(
@@ -163,7 +173,8 @@ final class WsControllerSource {
             String javalinHandler,
             Class<?> contextInterface,
             Class<?> contextImpl,
-            ExecutableElement method) {
+            ExecutableElement method,
+            HelperMethodBuilder helperBuilder) {
         if (method == null) {
             return;
         }
@@ -185,7 +196,8 @@ final class WsControllerSource {
                 method,
                 context,
                 contextInterface,
-                wrapper);
+                wrapper,
+                helperBuilder);
         MethodUtils methodUtils = new MethodUtils(typeUtils, elementUtils);
         if (methodUtils.hasVoidReturnType(method)) {
             handlerBuilder.addStatement("controller.$N(" + parameters + ")", method.getSimpleName());

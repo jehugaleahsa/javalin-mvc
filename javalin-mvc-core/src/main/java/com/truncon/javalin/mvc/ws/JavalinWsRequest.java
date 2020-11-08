@@ -53,7 +53,7 @@ public final class JavalinWsRequest implements WsRequest {
     }
 
     @Override
-    public String getHeader(String name) {
+    public String getHeaderValue(String name) {
         return context.header(name);
     }
 

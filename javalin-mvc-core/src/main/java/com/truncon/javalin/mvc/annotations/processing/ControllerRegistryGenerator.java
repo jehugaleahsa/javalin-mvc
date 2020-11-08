@@ -147,7 +147,7 @@ final class ControllerRegistryGenerator {
 
     private CodeBlock createWsEndpoints(String app, HelperMethodBuilder helperBuilder) throws ProcessingException {
         return wsControllers.stream()
-            .map(s -> s.generateEndpoint(container, app))
+            .map(s -> s.generateEndpoint(container, app, helperBuilder))
             .filter(Objects::nonNull)
             .collect(CodeBlock.joining("\n"));
     }

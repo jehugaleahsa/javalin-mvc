@@ -67,10 +67,11 @@ final class ParameterGenerator {
             ExecutableElement method,
             String context,
             Class<?> wrapperType,
-            String wrapper) {
+            String wrapper,
+            HelperMethodBuilder helperBuilder) {
         String[] arguments = method.getParameters().stream()
                 .map(p -> ParameterGenerator.getParameterGenerator(typeUtils, elementUtils, p))
-                .map(g -> g.generateWsParameter(context, wrapperType, wrapper))
+                .map(g -> g.generateWsParameter(context, wrapperType, wrapper, helperBuilder))
                 .toArray(String[]::new);
         return String.join(", ", arguments);
     }
@@ -109,26 +110,24 @@ final class ParameterGenerator {
             if (isType(parameterType, parameterClass)) {
                 String conversionMethod = helperBuilder.addConversionMethod(parameterClass, false);
                 if (conversionMethod != null) {
-                    String sourceMethod = helperBuilder.addSourceMethod(valueSource, parameterName, false);
+                    String sourceMethod = helperBuilder.addSourceMethod(valueSource, false);
                     return CodeBlock.builder()
                         .add("$N($N($N, $S))", conversionMethod, sourceMethod, wrapper, parameterName)
                         .build()
                         .toString();
                 }
-                return bindParameter(parameterName, parameterClass, valueSource);
             } else {
                 Class<?> arrayClass = getArrayClass(parameterClass);
                 if (isType(parameterType, arrayClass)) {
                     // NOTE: We pass the component type to the helper builder, not the array type.
                     String conversionMethod = helperBuilder.addConversionMethod(parameterClass, true);
                     if (conversionMethod != null) {
-                        String sourceMethod = helperBuilder.addSourceMethod(valueSource, parameterName, true);
+                        String sourceMethod = helperBuilder.addSourceMethod(valueSource, true);
                         return CodeBlock.builder()
                             .add("$N($N($N, $S))", conversionMethod, sourceMethod, wrapper, parameterName)
                             .build()
                             .toString();
                     }
-                    return bindParameter(parameterName, arrayClass, valueSource);
                 }
             }
         }
@@ -167,7 +166,7 @@ final class ParameterGenerator {
         return StringUtils.isBlank(parameter);
     }
 
-    public String generateWsParameter(String context, Class<?> wrapperType, String wrapper) {
+    public String generateWsParameter(String context, Class<?> wrapperType, String wrapper, HelperMethodBuilder helperBuilder) {
         TypeMirror parameterType = parameter.asType();
         String nonBinderParameter = getNonBinderWsParameter(context, wrapperType, wrapper, parameterType);
         if (!StringUtils.isBlank(nonBinderParameter)) {
@@ -175,13 +174,28 @@ final class ParameterGenerator {
         }
         String parameterName = getParameterName();
         WsValueSource valueSource = getWsValueSource(parameter);
-        for (Class<?> parameterClass : ConversionUtils.SUPPORTED_TYPES) {
+        for (Class<?> parameterClass : HelperMethodBuilder.CONVERSION_HELPER_LOOKUP.keySet()) {
             if (isType(parameterType, parameterClass)) {
-                return bindWsParameter(parameterName, parameterClass, valueSource);
+                String conversionMethod = helperBuilder.addConversionMethod(parameterClass, false);
+                if (conversionMethod != null) {
+                    String sourceMethod = helperBuilder.addSourceMethod(valueSource, false);
+                    return CodeBlock.builder()
+                        .add("$N($N($N, $S))", conversionMethod, sourceMethod, wrapper, parameterName)
+                        .build()
+                        .toString();
+                }
             } else {
                 Class<?> arrayClass = getArrayClass(parameterClass);
                 if (isType(parameterType, arrayClass)) {
-                    return bindWsParameter(parameterName, arrayClass, valueSource);
+                    // NOTE: We pass the component type to the helper builder, not the array type.
+                    String conversionMethod = helperBuilder.addConversionMethod(parameterClass, true);
+                    if (conversionMethod != null) {
+                        String sourceMethod = helperBuilder.addSourceMethod(valueSource, true);
+                        return CodeBlock.builder()
+                            .add("$N($N($N, $S))", conversionMethod, sourceMethod, wrapper, parameterName)
+                            .build()
+                            .toString();
+                    }
                 }
             }
         }
@@ -333,25 +347,5 @@ final class ParameterGenerator {
             return WsValueSource.QueryString;
         }
         return WsValueSource.Any;
-    }
-
-    private static String bindParameter(String parameterName, Class<?> parameterClass, ValueSource valueSource) {
-        return CodeBlock.of(
-                "($T)binder.getValue($S, $T.class, $T.$L)",
-                parameterClass,
-                parameterName,
-                parameterClass,
-                ValueSource.class,
-                valueSource).toString();
-    }
-
-    private static String bindWsParameter(String parameterName, Class<?> parameterClass, WsValueSource valueSource) {
-        return CodeBlock.of(
-                "($T)binder.getValue($S, $T.class, $T.$L)",
-                parameterClass,
-                parameterName,
-                parameterClass,
-                WsValueSource.class,
-                valueSource).toString();
     }
 }

@@ -59,7 +59,7 @@ public interface WsRequest {
      * @param name The name of the header to search for.
      * @return the value of the header or null of it does not exist.
      */
-    String getHeader(String name);
+    String getHeaderValue(String name);
 
     /**
      * Gets the key/value pairs for any headers.
