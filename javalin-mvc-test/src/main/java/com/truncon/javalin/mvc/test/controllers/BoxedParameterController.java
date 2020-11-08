@@ -121,6 +121,20 @@ public class BoxedParameterController {
         return new ContentResult(LOCAL_DATE_FORMAT.format(value));
     }
 
+    public static final String YEAR_MONTH_ROUTE = "/api/boxed/year-month/:value";
+    public static final DateTimeFormatter YEAR_MONTH_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM");
+    @HttpGet(route = YEAR_MONTH_ROUTE)
+    public ActionResult getYearMonth(YearMonth value) {
+        return new ContentResult(YEAR_MONTH_FORMAT.format(value));
+    }
+
+    public static final String YEAR_ROUTE = "/api/boxed/year/:value";
+    public static final DateTimeFormatter YEAR_FORMAT = DateTimeFormatter.ofPattern("yyyy");
+    @HttpGet(route = YEAR_ROUTE)
+    public ActionResult getYear(Year value) {
+        return new ContentResult(YEAR_FORMAT.format(value));
+    }
+
     public static final String BIG_INTEGER_ROUTE = "/api/boxed/big-integer/:value";
     @HttpGet(route = BIG_INTEGER_ROUTE)
     public ActionResult getBigInteger(BigInteger value) {

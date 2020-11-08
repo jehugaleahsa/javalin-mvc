@@ -52,7 +52,7 @@ final class JavalinHttpRequest implements HttpRequest {
         return context.formParamMap().containsKey(name);
     }
 
-    public String getFormParameter(String name) {
+    public String getFormValue(String name) {
         return context.formParam(name);
     }
 
@@ -64,7 +64,7 @@ final class JavalinHttpRequest implements HttpRequest {
         return context.headerMap().containsKey(name);
     }
 
-    public String getHeader(String name) {
+    public String getHeaderValue(String name) {
         return context.header(name);
     }
 

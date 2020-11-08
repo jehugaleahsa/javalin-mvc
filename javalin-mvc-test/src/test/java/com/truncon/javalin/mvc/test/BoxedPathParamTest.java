@@ -193,6 +193,30 @@ public final class BoxedPathParamTest {
     }
 
     @Test
+    public void testYearMonth() {
+        AsyncTestUtils.runTest(app -> {
+            String value = BoxedParameterController.YEAR_MONTH_FORMAT.format(YearMonth.now());
+            String route = buildRouteWithPathParams(
+                BoxedParameterController.YEAR_MONTH_ROUTE,
+                pathParams(param("value", value)));
+            String response = getStringForGet(route);
+            Assert.assertEquals(value, response);
+        }).join();
+    }
+
+    @Test
+    public void testYear() {
+        AsyncTestUtils.runTest(app -> {
+            String value = BoxedParameterController.YEAR_FORMAT.format(YearMonth.now());
+            String route = buildRouteWithPathParams(
+                BoxedParameterController.YEAR_ROUTE,
+                pathParams(param("value", value)));
+            String response = getStringForGet(route);
+            Assert.assertEquals(value, response);
+        }).join();
+    }
+
+    @Test
     public void testBigInteger() {
         AsyncTestUtils.runTest(app -> {
             String value = new BigInteger("12345678901234567890").toString();

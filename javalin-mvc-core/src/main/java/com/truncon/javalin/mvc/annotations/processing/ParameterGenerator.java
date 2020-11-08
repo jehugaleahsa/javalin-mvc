@@ -105,14 +105,29 @@ final class ParameterGenerator {
         String parameterName = getParameterName();
         ValueSource valueSource = getValueSource(parameter);
         // First check if we can provide a simple converter for the parameter type.
-        for (Class<?> parameterClass : HelperMethodBuilder.HELPER_LOOKUP.keySet()) {
+        for (Class<?> parameterClass : HelperMethodBuilder.CONVERSION_HELPER_LOOKUP.keySet()) {
             if (isType(parameterType, parameterClass)) {
-                helperBuilder.addConvertToMethod(parameterClass);
+                String conversionMethod = helperBuilder.addConversionMethod(parameterClass, false);
+                if (conversionMethod != null) {
+                    String sourceMethod = helperBuilder.addSourceMethod(valueSource, parameterName, false);
+                    return CodeBlock.builder()
+                        .add("$N($N($N, $S))", conversionMethod, sourceMethod, wrapper, parameterName)
+                        .build()
+                        .toString();
+                }
                 return bindParameter(parameterName, parameterClass, valueSource);
             } else {
                 Class<?> arrayClass = getArrayClass(parameterClass);
                 if (isType(parameterType, arrayClass)) {
-                    helperBuilder.addConvertToMethod(parameterClass);
+                    // NOTE: We pass the component type to the helper builder, not the array type.
+                    String conversionMethod = helperBuilder.addConversionMethod(parameterClass, true);
+                    if (conversionMethod != null) {
+                        String sourceMethod = helperBuilder.addSourceMethod(valueSource, parameterName, true);
+                        return CodeBlock.builder()
+                            .add("$N($N($N, $S))", conversionMethod, sourceMethod, wrapper, parameterName)
+                            .build()
+                            .toString();
+                    }
                     return bindParameter(parameterName, arrayClass, valueSource);
                 }
             }

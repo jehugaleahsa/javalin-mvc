@@ -30,7 +30,7 @@ public class BoxedArrayParameterController {
 
     public static final String BYTE_ROUTE = "/api/boxed-arrays/byte";
     @HttpGet(route = BYTE_ROUTE)
-    public ActionResult getString(@Named("value") Byte[] values) {
+    public ActionResult getByte(@Named("value") Byte[] values) {
         return new JsonResult(values);
     }
 
@@ -91,6 +91,18 @@ public class BoxedArrayParameterController {
     public static final String LOCAL_DATE_ROUTE = "/api/boxed-arrays/local-date";
     @HttpGet(route = LOCAL_DATE_ROUTE)
     public ActionResult getLocalDate(@Named("value") LocalDate[] values) {
+        return new JsonResult(values);
+    }
+
+    public static final String YEAR_MONTH_ROUTE = "/api/boxed-arrays/year-month";
+    @HttpGet(route = YEAR_MONTH_ROUTE)
+    public ActionResult getYearMonth(@Named("value") YearMonth[] values) {
+        return new JsonResult(values);
+    }
+
+    public static final String YEAR_ROUTE = "/api/boxed-arrays/year";
+    @HttpGet(route = YEAR_ROUTE)
+    public ActionResult getYear(@Named("value") Year[] values) {
         return new JsonResult(values);
     }
 

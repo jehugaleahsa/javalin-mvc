@@ -59,7 +59,7 @@ public interface HttpRequest {
      * @param name The name of the form field to search for.
      * @return the value of the form field or null if it does not exist.
      */
-    String getFormParameter(String name);
+    String getFormValue(String name);
 
     /**
      * Gets the key/value pairs for any form fields.
@@ -79,7 +79,7 @@ public interface HttpRequest {
      * @param name The name of the header to search for.
      * @return the value of the header or null of it does not exist.
      */
-    String getHeader(String name);
+    String getHeaderValue(String name);
 
     /**
      * Gets the key/value pairs for any headers.

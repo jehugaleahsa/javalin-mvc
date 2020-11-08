@@ -56,24 +56,28 @@ final class ControllerRegistryGenerator {
             .build();
         registryTypeBuilder.addAnnotation(generatedAnnotation);
 
-        TypeName factoryType = ParameterizedTypeName.get(
-            ClassName.get(Supplier.class),
-            TypeName.get(container.getType()));
-        FieldSpec scopeFactoryField = FieldSpec.builder(factoryType, "scopeFactory", Modifier.PRIVATE, Modifier.FINAL).build();
-        registryTypeBuilder.addField(scopeFactoryField);
+        if (container.isFound()) {
+            TypeName factoryType = ParameterizedTypeName.get(
+                ClassName.get(Supplier.class),
+                TypeName.get(container.getType()));
+            FieldSpec scopeFactoryField = FieldSpec.builder(factoryType, "scopeFactory", Modifier.PRIVATE, Modifier.FINAL).build();
+            registryTypeBuilder.addField(scopeFactoryField);
 
-        MethodSpec constructor = MethodSpec.constructorBuilder()
-            .addModifiers(Modifier.PUBLIC)
-            .addParameter(factoryType, "scopeFactory")
-            .addStatement("this.scopeFactory = scopeFactory")
-            .build();
-        registryTypeBuilder.addMethod(constructor);
+            MethodSpec constructor = MethodSpec.constructorBuilder()
+                .addModifiers(Modifier.PUBLIC)
+                .addParameter(factoryType, "scopeFactory")
+                .addStatement("this.scopeFactory = scopeFactory")
+                .build();
+            registryTypeBuilder.addMethod(constructor);
+        } else {
+            MethodSpec constructor = MethodSpec.constructorBuilder()
+                .addModifiers(Modifier.PUBLIC)
+                .build();
+            registryTypeBuilder.addMethod(constructor);
+        }
 
         final String APP_NAME = "app";
-        HelperMethodBuilder helperBuilder = new HelperMethodBuilder(
-            container.getTypeUtils(),
-            container.getElementUtils(),
-            registryTypeBuilder);
+        HelperMethodBuilder helperBuilder = new HelperMethodBuilder(registryTypeBuilder);
         MethodSpec register = MethodSpec.methodBuilder("register")
             .addAnnotation(Override.class)
             .addModifiers(Modifier.PUBLIC)

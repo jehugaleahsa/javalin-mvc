@@ -46,6 +46,8 @@ public final class ConversionUtils {
         converters.put(OffsetDateTime.class, s -> StringUtils.isBlank(s) ? null : OffsetDateTime.parse(s));
         converters.put(LocalDateTime.class, s -> StringUtils.isBlank(s) ? null : LocalDateTime.parse(s));
         converters.put(LocalDate.class, s -> StringUtils.isBlank(s) ? null : LocalDate.parse(s));
+        converters.put(YearMonth.class, s -> StringUtils.isBlank(s) ? null : YearMonth.parse(s));
+        converters.put(Year.class, s -> StringUtils.isBlank(s) ? null : Year.parse(s));
         converters.put(Double.class, s -> StringUtils.isBlank(s) ? null : Double.parseDouble(s));
         converters.put(Long.class, s -> StringUtils.isBlank(s) ? null : Long.parseLong(s));
         converters.put(Short.class, s -> StringUtils.isBlank(s) ? null : Short.parseShort(s));
