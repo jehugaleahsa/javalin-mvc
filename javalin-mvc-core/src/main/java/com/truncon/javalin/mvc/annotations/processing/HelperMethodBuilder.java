@@ -7,7 +7,10 @@ import com.squareup.javapoet.TypeSpec;
 import com.truncon.javalin.mvc.api.HttpContext;
 import com.truncon.javalin.mvc.api.HttpRequest;
 import com.truncon.javalin.mvc.api.ValueSource;
+import com.truncon.javalin.mvc.api.ws.WsMessageContext;
+import com.truncon.javalin.mvc.api.ws.WsRequest;
 import com.truncon.javalin.mvc.api.ws.WsValueSource;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 
 import javax.lang.model.element.Modifier;
 import java.math.BigDecimal;
@@ -97,8 +100,8 @@ public final class HelperMethodBuilder {
     private final Set<Class<?>> addedArrayConversionHelpers = new HashSet<>();
     private final Set<ValueSource> addedSingletonSourceHelpers = new HashSet<>();
     private final Set<ValueSource> addedArraySourceHelpers = new HashSet<>();
-    private final Set<WsValueSource> addedSingletonWsSourceHelpers = new HashSet<>();
-    private final Set<WsValueSource> addedArrayWsSourceHelpers = new HashSet<>();
+    private final Set<ImmutablePair<WsValueSource, Class<?>>> addedSingletonWsSourceHelpers = new HashSet<>();
+    private final Set<ImmutablePair<WsValueSource, Class<?>>> addedArrayWsSourceHelpers = new HashSet<>();
 
     public HelperMethodBuilder(TypeSpec.Builder typeBuilder) {
         this.typeBuilder = typeBuilder;
@@ -132,13 +135,14 @@ public final class HelperMethodBuilder {
         }
     }
 
-    public String addSourceMethod(WsValueSource valueSource, boolean isArray) {
+    public String addSourceMethod(WsValueSource valueSource, Class<?> wrapperType, boolean isArray) {
+        // TODO - Check that the wrapper type and value source make sense together
         WsSourceHelper sourceHelper = WS_SOURCE_HELPER_LOOKUP.get(valueSource);
         if (isArray) {
-            sourceHelper.buildArrayHelper(this);
+            sourceHelper.buildArrayHelper(this, wrapperType);
             return sourceHelper.getArrayName();
         } else {
-            sourceHelper.buildSingletonHelper(this);
+            sourceHelper.buildSingletonHelper(this, wrapperType);
             return sourceHelper.getSingletonName();
         }
     }
@@ -1871,46 +1875,54 @@ public final class HelperMethodBuilder {
 
     private static abstract class WsSourceHelper {
         public abstract WsValueSource getValueSource();
-
         public abstract String getSingletonName();
-
         public abstract String getArrayName();
 
-        public void buildSingletonHelper(HelperMethodBuilder builder) {
-            if (builder.addedSingletonWsSourceHelpers.contains(getValueSource())) {
+        public void buildSingletonHelper(HelperMethodBuilder builder, Class<?> wrapperType) {
+            ImmutablePair<WsValueSource, Class<?>> key = ImmutablePair.of(getValueSource(), wrapperType);
+            if (builder.addedSingletonWsSourceHelpers.contains(key)) {
                 return;
             }
             MethodSpec method = MethodSpec.methodBuilder(getSingletonName())
                 .addModifiers(Modifier.PRIVATE, Modifier.STATIC)
                 .returns(String.class)
-                .addParameter(HttpContext.class, "context", Modifier.FINAL)
+                .addParameter(wrapperType, "context", Modifier.FINAL)
                 .addParameter(String.class, "key", Modifier.FINAL)
-                .addCode(getSingletonMethodBody(builder, "context", "key"))
+                .addCode(getSingletonMethodBody(builder, wrapperType, "context", "key"))
                 .build();
             builder.typeBuilder.addMethod(method);
-            builder.addedSingletonWsSourceHelpers.add(getValueSource());
+            builder.addedSingletonWsSourceHelpers.add(key);
         }
 
-        protected abstract CodeBlock getSingletonMethodBody(HelperMethodBuilder builder, String context, String key);
+        protected abstract CodeBlock getSingletonMethodBody(
+            HelperMethodBuilder builder,
+            Class<?> contextType,
+            String context,
+            String key);
 
-        public void buildArrayHelper(HelperMethodBuilder builder) {
-            if (builder.addedArrayWsSourceHelpers.contains(getValueSource())) {
+        public void buildArrayHelper(HelperMethodBuilder builder, Class<?> wrapperType) {
+            ImmutablePair<WsValueSource, Class<?>> key = ImmutablePair.of(getValueSource(), wrapperType);
+            if (builder.addedArrayWsSourceHelpers.contains(key)) {
                 return;
             }
             MethodSpec method = MethodSpec.methodBuilder(getArrayName())
                 .addModifiers(Modifier.PRIVATE, Modifier.STATIC)
                 .returns(String[].class)
-                .addParameter(HttpContext.class, "context", Modifier.FINAL)
+                .addParameter(wrapperType, "context", Modifier.FINAL)
                 .addParameter(String.class, "key", Modifier.FINAL)
-                .addCode(getArrayMethodBody(builder, "context", "key"))
+                .addCode(getArrayMethodBody(builder, wrapperType, "context", "key"))
                 .build();
             builder.typeBuilder.addMethod(method);
-            builder.addedArrayWsSourceHelpers.add(getValueSource());
+            builder.addedArrayWsSourceHelpers.add(key);
         }
 
-        protected abstract CodeBlock getArrayMethodBody(HelperMethodBuilder builder, String context, String key);
+        protected abstract CodeBlock getArrayMethodBody(
+            HelperMethodBuilder builder,
+            Class<?> contextType,
+            String context,
+            String key);
 
-        public abstract CodeBlock getPresenceCheck(String request, String key);
+        public abstract CodeBlock getPresenceCheck(String context, String key);
     }
 
     private static final class WsPathHelper extends WsSourceHelper {
@@ -1930,17 +1942,25 @@ public final class HelperMethodBuilder {
         }
 
         @Override
-        protected CodeBlock getSingletonMethodBody(HelperMethodBuilder builder, String wrapper, String key) {
+        protected CodeBlock getSingletonMethodBody(
+                HelperMethodBuilder builder,
+                Class<?> wrapperType,
+                String wrapper,
+                String key) {
             return CodeBlock.builder()
-                .addStatement("$T request = $N.getRequest()", HttpRequest.class, wrapper)
+                .addStatement("$T request = $N.getRequest()", WsRequest.class, wrapper)
                 .addStatement("return request.getPathParameter($N)", key)
                 .build();
         }
 
         @Override
-        protected CodeBlock getArrayMethodBody(HelperMethodBuilder builder, String wrapper, String key) {
+        protected CodeBlock getArrayMethodBody(
+                HelperMethodBuilder builder,
+                Class<?> wrapperType,
+                String wrapper,
+                String key) {
             return CodeBlock.builder()
-                .addStatement("$T request = $N.getRequest()", HttpRequest.class, wrapper)
+                .addStatement("$T request = $N.getRequest()", WsRequest.class, wrapper)
                 .addStatement("$T<String> values = request.getPathLookup().get($N)", Collection.class, key)
                 .addStatement("return values == null ? new String[0] : values.toArray(new String[0])")
                 .build();
@@ -1971,17 +1991,25 @@ public final class HelperMethodBuilder {
         }
 
         @Override
-        protected CodeBlock getSingletonMethodBody(HelperMethodBuilder builder, String wrapper, String key) {
+        protected CodeBlock getSingletonMethodBody(
+                HelperMethodBuilder builder,
+                Class<?> wrapperType,
+                String wrapper,
+                String key) {
             return CodeBlock.builder()
-                .addStatement("$T request = $N.getRequest()", HttpRequest.class, wrapper)
+                .addStatement("$T request = $N.getRequest()", WsRequest.class, wrapper)
                 .addStatement("return request.getQueryParameter($N)", key)
                 .build();
         }
 
         @Override
-        protected CodeBlock getArrayMethodBody(HelperMethodBuilder builder, String wrapper, String key) {
+        protected CodeBlock getArrayMethodBody(
+                HelperMethodBuilder builder,
+                Class<?> wrapperType,
+                String wrapper,
+                String key) {
             return CodeBlock.builder()
-                .addStatement("$T request = $N.getRequest()", HttpRequest.class, wrapper)
+                .addStatement("$T request = $N.getRequest()", WsRequest.class, wrapper)
                 .addStatement("$T<String> values = request.getQueryLookup().get($N)", Collection.class, key)
                 .addStatement("return values == null ? new String[0] : values.toArray(new String[0])")
                 .build();
@@ -2012,17 +2040,25 @@ public final class HelperMethodBuilder {
         }
 
         @Override
-        protected CodeBlock getSingletonMethodBody(HelperMethodBuilder builder, String wrapper, String key) {
+        protected CodeBlock getSingletonMethodBody(
+                HelperMethodBuilder builder,
+                Class<?> wrapperType,
+                String wrapper,
+                String key) {
             return CodeBlock.builder()
-                .addStatement("$T request = $N.getRequest()", HttpRequest.class, wrapper)
+                .addStatement("$T request = $N.getRequest()", WsRequest.class, wrapper)
                 .addStatement("return request.getHeaderValue($N)", key)
                 .build();
         }
 
         @Override
-        protected CodeBlock getArrayMethodBody(HelperMethodBuilder builder, String wrapper, String key) {
+        protected CodeBlock getArrayMethodBody(
+                HelperMethodBuilder builder,
+                Class<?> wrapperType,
+                String wrapper,
+                String key) {
             return CodeBlock.builder()
-                .addStatement("$T request = $N.getRequest()", HttpRequest.class, wrapper)
+                .addStatement("$T request = $N.getRequest()", WsRequest.class, wrapper)
                 .addStatement("$T<String> values = request.getHeaderLookup().get($N)", Collection.class, key)
                 .addStatement("return values == null ? new String[0] : values.toArray(new String[0])")
                 .build();
@@ -2053,17 +2089,25 @@ public final class HelperMethodBuilder {
         }
 
         @Override
-        protected CodeBlock getSingletonMethodBody(HelperMethodBuilder builder, String wrapper, String key) {
+        protected CodeBlock getSingletonMethodBody(
+                HelperMethodBuilder builder,
+                Class<?> wrapperType,
+                String wrapper,
+                String key) {
             return CodeBlock.builder()
-                .addStatement("$T request = $N.getRequest()", HttpRequest.class, wrapper)
+                .addStatement("$T request = $N.getRequest()", WsRequest.class, wrapper)
                 .addStatement("return request.getCookieValue($N)", key)
                 .build();
         }
 
         @Override
-        protected CodeBlock getArrayMethodBody(HelperMethodBuilder builder, String wrapper, String key) {
+        protected CodeBlock getArrayMethodBody(
+                HelperMethodBuilder builder,
+                Class<?> wrapperType,
+                String wrapper,
+                String key) {
             return CodeBlock.builder()
-                .addStatement("$T request = $N.getRequest()", HttpRequest.class, wrapper)
+                .addStatement("$T request = $N.getRequest()", WsRequest.class, wrapper)
                 .addStatement("$T<String> values = request.getCookieLookup().get($N)", Collection.class, key)
                 .addStatement("return values == null ? new String[0] : values.toArray(new String[0])")
                 .build();
@@ -2094,27 +2138,36 @@ public final class HelperMethodBuilder {
         }
 
         @Override
-        protected CodeBlock getSingletonMethodBody(HelperMethodBuilder builder, String wrapper, String key) {
-            return CodeBlock.builder()
-                .addStatement("$T request = $N.getRequest()", HttpRequest.class, wrapper)
-                .addStatement("return request.getFormValue($N)", key)
-                .build();
+        protected CodeBlock getSingletonMethodBody(
+                HelperMethodBuilder builder,
+                Class<?> wrapperType,
+                String wrapper,
+                String key) {
+            if (wrapperType == WsMessageContext.class) {
+                return CodeBlock.builder().addStatement("return $N.getMessage()", wrapper).build();
+            } else {
+                return CodeBlock.builder().addStatement("return null").build();
+            }
         }
 
         @Override
-        protected CodeBlock getArrayMethodBody(HelperMethodBuilder builder, String wrapper, String key) {
-            return CodeBlock.builder()
-                .addStatement("$T request = $N.getRequest()", HttpRequest.class, wrapper)
-                .addStatement("$T<String> values = request.getFormLookup().get($N)", Collection.class, key)
-                .addStatement("return values == null ? new String[0] : values.toArray(new String[0])")
-                .build();
+        protected CodeBlock getArrayMethodBody(
+                HelperMethodBuilder builder,
+                Class<?> wrapperType,
+                String wrapper,
+                String key) {
+            if (wrapperType == WsMessageContext.class) {
+                return CodeBlock.builder()
+                    .addStatement("return new String[] { $N.getMessage() }", wrapper)
+                    .build();
+            } else {
+                return CodeBlock.builder().addStatement("return new String[0]").build();
+            }
         }
 
         @Override
-        public CodeBlock getPresenceCheck(String request, String key) {
-            return CodeBlock.builder()
-                .add("$N.hasFormParameter($N)", request, key)
-                .build();
+        public CodeBlock getPresenceCheck(String context, String key) {
+            return null;
         }
     }
 
@@ -2135,23 +2188,27 @@ public final class HelperMethodBuilder {
         }
 
         @Override
-        protected CodeBlock getSingletonMethodBody(HelperMethodBuilder builder, String wrapper, String key) {
+        protected CodeBlock getSingletonMethodBody(
+                HelperMethodBuilder builder,
+                Class<?> wrapperType,
+                String wrapper,
+                String key) {
             // Build the source helpers for all the other source types
             for (Map.Entry<WsValueSource, WsSourceHelper> entry : WS_SOURCE_HELPER_LOOKUP.entrySet()) {
                 WsValueSource source = entry.getKey();
                 if (source != WsValueSource.Any) {
                     WsSourceHelper helper = entry.getValue();
-                    helper.buildSingletonHelper(builder);
+                    helper.buildSingletonHelper(builder, wrapperType);
                 }
             }
 
             CodeBlock.Builder codeBuilder = CodeBlock.builder()
-                .addStatement("$T request = $N.getRequest()", HttpRequest.class, wrapper);
+                .addStatement("$T request = $N.getRequest()", WsRequest.class, wrapper);
             for (Map.Entry<WsValueSource, WsSourceHelper> entry : WS_SOURCE_HELPER_LOOKUP.entrySet()) {
                 WsValueSource source = entry.getKey();
                 if (source != WsValueSource.Any) {
                     WsSourceHelper helper = entry.getValue();
-                    CodeBlock check = helper.getPresenceCheck("request", key);
+                    CodeBlock check = helper.getPresenceCheck(wrapper, key);
                     if (check != null) {
                         codeBuilder.beginControlFlow("if (" + check.toString() + ")");
                         codeBuilder.addStatement("return $N($N, $N)", helper.getSingletonName(), wrapper, key);
@@ -2159,28 +2216,33 @@ public final class HelperMethodBuilder {
                     }
                 }
             }
-            codeBuilder.addStatement("return null");
+            WsSourceHelper messageHelper = WS_SOURCE_HELPER_LOOKUP.get(WsValueSource.Message);
+            codeBuilder.addStatement("$N($N, $N)", messageHelper.getSingletonName(), wrapper, key);
             return codeBuilder.build();
         }
 
         @Override
-        protected CodeBlock getArrayMethodBody(HelperMethodBuilder builder, String wrapper, String key) {
+        protected CodeBlock getArrayMethodBody(
+                HelperMethodBuilder builder,
+                Class<?> wrapperType,
+                String wrapper,
+                String key) {
             // Build the source helpers for all the other source types
             for (Map.Entry<WsValueSource, WsSourceHelper> entry : WS_SOURCE_HELPER_LOOKUP.entrySet()) {
                 WsValueSource source = entry.getKey();
                 if (source != WsValueSource.Any) {
                     WsSourceHelper helper = entry.getValue();
-                    helper.buildArrayHelper(builder);
+                    helper.buildArrayHelper(builder, wrapperType);
                 }
             }
 
             CodeBlock.Builder codeBuilder = CodeBlock.builder()
-                .addStatement("$T request = $N.getRequest()", HttpRequest.class, wrapper);
+                .addStatement("$T request = $N.getRequest()", WsRequest.class, wrapper);
             for (Map.Entry<WsValueSource, WsSourceHelper> entry : WS_SOURCE_HELPER_LOOKUP.entrySet()) {
                 WsValueSource source = entry.getKey();
                 if (source != WsValueSource.Any) {
                     WsSourceHelper helper = entry.getValue();
-                    CodeBlock check = helper.getPresenceCheck("request", key);
+                    CodeBlock check = helper.getPresenceCheck(wrapper, key);
                     if (check != null) {
                         codeBuilder.beginControlFlow("if (" + check.toString() + ")");
                         codeBuilder.addStatement("return $N($N, $N)", helper.getArrayName(), wrapper, key);
@@ -2188,12 +2250,13 @@ public final class HelperMethodBuilder {
                     }
                 }
             }
-            codeBuilder.addStatement("return new String[0]");
+            WsSourceHelper messageHelper = WS_SOURCE_HELPER_LOOKUP.get(WsValueSource.Message);
+            codeBuilder.addStatement("$N($N, $N)", messageHelper.getArrayName(), wrapper, key);
             return codeBuilder.build();
         }
 
         @Override
-        public CodeBlock getPresenceCheck(String request, String key) {
+        public CodeBlock getPresenceCheck(String context, String key) {
             return null;
         }
     }

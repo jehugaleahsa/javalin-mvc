@@ -14,7 +14,6 @@ import java.util.stream.Collectors;
 
 public final class ConversionUtils {
     private static final Map<Class<?>, Function<String, Object>> primitiveConverters = getPrimitiveConverters();
-    public static final Class<?>[] SUPPORTED_TYPES = primitiveConverters.keySet().toArray(new Class<?>[0]);
     private static final Map<Class<?>, Class<?>> primitiveToBoxed = getPrimitiveToBoxed();
 
     private ConversionUtils() {

@@ -178,7 +178,7 @@ final class ParameterGenerator {
             if (isType(parameterType, parameterClass)) {
                 String conversionMethod = helperBuilder.addConversionMethod(parameterClass, false);
                 if (conversionMethod != null) {
-                    String sourceMethod = helperBuilder.addSourceMethod(valueSource, false);
+                    String sourceMethod = helperBuilder.addSourceMethod(valueSource, wrapperType, false);
                     return CodeBlock.builder()
                         .add("$N($N($N, $S))", conversionMethod, sourceMethod, wrapper, parameterName)
                         .build()
@@ -190,7 +190,7 @@ final class ParameterGenerator {
                     // NOTE: We pass the component type to the helper builder, not the array type.
                     String conversionMethod = helperBuilder.addConversionMethod(parameterClass, true);
                     if (conversionMethod != null) {
-                        String sourceMethod = helperBuilder.addSourceMethod(valueSource, true);
+                        String sourceMethod = helperBuilder.addSourceMethod(valueSource, wrapperType, true);
                         return CodeBlock.builder()
                             .add("$N($N($N, $S))", conversionMethod, sourceMethod, wrapper, parameterName)
                             .build()
