@@ -113,7 +113,7 @@ public final class ParameterLookup {
         if (named != null) {
             return named.value();
         }
-        return ParameterCache.normalize(StringUtils.removeStart(method.getName(), "set"));
+        return StringUtils.uncapitalize(StringUtils.removeStart(method.getName(), "set"));
     }
 
     private static String getKey(Field field) {
@@ -121,7 +121,7 @@ public final class ParameterLookup {
         if (named != null) {
             return named.value();
         }
-        return ParameterCache.normalize(field.getName());
+        return field.getName();
     }
 
     private boolean setMethodValue(ValueSource valueSource, Object instance, String key, Method method) throws IllegalAccessException, InvocationTargetException {
@@ -160,7 +160,7 @@ public final class ParameterLookup {
             return Collections.emptyList();
         }
         Map<String, Collection<String>> lookup = cache.getLookup();
-        return lookup.get(ParameterCache.normalize(name));
+        return lookup.get(name);
     }
 
     private static Collection<Pair<Method, ValueSource>> getBoundMethods(Class<?> type) {

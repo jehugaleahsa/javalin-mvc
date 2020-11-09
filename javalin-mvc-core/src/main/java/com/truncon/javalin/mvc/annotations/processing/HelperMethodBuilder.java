@@ -48,6 +48,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TimeZone;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -74,6 +75,7 @@ public final class HelperMethodBuilder {
         lookup.put(Double.class, new BoxedDoubleHelper());
         lookup.put(Boolean.class, new BoxedBooleanHelper());
         lookup.put(Character.class, new BoxedCharacterHelper());
+        lookup.put(String.class, new StringHelper());
         lookup.put(Date.class, new DateHelper());
         lookup.put(Instant.class, new InstantHelper());
         lookup.put(ZonedDateTime.class, new ZonedDateTimeHelper());
@@ -149,12 +151,16 @@ public final class HelperMethodBuilder {
     }
 
     private Class<?> getParameterClass(Element memberElement) {
+        return getParameterClass(getParameterType(memberElement));
+    }
+
+    private TypeMirror getParameterType(Element memberElement) {
         if (memberElement.getKind() == ElementKind.FIELD) {
-            return getParameterClass(memberElement.asType());
+            return memberElement.asType();
         } else {
             ExecutableElement method = (ExecutableElement) memberElement;
             VariableElement parameter = method.getParameters().get(0);
-            return getParameterClass(parameter.asType());
+            return parameter.asType();
         }
     }
 
@@ -175,6 +181,25 @@ public final class HelperMethodBuilder {
         return null;
     }
 
+    public static ValueSource getDefaultFromBinding(Element element) {
+        if (element.getAnnotation(FromPath.class) != null) {
+            return ValueSource.Path;
+        }
+        if (element.getAnnotation(FromQuery.class) != null) {
+            return ValueSource.QueryString;
+        }
+        if (element.getAnnotation(FromHeader.class) != null) {
+            return ValueSource.Header;
+        }
+        if (element.getAnnotation(FromCookie.class) != null) {
+            return ValueSource.Cookie;
+        }
+        if (element.getAnnotation(FromForm.class) != null) {
+            return ValueSource.FormData;
+        }
+        return ValueSource.Any;
+    }
+
     public String addConversionMethod(TypeElement element, ValueSource defaultSource) {
         ImmutablePair<ValueSource, String> key = ImmutablePair.of(defaultSource, element.getQualifiedName().toString());
         String methodName = complexConversionLookup.get(key);
@@ -190,48 +215,28 @@ public final class HelperMethodBuilder {
         }
         List<Element> memberElements = element.getEnclosedElements().stream()
             .filter(e -> e.getKind() == ElementKind.FIELD || e.getKind() == ElementKind.METHOD)
-            .filter(e -> defaultSource != ValueSource.Any || hasFromAnnotation(e))
+            .filter(e -> defaultSource != ValueSource.Any || hasFromAnnotation(e) || hasMemberBinding(e))
             .filter(e -> isValidBindTarget(e, false))
             .collect(Collectors.toList());
         for (Element memberElement : memberElements) {
-            Class<?> parameterClass = getParameterClass(memberElement);
-            if (parameterClass != null) {
-                Class<?> actualClass = parameterClass.isArray()
-                    ? parameterClass.getComponentType()
-                    : parameterClass;
-                String conversionMethod = addConversionMethod(actualClass, parameterClass.isArray());
-                if (conversionMethod != null) {
-                    String memberName = getMemberName(memberElement);
-                    if (memberName != null) {
-                        ValueSource valueSource = getMemberValueSource(memberElement, defaultSource);
-                        String sourceMethod = addSourceMethod(valueSource, parameterClass.isArray());
-                        if (memberElement.getKind() == ElementKind.FIELD) {
-                            methodBodyBuilder.addStatement(
-                                "model.$N = $N($N($N, $S))",
-                                memberElement.getSimpleName(),
-                                conversionMethod,
-                                sourceMethod,
-                                "context",
-                                memberName);
-                        } else if (memberElement.getKind() == ElementKind.METHOD) {
-                            methodBodyBuilder.addStatement(
-                                "model.$N($N($N($N, $S)))",
-                                memberElement.getSimpleName(),
-                                conversionMethod,
-                                sourceMethod,
-                                "context",
-                                memberName);
-                        }
-                    }
+            if (!addPrimitiveSetter(memberElement, methodBodyBuilder, defaultSource)) {
+                ValueSource defaultSubSource = getDefaultFromBinding(memberElement);
+                if (defaultSubSource != ValueSource.Any || hasMemberBinding(memberElement)) {
+                    TypeElement subElement = container.getTypeUtils().getTypeElement(getParameterType(memberElement));
+                    String conversionMethod = addConversionMethod(subElement, defaultSource);
+                    String valueExpression = CodeBlock.builder()
+                        .add("$N($N)", conversionMethod, "context")
+                        .build()
+                        .toString();
+                    setMember(memberElement, methodBodyBuilder, valueExpression);
                 }
             }
-            // TODO - handle recursion
         }
         methodBodyBuilder.addStatement("return model");
+
         String simpleName = element.getSimpleName().toString();
         int count = complexConversionCounts.getOrDefault(simpleName, 0);
-        String suffix = count == 0 ? "" : "" + (count + 1);
-        methodName = "to" + simpleName + suffix;
+        methodName = "to" + simpleName + (count + 1);
         MethodSpec method = MethodSpec.methodBuilder(methodName)
             .addModifiers(Modifier.PRIVATE)
             .addModifiers(Modifier.STATIC)
@@ -258,7 +263,7 @@ public final class HelperMethodBuilder {
         } else if (memberElement.getKind() == ElementKind.METHOD) {
             if (memberElement.getModifiers().contains(Modifier.PUBLIC)) {
                 ExecutableElement method = (ExecutableElement) memberElement;
-                if (method.getParameters().size() == 1) {
+                if (!method.getModifiers().contains(Modifier.STATIC) && method.getParameters().size() == 1) {
                     return true;
                 }
             }
@@ -270,6 +275,62 @@ public final class HelperMethodBuilder {
         } else {
             return false;
         }
+    }
+
+    private boolean addPrimitiveSetter(
+            Element memberElement,
+            CodeBlock.Builder methodBodyBuilder,
+            ValueSource defaultSource) {
+        Class<?> parameterClass = getParameterClass(memberElement);
+        if (parameterClass == null) {
+            if (memberElement.getSimpleName().toString().equals("container")) {
+                throw new RuntimeException("1");
+            }
+            return false;
+        }
+        Class<?> actualClass = parameterClass.isArray()
+            ? parameterClass.getComponentType()
+            : parameterClass;
+        String conversionMethod = addConversionMethod(actualClass, parameterClass.isArray());
+        if (conversionMethod == null) {
+            if (memberElement.getSimpleName().toString().equals("container")) {
+                throw new RuntimeException("1");
+            }
+            return false;
+        }
+        String memberName = getMemberName(memberElement);
+        if (memberName == null) {
+            if (memberElement.getSimpleName().toString().equals("container")) {
+                throw new RuntimeException("3");
+            }
+            return false;
+        }
+        ValueSource valueSource = getMemberValueSource(memberElement, defaultSource);
+        String sourceMethod = addSourceMethod(valueSource, parameterClass.isArray());
+        String valueExpression = getValueExpression(conversionMethod, sourceMethod, "context", memberName);
+        return setMember(memberElement, methodBodyBuilder, valueExpression);
+    }
+
+    private boolean setMember(Element member, CodeBlock.Builder methodBodyBuilder, String valueExpression) {
+        if (member.getKind() == ElementKind.FIELD) {
+            methodBodyBuilder.addStatement("model.$N = " + valueExpression, member.getSimpleName());
+            return true;
+        } else if (member.getKind() == ElementKind.METHOD) {
+            methodBodyBuilder.addStatement("model.$N(" + valueExpression + ")", member.getSimpleName());
+            return true;
+        } else {
+            if (member.getSimpleName().toString().equals("container")) {
+                throw new RuntimeException("4");
+            }
+            return false;
+        }
+    }
+
+    private String getValueExpression(String conversionMethod, String sourceMethod, String context, String key) {
+        return CodeBlock.builder()
+            .add("$N($N($N, $S))", conversionMethod, sourceMethod, context, key)
+            .build()
+            .toString();
     }
 
     private static ValueSource getMemberValueSource(Element memberElement, ValueSource defaultSource) {
@@ -300,10 +361,37 @@ public final class HelperMethodBuilder {
             return memberElement.getSimpleName().toString();
         } else if (memberElement.getKind() == ElementKind.METHOD) {
             String name = memberElement.getSimpleName().toString();
-            return StringUtils.removeStart(name, "set");
+            return StringUtils.uncapitalize(StringUtils.removeStart(name, "set"));
         } else {
             return null;
         }
+    }
+
+    public boolean hasMemberBinding(Element element) {
+        if (element.getKind() == ElementKind.PARAMETER) {
+            TypeElement typeElement = container.getTypeUtils().getTypeElement(element.asType());
+            return hasMemberBinding(typeElement);
+        } else if (element.getKind() == ElementKind.FIELD) {
+            TypeElement typeElement = container.getTypeUtils().getTypeElement(element.asType());
+            return hasMemberBinding(typeElement);
+        } else if (element.getKind() == ElementKind.METHOD) {
+            ExecutableElement method = (ExecutableElement) element;
+            if (!method.getModifiers().contains(Modifier.STATIC) && method.getParameters().size() == 1) {
+                VariableElement parameterElement = method.getParameters().get(0);
+                TypeElement typeElement = container.getTypeUtils().getTypeElement(parameterElement.asType());
+                return hasMemberBinding(typeElement);
+            }
+        }
+        return false;
+    }
+
+    private boolean hasMemberBinding(TypeElement element) {
+        if (element == null) {
+            return false;
+        }
+        return element.getEnclosedElements().stream()
+            .filter(e -> e.getKind() == ElementKind.FIELD || e.getKind() == ElementKind.METHOD)
+            .anyMatch(HelperMethodBuilder::hasFromAnnotation);
     }
 
     public static boolean hasFromAnnotation(Element element) {
@@ -312,6 +400,22 @@ public final class HelperMethodBuilder {
             || element.getAnnotation(FromHeader.class) != null
             || element.getAnnotation(FromCookie.class) != null
             || element.getAnnotation(FromForm.class) != null;
+    }
+
+    public static WsValueSource getDefaultWsFromBinding(Element element) {
+        if (element.getAnnotation(FromPath.class) != null) {
+            return WsValueSource.Path;
+        }
+        if (element.getAnnotation(FromQuery.class) != null) {
+            return WsValueSource.QueryString;
+        }
+        if (element.getAnnotation(FromHeader.class) != null) {
+            return WsValueSource.Header;
+        }
+        if (element.getAnnotation(FromCookie.class) != null) {
+            return WsValueSource.Cookie;
+        }
+        return WsValueSource.Any;
     }
 
     public String addConversionMethod(TypeElement element, WsValueSource defaultSource, Class<?> contextType) {
@@ -333,45 +437,24 @@ public final class HelperMethodBuilder {
             .filter(e -> isValidBindTarget(e, true))
             .collect(Collectors.toList());
         for (Element memberElement : memberElements) {
-            Class<?> parameterClass = getParameterClass(memberElement);
-            if (parameterClass != null) {
-                Class<?> actualClass = parameterClass.isArray()
-                    ? parameterClass.getComponentType()
-                    : parameterClass;
-                String conversionMethod = addConversionMethod(actualClass, parameterClass.isArray());
-                if (conversionMethod != null) {
-                    String memberName = getMemberName(memberElement);
-                    if (memberName != null) {
-                        WsValueSource valueSource = getMemberValueSource(memberElement, defaultSource);
-                        String sourceMethod = addSourceMethod(valueSource, contextType, parameterClass.isArray());
-                        if (memberElement.getKind() == ElementKind.FIELD) {
-                            methodBodyBuilder.addStatement(
-                                "model.$N = $N($N($N, $S))",
-                                memberElement.getSimpleName(),
-                                conversionMethod,
-                                sourceMethod,
-                                "context",
-                                memberName);
-                        } else if (memberElement.getKind() == ElementKind.METHOD) {
-                            methodBodyBuilder.addStatement(
-                                "model.$N($N($N($N, $S)))",
-                                memberElement.getSimpleName(),
-                                conversionMethod,
-                                sourceMethod,
-                                "context",
-                                memberName);
-                        }
-                    }
+            if (!addPrimitiveSetter(memberElement, methodBodyBuilder, defaultSource, contextType)) {
+                WsValueSource defaultSubSource = getDefaultWsFromBinding(memberElement);
+                if (defaultSubSource != WsValueSource.Any || hasWsMemberBinding(memberElement)) {
+                    TypeElement subElement = container.getTypeUtils().getTypeElement(getParameterType(memberElement));
+                    String conversionMethod = addConversionMethod(subElement, defaultSource, contextType);
+                    String valueExpression = CodeBlock.builder()
+                        .add("$N($N)", conversionMethod, "context")
+                        .build()
+                        .toString();
+                    setMember(memberElement, methodBodyBuilder, valueExpression);
                 }
             }
-            // TODO - handle recursion
         }
         methodBodyBuilder.addStatement("return model");
 
         String simpleName = element.getSimpleName().toString();
         int count = complexConversionCounts.getOrDefault(simpleName, 0);
-        String suffix = count == 0 ? "" : "" + (count + 1);
-        methodName = "to" + simpleName + suffix;
+        methodName = "to" + simpleName + (count + 1);
         MethodSpec method = MethodSpec.methodBuilder(methodName)
             .addModifiers(Modifier.PRIVATE)
             .addModifiers(Modifier.STATIC)
@@ -392,6 +475,41 @@ public final class HelperMethodBuilder {
             || element.getAnnotation(FromCookie.class) != null;
     }
 
+    private boolean addPrimitiveSetter(
+            Element memberElement,
+            CodeBlock.Builder methodBodyBuilder,
+            WsValueSource defaultSource,
+            Class<?> contextType) {
+        Class<?> parameterClass = getParameterClass(memberElement);
+        if (parameterClass == null) {
+            if (memberElement.getSimpleName().toString().equals("container")) {
+                throw new RuntimeException("No parameter class for string.");
+            }
+            return false;
+        }
+        Class<?> actualClass = parameterClass.isArray()
+            ? parameterClass.getComponentType()
+            : parameterClass;
+        String conversionMethod = addConversionMethod(actualClass, parameterClass.isArray());
+        if (conversionMethod == null) {
+            if (memberElement.getSimpleName().toString().equals("container")) {
+                throw new RuntimeException("No conversion method for string.");
+            }
+            return false;
+        }
+        String memberName = getMemberName(memberElement);
+        if (memberName == null) {
+            if (memberElement.getSimpleName().toString().equals("container")) {
+                throw new RuntimeException("No member name for string.");
+            }
+            return false;
+        }
+        WsValueSource valueSource = getMemberValueSource(memberElement, defaultSource);
+        String sourceMethod = addSourceMethod(valueSource, contextType, parameterClass.isArray());
+        String valueExpression = getValueExpression(conversionMethod, sourceMethod, "context", memberName);
+        return setMember(memberElement, methodBodyBuilder, valueExpression);
+    }
+
     private static WsValueSource getMemberValueSource(Element memberElement, WsValueSource defaultSource) {
         if (memberElement.getAnnotation(FromHeader.class) != null) {
             return WsValueSource.Header;
@@ -406,6 +524,33 @@ public final class HelperMethodBuilder {
             return WsValueSource.QueryString;
         }
         return defaultSource;
+    }
+
+    public boolean hasWsMemberBinding(Element element) {
+        if (element.getKind() == ElementKind.PARAMETER) {
+            TypeElement typeElement = container.getTypeUtils().getTypeElement(element.asType());
+            return hasWsMemberBinding(typeElement);
+        } else if (element.getKind() == ElementKind.FIELD) {
+            TypeElement typeElement = container.getTypeUtils().getTypeElement(element.asType());
+            return hasWsMemberBinding(typeElement);
+        } else if (element.getKind() == ElementKind.METHOD) {
+            ExecutableElement method = (ExecutableElement) element;
+            if (!method.getModifiers().contains(Modifier.STATIC) && method.getParameters().size() == 1) {
+                VariableElement parameterElement = method.getParameters().get(0);
+                TypeElement typeElement = container.getTypeUtils().getTypeElement(parameterElement.asType());
+                return hasWsMemberBinding(typeElement);
+            }
+        }
+        return false;
+    }
+
+    private boolean hasWsMemberBinding(TypeElement element) {
+        if (element == null) {
+            return false;
+        }
+        return element.getEnclosedElements().stream()
+            .filter(e -> e.getKind() == ElementKind.FIELD || e.getKind() == ElementKind.METHOD)
+            .anyMatch(HelperMethodBuilder::hasWsFromAnnotation);
     }
 
     public String addSourceMethod(ValueSource valueSource, boolean isArray) {
@@ -1254,6 +1399,42 @@ public final class HelperMethodBuilder {
         }
     }
 
+    private static final class StringHelper extends ConversionHelper {
+        @Override
+        public Class<?> getSingletonType() {
+            return String.class;
+        }
+
+        @Override
+        public Class<?> getArrayType() {
+            return String[].class;
+        }
+
+        @Override
+        public String getSingletonName() {
+            return "toString";
+        }
+
+        @Override
+        public String getArrayName() {
+            return "toStringArray";
+        }
+
+        @Override
+        protected CodeBlock getSingletonMethodBody(HelperMethodBuilder builder) {
+            return CodeBlock.builder()
+                .addStatement("return value")
+                .build();
+        }
+
+        @Override
+        protected CodeBlock getArrayMethodBody(HelperMethodBuilder builder) {
+            return CodeBlock.builder()
+                .addStatement("return values")
+                .build();
+        }
+    }
+
     private static final class DateHelper extends ConversionHelper {
         private boolean hasField;
 
@@ -1309,13 +1490,22 @@ public final class HelperMethodBuilder {
 
         private void addFormatterField(TypeSpec.Builder typeBuilder) {
             if (!hasField) {
+                MethodSpec method = MethodSpec.methodBuilder("getDateFormatter")
+                    .addModifiers(Modifier.PRIVATE, Modifier.STATIC)
+                    .returns(SimpleDateFormat.class)
+                    .addCode(CodeBlock.builder()
+                        .addStatement("$T formatter = new $T($S)", SimpleDateFormat.class, SimpleDateFormat.class, "yyyy-MM-dd'T'HH:mm:ss'Z'")
+                        .addStatement("formatter.setTimeZone($T.getTimeZone($S))", TimeZone.class, "UTC")
+                        .addStatement("return formatter")
+                        .build())
+                    .build();
+                typeBuilder.addMethod(method);
                 addField(
                     typeBuilder,
                     "DATE_FORMATTER",
                     SimpleDateFormat.class,
-                    "new $T($S)",
-                    SimpleDateFormat.class,
-                    "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
+                    "$N()",
+                    method.name
                 );
                 hasField = true;
             }

@@ -5,10 +5,11 @@ import io.javalin.http.Context;
 import io.javalin.http.UploadedFile;
 import com.truncon.javalin.mvc.api.FileUpload;
 import com.truncon.javalin.mvc.api.HttpRequest;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -45,7 +46,7 @@ final class JavalinHttpRequest implements HttpRequest {
     }
 
     public Map<String, Collection<String>> getQueryLookup() {
-        return Collections.unmodifiableMap(context.queryParamMap());
+        return copy(context.queryParamMap());
     }
 
     public boolean hasFormParameter(String name) {
@@ -57,7 +58,7 @@ final class JavalinHttpRequest implements HttpRequest {
     }
 
     public Map<String, Collection<String>> getFormLookup() {
-        return Collections.unmodifiableMap(context.formParamMap());
+        return copy(context.formParamMap());
     }
 
     public boolean hasHeader(String name) {
@@ -139,7 +140,18 @@ final class JavalinHttpRequest implements HttpRequest {
 
     private static List<String> listOf(String item) {
         List<String> list = new ArrayList<>();
-        list.add(item);
+        list.add(StringUtils.trimToNull(item));
         return list;
+    }
+
+    private static Map<String, Collection<String>> copy(Map<String, List<String>> map) {
+        Map<String, Collection<String>> copy = new LinkedHashMap<>(map.size());
+        for (Map.Entry<String, List<String>> entry : map.entrySet()) {
+            Collection<String> values = copy.computeIfAbsent(entry.getKey(), k -> new ArrayList<>(entry.getValue().size()));
+            for (String value : entry.getValue()) {
+                values.add(value.isEmpty() ? null : value);
+            }
+        }
+        return copy;
     }
 }

@@ -24,12 +24,12 @@ public final class ParameterCache {
 
     public boolean hasValue(String name) {
         Map<String, Collection<String>> lookup = getLookup();
-        return lookup.containsKey(normalize(name));
+        return lookup.containsKey(name);
     }
 
     public Collection<String> getValues(String name) {
         Map<String, Collection<String>> lookup = getLookup();
-        return lookup.get(normalize(name));
+        return lookup.get(name);
     }
 
     public Map<String, Collection<String>> getLookup() {
@@ -39,15 +39,10 @@ public final class ParameterCache {
         Map<String, Collection<String>> cache = new LinkedHashMap<>();
         Map<String, Collection<String>> source = getter.get();
         for (String name : source.keySet()) {
-            String sterilized = normalize(name);
             Collection<String> values = source.get(name);
-            cache.computeIfAbsent(sterilized, k -> new ArrayList<>()).addAll(values);
+            cache.computeIfAbsent(name, k -> new ArrayList<>()).addAll(values);
         }
         lookup = cache;
         return lookup;
-    }
-
-    public static String normalize(String name) {
-        return name == null ? null : name.trim().toUpperCase();
     }
 }

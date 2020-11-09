@@ -108,8 +108,8 @@ final class ParameterGenerator {
 
         // Next, check if this is an object with a @From* annotation or if one of the type's
         // public members has a @From* annotation decorating it.
-        ValueSource defaultBinding = getDefaultFromBinding();
-        if (defaultBinding != ValueSource.Any || hasMemberBinding(typeUtils)) {
+        ValueSource defaultBinding = HelperMethodBuilder.getDefaultFromBinding(parameter);
+        if (defaultBinding != ValueSource.Any || helperBuilder.hasMemberBinding(parameter)) {
             TypeElement element = typeUtils.getTypeElement(parameterType);
             String conversionMethod = helperBuilder.addConversionMethod(element, defaultBinding);
             return CodeBlock.builder()
@@ -142,35 +142,6 @@ final class ParameterGenerator {
         } else {
             return null;
         }
-    }
-
-    private ValueSource getDefaultFromBinding() {
-        if (parameter.getAnnotation(FromPath.class) != null) {
-            return ValueSource.Path;
-        }
-        if (parameter.getAnnotation(FromQuery.class) != null) {
-            return ValueSource.QueryString;
-        }
-        if (parameter.getAnnotation(FromHeader.class) != null) {
-            return ValueSource.Header;
-        }
-        if (parameter.getAnnotation(FromCookie.class) != null) {
-            return ValueSource.Cookie;
-        }
-        if (parameter.getAnnotation(FromForm.class) != null) {
-            return ValueSource.FormData;
-        }
-        return ValueSource.Any;
-    }
-
-    private boolean hasMemberBinding(TypeUtils typeUtils) {
-        TypeElement element = typeUtils.getTypeElement(parameter.asType());
-        if (element == null) {
-            return false;
-        }
-        return element.getEnclosedElements().stream()
-            .filter(e -> e.getKind() == ElementKind.FIELD || e.getKind() == ElementKind.METHOD)
-            .anyMatch(HelperMethodBuilder::hasFromAnnotation);
     }
 
     public boolean isWsBinderNeeded(TypeUtils typeUtils, Class<?> wrapperType) {
@@ -207,8 +178,8 @@ final class ParameterGenerator {
 
         // Next, check if this is an object with a @From* annotation or if one of the type's
         // public members has a @From* annotation decorating it.
-        WsValueSource defaultBinding = getDefaultWsFromBinding();
-        if (defaultBinding != WsValueSource.Any || hasWsMemberBinding(typeUtils)) {
+        WsValueSource defaultBinding = HelperMethodBuilder.getDefaultWsFromBinding(parameter);
+        if (defaultBinding != WsValueSource.Any || helperBuilder.hasWsMemberBinding(parameter)) {
             TypeElement element = typeUtils.getTypeElement(parameterType);
             String conversionMethod = helperBuilder.addConversionMethod(element, defaultBinding, wrapperType);
             return CodeBlock.builder()
@@ -268,32 +239,6 @@ final class ParameterGenerator {
         } else {
             return false;
         }
-    }
-
-    private WsValueSource getDefaultWsFromBinding() {
-        if (parameter.getAnnotation(FromPath.class) != null) {
-            return WsValueSource.Path;
-        }
-        if (parameter.getAnnotation(FromQuery.class) != null) {
-            return WsValueSource.QueryString;
-        }
-        if (parameter.getAnnotation(FromHeader.class) != null) {
-            return WsValueSource.Header;
-        }
-        if (parameter.getAnnotation(FromCookie.class) != null) {
-            return WsValueSource.Cookie;
-        }
-        return WsValueSource.Any;
-    }
-
-    private boolean hasWsMemberBinding(TypeUtils typeUtils) {
-        TypeElement element = typeUtils.getTypeElement(parameter.asType());
-        if (element == null) {
-            return false;
-        }
-        return element.getEnclosedElements().stream()
-            .filter(e -> e.getKind() == ElementKind.FIELD || e.getKind() == ElementKind.METHOD)
-            .anyMatch(HelperMethodBuilder::hasWsFromAnnotation);
     }
 
     public String getParameterName() {

@@ -1,6 +1,8 @@
 package com.truncon.javalin.mvc.test;
 
 import com.truncon.javalin.mvc.test.controllers.BindModelController;
+import com.truncon.javalin.mvc.test.models.ContainerModel;
+import com.truncon.javalin.mvc.test.models.PrimitiveParamFieldModel;
 import com.truncon.javalin.mvc.test.models.PrimitiveParamFieldNamedModel;
 import com.truncon.javalin.mvc.test.models.PrimitiveParamMethodModel;
 import com.truncon.javalin.mvc.test.models.PrimitiveParamMethodNamedModel;
@@ -98,7 +100,7 @@ public final class BindModelTest {
     @Test
     public void testGet_path_fields() {
         AsyncTestUtils.runTest(app -> {
-            String route = buildRouteWithQueryParams(BindModelController.GET_SETTERS_WITH_SOURCE_ROUTE, queryParams(
+            String route = buildRouteWithQueryParams(BindModelController.GET_FIELDS_WITH_SOURCE_ROUTE, queryParams(
                 param("intValue", Integer.toString(Integer.MAX_VALUE)),
                 param("booleanValue", Boolean.toString(true)),
                 param("doubleValue", Double.toString(Double.MAX_VALUE)),
@@ -108,16 +110,16 @@ public final class BindModelTest {
                 param("charValue", Character.toString(Character.MAX_VALUE)),
                 param("longValue", Long.toString(Long.MAX_VALUE))
             ));
-            PrimitiveParamMethodModel model = getJsonResponseForGet(route, PrimitiveParamMethodModel.class);
+            PrimitiveParamFieldModel model = getJsonResponseForGet(route, PrimitiveParamFieldModel.class);
             Assert.assertNotNull(model);
-            Assert.assertEquals(Integer.MAX_VALUE, model.getInteger());
-            Assert.assertTrue(model.getBoolean());
-            Assert.assertEquals(Double.MAX_VALUE, model.getDouble(), 0.0);
-            Assert.assertEquals(Byte.MAX_VALUE, model.getByte());
-            Assert.assertEquals(Short.MAX_VALUE, model.getShort());
-            Assert.assertEquals(Float.MAX_VALUE, model.getFloat(), 0.0f);
-            Assert.assertEquals(Character.MAX_VALUE, model.getChar());
-            Assert.assertEquals(Long.MAX_VALUE, model.getLong());
+            Assert.assertEquals(Integer.MAX_VALUE, model.intValue);
+            Assert.assertTrue(model.booleanValue);
+            Assert.assertEquals(Double.MAX_VALUE, model.doubleValue, 0.0);
+            Assert.assertEquals(Byte.MAX_VALUE, model.byteValue);
+            Assert.assertEquals(Short.MAX_VALUE, model.shortValue);
+            Assert.assertEquals(Float.MAX_VALUE, model.floatValue, 0.0f);
+            Assert.assertEquals(Character.MAX_VALUE, model.charValue);
+            Assert.assertEquals(Long.MAX_VALUE, model.longValue);
         }).join();
     }
 
@@ -222,6 +224,24 @@ public final class BindModelTest {
             Assert.assertEquals(Float.MAX_VALUE, model.floatValue, 0.0f);
             Assert.assertEquals(Character.MAX_VALUE, model.charValue);
             Assert.assertEquals(Long.MAX_VALUE, model.longValue);
+        }).join();
+    }
+
+    @Test
+    public void testGet_nestedModels_bindsRecursively() {
+        AsyncTestUtils.runTest(app -> {
+            String route = buildRouteWithQueryParams(BindModelController.GET_NESTED_MODELS_ROUTE, queryParams(
+                param("container", "container"),
+                param("field", "field"),
+                param("setter", "setter")
+            ));
+            ContainerModel model = getJsonResponseForGet(route, ContainerModel.class);
+            Assert.assertNotNull(model);
+            Assert.assertEquals("container", model.container);
+            Assert.assertNotNull(model.field);
+            Assert.assertEquals("field", model.field.field);
+            Assert.assertNotNull(model.getSetter());
+            Assert.assertEquals("setter", model.getSetter().setter);
         }).join();
     }
 }
