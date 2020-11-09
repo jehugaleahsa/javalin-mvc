@@ -113,11 +113,8 @@ final class RouteGenerator {
         return method.getAnnotation(annotationClass);
     }
 
-    public CodeBlock generateRoute(
-            ContainerSource container,
-            String app,
-            int index,
-            HelperMethodBuilder helperBuilder) {
+    public CodeBlock generateRoute(String app, int index, HelperMethodBuilder helperBuilder) {
+        ContainerSource container = helperBuilder.getContainer();
         CodeBlock.Builder handlerBuilder = CodeBlock.builder();
         handlerBuilder.beginControlFlow("$T handler$L = (ctx) ->", Handler.class, index);
 
@@ -125,7 +122,7 @@ final class RouteGenerator {
             handlerBuilder.addStatement("$T injector = scopeFactory.get()", container.getType());
         }
         handlerBuilder.addStatement("$T wrapper = new $T(ctx)", HttpContext.class, JavalinHttpContext.class);
-        if (ParameterGenerator.isBinderNeeded(typeUtils, elementUtils, method)) {
+        if (ParameterGenerator.isBinderNeeded(container.getTypeUtils(), method)) {
             handlerBuilder.addStatement("$T binder = new $T(wrapper.getRequest())", ModelBinder.class, DefaultModelBinder.class);
         }
 
@@ -209,7 +206,7 @@ final class RouteGenerator {
     }
 
     private String bindParameters(String context, String wrapper, HelperMethodBuilder helperBuilder) {
-        return ParameterGenerator.bindParameters(typeUtils, elementUtils, method, context, wrapper, helperBuilder);
+        return ParameterGenerator.bindParameters(method, context, wrapper, helperBuilder);
     }
 
     private static void generateAfterHandlers(

@@ -14,28 +14,22 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 final class ContainerSource {
-    private final Types typeUtils;
-    private final Elements elementUtils;
+    private final TypeUtils typeUtils;
     private final TypeElement containerElement;
     private final List<ExecutableElement> dependencies;
 
     private ContainerSource(
-            Types typeUtils,
-            Elements elementUtils,
+            Types types,
+            Elements elements,
             TypeElement containerElement,
             List<ExecutableElement> dependencies) {
-        this.typeUtils = typeUtils;
-        this.elementUtils = elementUtils;
+        this.typeUtils = new TypeUtils(elements, types);
         this.containerElement = containerElement;
         this.dependencies = dependencies;
     }
 
-    Types getTypeUtils() {
+    public TypeUtils getTypeUtils() {
         return typeUtils;
-    }
-
-    Elements getElementUtils() {
-        return elementUtils;
     }
 
     public static ContainerSource getContainerSource(
@@ -82,21 +76,21 @@ final class ContainerSource {
     }
 
     public Name getDependencyName(Class<?> dependencyClass) {
-        TypeElement searchType = elementUtils.getTypeElement(dependencyClass.getCanonicalName());
+        TypeElement searchType = typeUtils.getTypeElement(dependencyClass.getCanonicalName());
         return getDependencyName(searchType);
     }
 
     public Name getDependencyName(Name dependencyName) {
-        TypeElement searchType = elementUtils.getTypeElement(dependencyName);
+        TypeElement searchType = typeUtils.getTypeElement(dependencyName);
         return getDependencyName(searchType);
     }
 
     public Name getDependencyName(TypeElement searchType) {
         for (ExecutableElement dependency : dependencies) {
-            if (typeUtils.isSameType(searchType.asType(), dependency.getReturnType())) {
+            if (typeUtils.isType(searchType.asType(), dependency.getReturnType())) {
                 return dependency.getSimpleName();
             }
         }
-        return  null;
+        return null;
     }
 }

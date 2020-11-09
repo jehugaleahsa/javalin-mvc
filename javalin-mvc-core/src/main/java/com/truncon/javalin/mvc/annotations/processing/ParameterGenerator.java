@@ -1,76 +1,60 @@
 package com.truncon.javalin.mvc.annotations.processing;
 
 import com.squareup.javapoet.CodeBlock;
-import com.truncon.javalin.mvc.ConversionUtils;
 import com.truncon.javalin.mvc.api.*;
 import com.truncon.javalin.mvc.api.ws.*;
 import io.javalin.http.Context;
 import org.apache.commons.lang3.StringUtils;
 
+import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
-import javax.lang.model.type.ArrayType;
-import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.Elements;
-import javax.lang.model.util.Types;
 
 final class ParameterGenerator {
-    private final Types typeUtils;
-    private final Elements elementUtils;
     private final VariableElement parameter;
 
-    private ParameterGenerator(Types typeUtils, Elements elementUtils, VariableElement parameter) {
-        this.typeUtils = typeUtils;
-        this.elementUtils = elementUtils;
+    private ParameterGenerator(VariableElement parameter) {
         this.parameter = parameter;
     }
 
-    public static ParameterGenerator getParameterGenerator(Types types, Elements elements, VariableElement parameter) {
-        return new ParameterGenerator(types, elements, parameter);
+    public static ParameterGenerator getParameterGenerator(VariableElement parameter) {
+        return new ParameterGenerator(parameter);
     }
 
-    public static boolean isBinderNeeded(Types typeUtils, Elements elementUtils, ExecutableElement method) {
+    public static boolean isBinderNeeded(TypeUtils typeUtils, ExecutableElement method) {
         return method.getParameters().stream()
-            .map(p -> ParameterGenerator.getParameterGenerator(typeUtils, elementUtils, p))
-            .anyMatch(ParameterGenerator::isBinderNeeded);
+            .map(ParameterGenerator::getParameterGenerator)
+            .anyMatch(g -> g.isBinderNeeded(typeUtils));
     }
 
     public static String bindParameters(
-            Types typeUtils,
-            Elements elementUtils,
             ExecutableElement method,
             String context,
             String wrapper,
             HelperMethodBuilder helperBuilder) {
         String[] arguments = method.getParameters().stream()
-            .map(p -> ParameterGenerator.getParameterGenerator(typeUtils, elementUtils, p))
+            .map(ParameterGenerator::getParameterGenerator)
             .map(g -> g.generateParameter(context, wrapper, helperBuilder))
             .toArray(String[]::new);
         return String.join(", ", arguments);
     }
 
-    public static boolean isWsBinderNeeded(
-            Types typeUtils,
-            Elements elementUtils,
-            ExecutableElement method,
-            Class<?> wrapperType) {
+    public static boolean isWsBinderNeeded(TypeUtils typeUtils, ExecutableElement method, Class<?> wrapperType) {
         return method.getParameters().stream()
-            .map(p -> ParameterGenerator.getParameterGenerator(typeUtils, elementUtils, p))
-            .anyMatch(p -> p.isWsBinderNeeded(wrapperType));
+            .map(ParameterGenerator::getParameterGenerator)
+            .anyMatch(p -> p.isWsBinderNeeded(typeUtils, wrapperType));
     }
 
     public static String bindWsParameters(
-            Types typeUtils,
-            Elements elementUtils,
             ExecutableElement method,
             String context,
             Class<?> wrapperType,
             String wrapper,
             HelperMethodBuilder helperBuilder) {
         String[] arguments = method.getParameters().stream()
-                .map(p -> ParameterGenerator.getParameterGenerator(typeUtils, elementUtils, p))
+                .map(ParameterGenerator::getParameterGenerator)
                 .map(g -> g.generateWsParameter(context, wrapperType, wrapper, helperBuilder))
                 .toArray(String[]::new);
         return String.join(", ", arguments);
@@ -80,17 +64,17 @@ final class ParameterGenerator {
         return parameter;
     }
 
-    public boolean isBinderNeeded() {
+    public boolean isBinderNeeded(TypeUtils typeUtils) {
         TypeMirror parameterType = parameter.asType();
-        if (isType(parameterType, Context.class)) {
+        if (typeUtils.isType(parameterType, Context.class)) {
             return false;
-        } else if (isType(parameterType, HttpContext.class)) {
+        } else if (typeUtils.isType(parameterType, HttpContext.class)) {
             return false;
-        } else if (isType(parameterType, HttpRequest.class)) {
+        } else if (typeUtils.isType(parameterType, HttpRequest.class)) {
             return false;
-        } else if (isType(parameterType, HttpResponse.class)) {
+        } else if (typeUtils.isType(parameterType, HttpResponse.class)) {
             return false;
-        } else if (isType(parameterType, FileUpload.class)) {
+        } else if (typeUtils.isType(parameterType, FileUpload.class)) {
             return false;
         } else {
             return true;
@@ -99,40 +83,40 @@ final class ParameterGenerator {
 
     public String generateParameter(String context, String wrapper, HelperMethodBuilder helperBuilder) {
         TypeMirror parameterType = parameter.asType();
-        String nonBinderParameter = getNonBinderParameter(context, wrapper, parameterType);
+        TypeUtils typeUtils = helperBuilder.getContainer().getTypeUtils();
+        String nonBinderParameter = getNonBinderParameter(context, wrapper, typeUtils, parameterType);
         if (!StringUtils.isBlank(nonBinderParameter)) {
             return nonBinderParameter;
         }
         String parameterName = getParameterName();
         ValueSource valueSource = getValueSource(parameter);
         // First check if we can provide a simple converter for the parameter type.
-        for (Class<?> parameterClass : HelperMethodBuilder.CONVERSION_HELPER_LOOKUP.keySet()) {
-            if (isType(parameterType, parameterClass)) {
-                String conversionMethod = helperBuilder.addConversionMethod(parameterClass, false);
-                if (conversionMethod != null) {
-                    String sourceMethod = helperBuilder.addSourceMethod(valueSource, false);
-                    return CodeBlock.builder()
-                        .add("$N($N($N, $S))", conversionMethod, sourceMethod, wrapper, parameterName)
-                        .build()
-                        .toString();
-                }
-            } else {
-                Class<?> arrayClass = getArrayClass(parameterClass);
-                if (isType(parameterType, arrayClass)) {
-                    // NOTE: We pass the component type to the helper builder, not the array type.
-                    String conversionMethod = helperBuilder.addConversionMethod(parameterClass, true);
-                    if (conversionMethod != null) {
-                        String sourceMethod = helperBuilder.addSourceMethod(valueSource, true);
-                        return CodeBlock.builder()
-                            .add("$N($N($N, $S))", conversionMethod, sourceMethod, wrapper, parameterName)
-                            .build()
-                            .toString();
-                    }
-                }
+        Class<?> parameterClass = helperBuilder.getParameterClass(parameterType);
+        if (parameterClass != null) {
+            Class<?> actualClass = parameterClass.isArray()
+                ? parameterClass.getComponentType() // NOTE: We pass the component type to the helper builder, not the array type
+                : parameterClass;
+            String conversionMethod = helperBuilder.addConversionMethod(actualClass, parameterClass.isArray());
+            if (conversionMethod != null) {
+                String sourceMethod = helperBuilder.addSourceMethod(valueSource, parameterClass.isArray());
+                return CodeBlock.builder()
+                    .add("$N($N($N, $S))", conversionMethod, sourceMethod, wrapper, parameterName)
+                    .build()
+                    .toString();
             }
         }
+
         // Next, check if this is an object with a @From* annotation or if one of the type's
         // public members has a @From* annotation decorating it.
+        ValueSource defaultBinding = getDefaultFromBinding();
+        if (defaultBinding != ValueSource.Any || hasMemberBinding(typeUtils)) {
+            TypeElement element = typeUtils.getTypeElement(parameterType);
+            String conversionMethod = helperBuilder.addConversionMethod(element, defaultBinding);
+            return CodeBlock.builder()
+                .add("$N($N)", conversionMethod, wrapper)
+                .build()
+                .toString();
+        }
 
         // Lastly, assume the type should be converted using JSON.
         return CodeBlock.of(
@@ -144,61 +128,95 @@ final class ParameterGenerator {
                 valueSource).toString();
     }
 
-    private String getNonBinderParameter(String context, String wrapper, TypeMirror parameterType) {
-        if (isType(parameterType, Context.class)) {
+    private String getNonBinderParameter(String context, String wrapper, TypeUtils typeUtils, TypeMirror parameterType) {
+        if (typeUtils.isType(parameterType, Context.class)) {
             return context;
-        } else if (isType(parameterType, HttpContext.class)) {
+        } else if (typeUtils.isType(parameterType, HttpContext.class)) {
             return wrapper;
-        } else if (isType(parameterType, HttpRequest.class)) {
+        } else if (typeUtils.isType(parameterType, HttpRequest.class)) {
             return wrapper + ".getRequest()";
-        } else if (isType(parameterType, HttpResponse.class)) {
+        } else if (typeUtils.isType(parameterType, HttpResponse.class)) {
             return wrapper + ".getResponse()";
-        } else if (isType(parameterType, FileUpload.class)) {
+        } else if (typeUtils.isType(parameterType, FileUpload.class)) {
             return CodeBlock.of(wrapper + ".getRequest().getFile($S)", getParameterName()).toString();
         } else {
             return null;
         }
     }
 
-    public boolean isWsBinderNeeded(Class<?> wrapperType) {
+    private ValueSource getDefaultFromBinding() {
+        if (parameter.getAnnotation(FromPath.class) != null) {
+            return ValueSource.Path;
+        }
+        if (parameter.getAnnotation(FromQuery.class) != null) {
+            return ValueSource.QueryString;
+        }
+        if (parameter.getAnnotation(FromHeader.class) != null) {
+            return ValueSource.Header;
+        }
+        if (parameter.getAnnotation(FromCookie.class) != null) {
+            return ValueSource.Cookie;
+        }
+        if (parameter.getAnnotation(FromForm.class) != null) {
+            return ValueSource.FormData;
+        }
+        return ValueSource.Any;
+    }
+
+    private boolean hasMemberBinding(TypeUtils typeUtils) {
+        TypeElement element = typeUtils.getTypeElement(parameter.asType());
+        if (element == null) {
+            return false;
+        }
+        return element.getEnclosedElements().stream()
+            .filter(e -> e.getKind() == ElementKind.FIELD || e.getKind() == ElementKind.METHOD)
+            .anyMatch(HelperMethodBuilder::hasFromAnnotation);
+    }
+
+    public boolean isWsBinderNeeded(TypeUtils typeUtils, Class<?> wrapperType) {
         TypeMirror parameterType = parameter.asType();
-        String parameter = getNonBinderWsParameter("context", wrapperType, "wrapper", parameterType);
+        String parameter = getNonBinderWsParameter(typeUtils, "context", wrapperType, "wrapper", parameterType);
         return StringUtils.isBlank(parameter);
     }
 
     public String generateWsParameter(String context, Class<?> wrapperType, String wrapper, HelperMethodBuilder helperBuilder) {
         TypeMirror parameterType = parameter.asType();
-        String nonBinderParameter = getNonBinderWsParameter(context, wrapperType, wrapper, parameterType);
+        TypeUtils typeUtils = helperBuilder.getContainer().getTypeUtils();
+        String nonBinderParameter = getNonBinderWsParameter(typeUtils, context, wrapperType, wrapper, parameterType);
         if (!StringUtils.isBlank(nonBinderParameter)) {
             return nonBinderParameter;
         }
+
+        // First check if we can provide a simple converter for the parameter type.
         String parameterName = getParameterName();
         WsValueSource valueSource = getWsValueSource(parameter);
-        for (Class<?> parameterClass : HelperMethodBuilder.CONVERSION_HELPER_LOOKUP.keySet()) {
-            if (isType(parameterType, parameterClass)) {
-                String conversionMethod = helperBuilder.addConversionMethod(parameterClass, false);
-                if (conversionMethod != null) {
-                    String sourceMethod = helperBuilder.addSourceMethod(valueSource, wrapperType, false);
-                    return CodeBlock.builder()
-                        .add("$N($N($N, $S))", conversionMethod, sourceMethod, wrapper, parameterName)
-                        .build()
-                        .toString();
-                }
-            } else {
-                Class<?> arrayClass = getArrayClass(parameterClass);
-                if (isType(parameterType, arrayClass)) {
-                    // NOTE: We pass the component type to the helper builder, not the array type.
-                    String conversionMethod = helperBuilder.addConversionMethod(parameterClass, true);
-                    if (conversionMethod != null) {
-                        String sourceMethod = helperBuilder.addSourceMethod(valueSource, wrapperType, true);
-                        return CodeBlock.builder()
-                            .add("$N($N($N, $S))", conversionMethod, sourceMethod, wrapper, parameterName)
-                            .build()
-                            .toString();
-                    }
-                }
+        Class<?> parameterClass = helperBuilder.getParameterClass(parameterType);
+        if (parameterClass != null) {
+            Class<?> actualClass = parameterClass.isArray()
+                ? parameterClass.getComponentType() // NOTE: We pass the component type to the helper builder, not the array type
+                : parameterClass;
+            String conversionMethod = helperBuilder.addConversionMethod(actualClass, parameterClass.isArray());
+            if (conversionMethod != null) {
+                String sourceMethod = helperBuilder.addSourceMethod(valueSource, wrapperType, parameterClass.isArray());
+                return CodeBlock.builder()
+                    .add("$N($N($N, $S))", conversionMethod, sourceMethod, wrapper, parameterName)
+                    .build()
+                    .toString();
             }
         }
+
+        // Next, check if this is an object with a @From* annotation or if one of the type's
+        // public members has a @From* annotation decorating it.
+        WsValueSource defaultBinding = getDefaultWsFromBinding();
+        if (defaultBinding != WsValueSource.Any || hasWsMemberBinding(typeUtils)) {
+            TypeElement element = typeUtils.getTypeElement(parameterType);
+            String conversionMethod = helperBuilder.addConversionMethod(element, defaultBinding, wrapperType);
+            return CodeBlock.builder()
+                .add("$N($N)", conversionMethod, wrapper)
+                .build()
+                .toString();
+        }
+
         return CodeBlock.of(
                 "($T)binder.getValue($S, $T.class, $T.$L)",
                 parameterType,
@@ -209,97 +227,73 @@ final class ParameterGenerator {
     }
 
     private String getNonBinderWsParameter(
+            TypeUtils typeUtils,
             String context,
             Class<?> wrapperType,
             String wrapper,
             TypeMirror parameterType) {
-        if (isBuiltInWsContextType(wrapperType, parameterType)) {
+        if (isBuiltInWsContextType(typeUtils, wrapperType, parameterType)) {
             return context;
-        } else if (isType(parameterType, wrapperType)) {
+        } else if (typeUtils.isType(parameterType, wrapperType)) {
             return wrapper;
-        } else if (isType(parameterType, WsContext.class)) {
+        } else if (typeUtils.isType(parameterType, WsContext.class)) {
             return wrapper + ".getContext()";
-        } else if (isType(parameterType, WsRequest.class)) {
+        } else if (typeUtils.isType(parameterType, WsRequest.class)) {
             return wrapper + ".getContext().getRequest()";
-        } else if (isType(parameterType, WsResponse.class)) {
+        } else if (typeUtils.isType(parameterType, WsResponse.class)) {
             return wrapper + ".getContext().getResponse()";
         } else {
             return null;
         }
     }
 
-    private boolean isBuiltInWsContextType(Class<?> wrapperType, TypeMirror parameterType) {
-        if (isType(parameterType, io.javalin.websocket.WsContext.class)) {
+    private boolean isBuiltInWsContextType(TypeUtils typeUtils, Class<?> wrapperType, TypeMirror parameterType) {
+        if (typeUtils.isType(parameterType, io.javalin.websocket.WsContext.class)) {
             return true;
         } else if (wrapperType.equals(WsConnectContext.class)
-                && isType(parameterType, io.javalin.websocket.WsConnectContext.class)) {
+            && typeUtils.isType(parameterType, io.javalin.websocket.WsConnectContext.class)) {
             return true;
         } else if (wrapperType.equals(WsDisconnectContext.class)
-                && isType(parameterType, io.javalin.websocket.WsCloseContext.class)) {
+            && typeUtils.isType(parameterType, io.javalin.websocket.WsCloseContext.class)) {
             return true;
         } else if (wrapperType.equals(WsErrorContext.class)
-                && isType(parameterType, io.javalin.websocket.WsErrorContext.class)) {
+            && typeUtils.isType(parameterType, io.javalin.websocket.WsErrorContext.class)) {
             return true;
         } else if (wrapperType.equals(WsMessageContext.class)
-                && isType(parameterType, io.javalin.websocket.WsMessageContext.class)) {
+            && typeUtils.isType(parameterType, io.javalin.websocket.WsMessageContext.class)) {
             return true;
         } else if (wrapperType.equals(WsBinaryMessageContext.class)
-                && isType(parameterType, io.javalin.websocket.WsBinaryMessageContext.class)) {
+            && typeUtils.isType(parameterType, io.javalin.websocket.WsBinaryMessageContext.class)) {
             return true;
         } else {
             return false;
         }
     }
 
-    private boolean isType(TypeMirror parameterType, Class<?> type) {
-        if (type == null) {
-            return false;
-        } else if (parameterType.getKind() == TypeKind.ARRAY) {
-            return type.isArray() && isType(((ArrayType)parameterType).getComponentType(), type.getComponentType());
-        } else if (type.isPrimitive()) {
-            Class<?> primitiveType = getPrimitiveType(parameterType);
-            return primitiveType == type;
-        } else if (!type.isArray()) {
-            TypeElement typeElement = elementUtils.getTypeElement(type.getCanonicalName());
-            if (typeElement == null) {
-                return false;
-            }
-            TypeMirror checkType = typeElement.asType();
-            return typeUtils.isSameType(parameterType, checkType);
-        } else {
-            return false;
+    private WsValueSource getDefaultWsFromBinding() {
+        if (parameter.getAnnotation(FromPath.class) != null) {
+            return WsValueSource.Path;
         }
+        if (parameter.getAnnotation(FromQuery.class) != null) {
+            return WsValueSource.QueryString;
+        }
+        if (parameter.getAnnotation(FromHeader.class) != null) {
+            return WsValueSource.Header;
+        }
+        if (parameter.getAnnotation(FromCookie.class) != null) {
+            return WsValueSource.Cookie;
+        }
+        return WsValueSource.Any;
     }
 
-    private static Class<?> getPrimitiveType(TypeMirror parameterType) {
-        switch (parameterType.getKind()) {
-            case BOOLEAN:
-                return boolean.class;
-            case BYTE:
-                return byte.class;
-            case CHAR:
-                return char.class;
-            case DOUBLE:
-                return double.class;
-            case FLOAT:
-                return float.class;
-            case INT:
-                return int.class;
-            case LONG:
-                return long.class;
-            case SHORT:
-                return short.class;
-            default:
-                return void.class;
+    private boolean hasWsMemberBinding(TypeUtils typeUtils) {
+        TypeElement element = typeUtils.getTypeElement(parameter.asType());
+        if (element == null) {
+            return false;
         }
-    }
-
-    private Class<?> getArrayClass(Class<?> type) {
-        try {
-            return Class.forName("[L" + type.getCanonicalName() + ";");
-        } catch (ClassNotFoundException e) {
-            return null;
-        }
+        return element.getEnclosedElements().stream()
+            .filter(e -> e.getKind() == ElementKind.FIELD || e.getKind() == ElementKind.METHOD)
+            .anyMatch(HelperMethodBuilder::hasWsFromAnnotation);
     }
 
     public String getParameterName() {

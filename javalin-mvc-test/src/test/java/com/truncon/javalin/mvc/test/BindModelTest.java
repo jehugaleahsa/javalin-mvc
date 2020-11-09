@@ -188,14 +188,14 @@ public final class BindModelTest {
             ));
             PrimitiveQueryParamFieldModel model = getJsonResponseForGet(route, PrimitiveQueryParamFieldModel.class);
             Assert.assertNotNull(model);
-            Assert.assertEquals(Integer.MAX_VALUE, model.getInteger());
-            Assert.assertTrue(model.getBoolean());
-            Assert.assertEquals(Double.MAX_VALUE, model.getDouble(), 0.0);
-            Assert.assertEquals(Byte.MAX_VALUE, model.getByte());
-            Assert.assertEquals(Short.MAX_VALUE, model.getShort());
-            Assert.assertEquals(Float.MAX_VALUE, model.getFloat(), 0.0f);
-            Assert.assertEquals(Character.MAX_VALUE, model.getChar());
-            Assert.assertEquals(Long.MAX_VALUE, model.getLong());
+            Assert.assertEquals(Integer.MAX_VALUE, model.intValue);
+            Assert.assertTrue(model.booleanValue);
+            Assert.assertEquals(Double.MAX_VALUE, model.doubleValue, 0.0);
+            Assert.assertEquals(Byte.MAX_VALUE, model.byteValue);
+            Assert.assertEquals(Short.MAX_VALUE, model.shortValue);
+            Assert.assertEquals(Float.MAX_VALUE, model.floatValue, 0.0f);
+            Assert.assertEquals(Character.MAX_VALUE, model.charValue);
+            Assert.assertEquals(Long.MAX_VALUE, model.longValue);
         }).join();
     }
 
@@ -214,14 +214,14 @@ public final class BindModelTest {
             ));
             PrimitiveQueryParamFieldNamedModel model = getJsonResponseForGet(route, PrimitiveQueryParamFieldNamedModel.class);
             Assert.assertNotNull(model);
-            Assert.assertEquals(Integer.MAX_VALUE, model.getInteger());
-            Assert.assertTrue(model.getBoolean());
-            Assert.assertEquals(Double.MAX_VALUE, model.getDouble(), 0.0);
-            Assert.assertEquals(Byte.MAX_VALUE, model.getByte());
-            Assert.assertEquals(Short.MAX_VALUE, model.getShort());
-            Assert.assertEquals(Float.MAX_VALUE, model.getFloat(), 0.0f);
-            Assert.assertEquals(Character.MAX_VALUE, model.getChar());
-            Assert.assertEquals(Long.MAX_VALUE, model.getLong());
+            Assert.assertEquals(Integer.MAX_VALUE, model.intValue);
+            Assert.assertTrue(model.booleanValue);
+            Assert.assertEquals(Double.MAX_VALUE, model.doubleValue, 0.0);
+            Assert.assertEquals(Byte.MAX_VALUE, model.byteValue);
+            Assert.assertEquals(Short.MAX_VALUE, model.shortValue);
+            Assert.assertEquals(Float.MAX_VALUE, model.floatValue, 0.0f);
+            Assert.assertEquals(Character.MAX_VALUE, model.charValue);
+            Assert.assertEquals(Long.MAX_VALUE, model.longValue);
         }).join();
     }
 }

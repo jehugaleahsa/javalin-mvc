@@ -66,7 +66,7 @@ final class AfterGenerator {
 
     private Name getHandlerGetter() {
         TypeMirror handlerType = getTypeMirror();
-        TypeElement handlerTypeElement = (TypeElement)container.getTypeUtils().asElement(handlerType);
+        TypeElement handlerTypeElement = container.getTypeUtils().getTypeElement(handlerType);
         return container.getDependencyName(handlerTypeElement);
     }
 

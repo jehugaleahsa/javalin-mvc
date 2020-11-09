@@ -77,7 +77,7 @@ final class ControllerRegistryGenerator {
         }
 
         final String APP_NAME = "app";
-        HelperMethodBuilder helperBuilder = new HelperMethodBuilder(registryTypeBuilder);
+        HelperMethodBuilder helperBuilder = new HelperMethodBuilder(container, registryTypeBuilder);
         MethodSpec register = MethodSpec.methodBuilder("register")
             .addAnnotation(Override.class)
             .addModifiers(Modifier.PUBLIC)
@@ -105,7 +105,7 @@ final class ControllerRegistryGenerator {
             .collect(Collectors.toList());
         detectDuplicateRoutes(generators);
         return generators.stream()
-            .map(g -> g.generateRoute(container, app, index.getAndIncrement(), helperBuilder))
+            .map(g -> g.generateRoute(app, index.getAndIncrement(), helperBuilder))
             .collect(CodeBlock.joining("\n"));
     }
 
@@ -147,7 +147,7 @@ final class ControllerRegistryGenerator {
 
     private CodeBlock createWsEndpoints(String app, HelperMethodBuilder helperBuilder) throws ProcessingException {
         return wsControllers.stream()
-            .map(s -> s.generateEndpoint(container, app, helperBuilder))
+            .map(s -> s.generateEndpoint(app, helperBuilder))
             .filter(Objects::nonNull)
             .collect(CodeBlock.joining("\n"));
     }
