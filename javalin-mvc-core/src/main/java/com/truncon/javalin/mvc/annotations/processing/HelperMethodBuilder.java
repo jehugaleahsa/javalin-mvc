@@ -2682,7 +2682,7 @@ public final class HelperMethodBuilder {
                 WsValueSource source = entry.getKey();
                 if (source != WsValueSource.Any) {
                     WsSourceHelper helper = entry.getValue();
-                    CodeBlock check = helper.getPresenceCheck(wrapper, key);
+                    CodeBlock check = helper.getPresenceCheck("request", key);
                     if (check != null) {
                         codeBuilder.beginControlFlow("if (" + check.toString() + ")");
                         codeBuilder.addStatement("return $N($N, $N)", helper.getSingletonName(), wrapper, key);
@@ -2691,7 +2691,7 @@ public final class HelperMethodBuilder {
                 }
             }
             WsSourceHelper messageHelper = WS_SOURCE_HELPER_LOOKUP.get(WsValueSource.Message);
-            codeBuilder.addStatement("$N($N, $N)", messageHelper.getSingletonName(), wrapper, key);
+            codeBuilder.addStatement("return $N($N, $N)", messageHelper.getSingletonName(), wrapper, key);
             return codeBuilder.build();
         }
 

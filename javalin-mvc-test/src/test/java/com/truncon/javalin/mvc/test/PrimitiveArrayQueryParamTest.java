@@ -18,7 +18,7 @@ public final class PrimitiveArrayQueryParamTest {
             boolean[] actual = getJsonResponseForGet(route, boolean[].class);
             boolean[] expected = new boolean[] { false, true };
             Assert.assertArrayEquals(expected, actual);
-        }).join();
+        });
     }
 
     @Test
@@ -30,7 +30,7 @@ public final class PrimitiveArrayQueryParamTest {
             int[] actual = getJsonResponseForGet(route, int[].class);
             int[] expected = new int[] { 123, 456 };
             Assert.assertArrayEquals(expected, actual);
-        }).join();
+        });
     }
 
     @Test
@@ -44,7 +44,7 @@ public final class PrimitiveArrayQueryParamTest {
             double[] actual = getJsonResponseForGet(route, double[].class);
             double[] expected = new double[] { Double.MIN_VALUE, Double.MAX_VALUE };
             Assert.assertArrayEquals(expected, actual, 1.0);
-        }).join();
+        });
     }
 
     @Test
@@ -56,7 +56,7 @@ public final class PrimitiveArrayQueryParamTest {
             String[] actual = getJsonResponseForGet(route, String[].class);
             String[] expected = new String[] { "Hello", "Goodbye" };
             Assert.assertArrayEquals(expected, actual);
-        }).join();
+        });
     }
 
     @Test
@@ -70,7 +70,7 @@ public final class PrimitiveArrayQueryParamTest {
             byte[] actual = getJsonResponseForGet(route, byte[].class);
             byte[] expected = new byte[] { Byte.MIN_VALUE, Byte.MAX_VALUE };
             Assert.assertArrayEquals(expected, actual);
-        }).join();
+        });
     }
 
     @Test
@@ -84,7 +84,7 @@ public final class PrimitiveArrayQueryParamTest {
             short[] actual = getJsonResponseForGet(route, short[].class);
             short[] expected = new short[] { Short.MIN_VALUE, Short.MAX_VALUE };
             Assert.assertArrayEquals(expected, actual);
-        }).join();
+        });
     }
 
     @Test
@@ -98,7 +98,7 @@ public final class PrimitiveArrayQueryParamTest {
             float[] actual = getJsonResponseForGet(route, float[].class);
             float[] expected = new float[] { Float.MIN_VALUE, Float.MAX_VALUE };
             Assert.assertArrayEquals(expected, actual, 1.0f);
-        }).join();
+        });
     }
 
     @Test
@@ -112,7 +112,7 @@ public final class PrimitiveArrayQueryParamTest {
             char[] actual = getJsonResponseForGet(route, char[].class);
             char[] expected = new char[] { Character.MIN_VALUE, Character.MAX_VALUE };
             Assert.assertArrayEquals(expected, actual);
-        }).join();
+        });
     }
 
     @Test
@@ -126,6 +126,6 @@ public final class PrimitiveArrayQueryParamTest {
             long[] actual = getJsonResponseForGet(route, long[].class);
             long[] expected = new long[] { Long.MIN_VALUE, Long.MAX_VALUE };
             Assert.assertArrayEquals(expected, actual);
-        }).join();
+        });
     }
 }

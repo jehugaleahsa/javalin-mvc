@@ -16,7 +16,7 @@ public final class AsyncResultTest {
             String route = RouteBuilder.buildRoute(AsyncController.GET_CONTENT_ROUTE);
             String result = getStringForGet(route);
             Assert.assertEquals("Hello", result);
-        }).join();
+        });
     }
 
     @Test
@@ -26,6 +26,6 @@ public final class AsyncResultTest {
             DownloadDetails result = downloadForGet(route);
             Assert.assertEquals("text/plain", result.getContentType());
             Assert.assertEquals("Hello", new String(result.getData(), StandardCharsets.UTF_8));
-        }).join();
+        });
     }
 }

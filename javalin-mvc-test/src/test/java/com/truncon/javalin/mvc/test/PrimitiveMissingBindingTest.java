@@ -15,7 +15,7 @@ public final class PrimitiveMissingBindingTest {
             String route = buildRoute(PrimitiveHeaderParamController.INTEGER_ROUTE);
             String response = getStringForHeadersAndGet(route, headerParams());
             Assert.assertEquals(Integer.toString(0), response);
-        }).join();
+        });
     }
 
     @Test
@@ -24,7 +24,7 @@ public final class PrimitiveMissingBindingTest {
             String route = buildRoute(PrimitiveHeaderParamController.LONG_ROUTE);
             String response = getStringForHeadersAndGet(route, headerParams());
             Assert.assertEquals(Long.toString(0L), response);
-        }).join();
+        });
     }
 
     @Test
@@ -33,7 +33,7 @@ public final class PrimitiveMissingBindingTest {
             String route = buildRoute(PrimitiveHeaderParamController.SHORT_ROUTE);
             String response = getStringForHeadersAndGet(route, headerParams());
             Assert.assertEquals(Short.toString((short) 0), response);
-        }).join();
+        });
     }
 
     @Test
@@ -42,7 +42,7 @@ public final class PrimitiveMissingBindingTest {
             String route = buildRoute(PrimitiveHeaderParamController.BYTE_ROUTE);
             String response = getStringForHeadersAndGet(route, headerParams());
             Assert.assertEquals(Byte.toString((byte) 0), response);
-        }).join();
+        });
     }
 
     @Test
@@ -51,7 +51,7 @@ public final class PrimitiveMissingBindingTest {
             String route = buildRoute(PrimitiveHeaderParamController.BOOLEAN_ROUTE);
             String response = getStringForHeadersAndGet(route, headerParams());
             Assert.assertEquals(Boolean.toString(false), response);
-        }).join();
+        });
     }
 
     @Test
@@ -60,7 +60,7 @@ public final class PrimitiveMissingBindingTest {
             String route = buildRoute(PrimitiveHeaderParamController.CHAR_ROUTE);
             String response = getStringForHeadersAndGet(route, headerParams());
             Assert.assertEquals(Character.toString('\0'), response);
-        }).join();
+        });
     }
 
     @Test
@@ -69,7 +69,7 @@ public final class PrimitiveMissingBindingTest {
             String route = buildRoute(PrimitiveHeaderParamController.FLOAT_ROUTE);
             String response = getStringForHeadersAndGet(route, headerParams());
             Assert.assertEquals(Float.toString(0.0f), response);
-        }).join();
+        });
     }
 
     @Test
@@ -78,6 +78,6 @@ public final class PrimitiveMissingBindingTest {
             String route = buildRoute(PrimitiveHeaderParamController.DOUBLE_ROUTE);
             String response = getStringForHeadersAndGet(route, headerParams());
             Assert.assertEquals(Double.toString(0.0), response);
-        }).join();
+        });
     }
 }

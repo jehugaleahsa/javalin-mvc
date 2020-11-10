@@ -19,21 +19,34 @@ public final class RouteBuilder {
     }
 
     public static String buildRoute(String path) throws IOException {
-        return buildRouteWithPathParams(path, Collections.emptyMap());
+        return buildRoute(path, Collections.emptyMap(), Collections.emptyList(), false);
     }
 
     public static String buildRouteWithPathParams(String path, Map<String, String> pathReplacements) throws IOException {
-        return buildRoute(path, pathReplacements, Collections.emptyList());
+        return buildRoute(path, pathReplacements, Collections.emptyList(), false);
     }
 
     public static String buildRouteWithQueryParams(String path, Collection<Pair<String, String>> queryString) throws IOException {
-        return buildRoute(path, Collections.emptyMap(), queryString);
+        return buildRoute(path, Collections.emptyMap(), queryString, false);
+    }
+
+    public static String buildWsRoute(String path) throws IOException {
+        return buildRoute(path, Collections.emptyMap(), Collections.emptyList(), true);
+    }
+
+    public static String buildWsRouteWithPathParams(String path, Map<String, String> pathReplacements) throws IOException {
+        return buildRoute(path, pathReplacements, Collections.emptyList(), true);
+    }
+
+    public static String buildWsRouteWithQueryParams(String path, Collection<Pair<String, String>> queryString) throws IOException {
+        return buildRoute(path, Collections.emptyMap(), queryString, true);
     }
 
     public static String buildRoute(
             String path,
             Map<String, String> pathReplacements,
-            Collection<Pair<String, String>> query) throws IOException {
+            Collection<Pair<String, String>> query,
+            boolean isWebSockets) throws IOException {
         if (path == null) {
             path = "";
         } else {
@@ -55,7 +68,7 @@ public final class RouteBuilder {
                 throw new RuntimeException();
             }
         }).collect(Collectors.joining("&"));
-        String route = "http://localhost:" + AppHost.PORT + path;
+        String route = (isWebSockets ? "ws" : "http") + "://localhost:" + AppHost.PORT + path;
         if (!queryString.isEmpty()) {
             route = route + "?" + queryString;
         }

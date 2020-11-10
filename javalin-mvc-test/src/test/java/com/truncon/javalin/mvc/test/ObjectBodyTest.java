@@ -38,7 +38,7 @@ public final class ObjectBodyTest {
             Assert.assertEquals(model.getFloat(), response.getFloat(), 1);
             Assert.assertEquals(model.getChar(), response.getChar());
             Assert.assertEquals(model.getLong(), response.getLong());
-        }).join();
+        });
     }
 
     @Test
@@ -85,6 +85,6 @@ public final class ObjectBodyTest {
             Assert.assertEquals(model.getBigInteger(), response.getBigInteger());
             Assert.assertEquals(model.getBigDecimal(), response.getBigDecimal());
             Assert.assertEquals(model.getUuid(), response.getUuid());
-        }).join();
+        });
     }
 }

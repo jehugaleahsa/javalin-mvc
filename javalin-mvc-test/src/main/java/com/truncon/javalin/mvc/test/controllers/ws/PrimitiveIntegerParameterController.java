@@ -14,26 +14,22 @@ import com.truncon.javalin.mvc.api.ws.WsMessageContext;
 
 @WsController(route = PrimitiveIntegerParameterController.ROUTE)
 public final class PrimitiveIntegerParameterController {
-    public static final String ROUTE = "/ws/params/primitives/integer";
+    public static final String ROUTE = "/ws/params/primitives/integer/:value";
 
     @WsConnect
     public void connect(WsConnectContext context) {
-        System.out.println("connect");
     }
 
     @WsDisconnect
     public void disconnect(WsDisconnectContext context) {
-        System.out.println("disconnect");
     }
 
     @WsError
     public void error(WsErrorContext context) {
-        System.out.println("error");
     }
 
     @WsMessage
-    public WsActionResult message(WsMessageContext context) {
-        System.out.println("message");
-        return new WsContentResult("Hello, world!!!");
+    public WsActionResult message(int value) {
+        return new WsContentResult(Integer.toString(value));
     }
 }

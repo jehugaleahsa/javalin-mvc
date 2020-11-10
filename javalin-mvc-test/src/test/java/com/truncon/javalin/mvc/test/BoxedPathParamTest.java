@@ -21,7 +21,7 @@ public final class BoxedPathParamTest {
                 pathParams(param("value", "Hello")));
             String response = getStringForGet(route);
             Assert.assertEquals("Hello", response);
-        }).join();
+        });
     }
 
     @Test
@@ -33,7 +33,7 @@ public final class BoxedPathParamTest {
                 pathParams(param("value", value)));
             String response = getStringForGet(route);
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     @Test
@@ -45,7 +45,7 @@ public final class BoxedPathParamTest {
                 pathParams(param("value", value)));
             String response = getStringForGet(route);
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     @Test
@@ -57,7 +57,7 @@ public final class BoxedPathParamTest {
                 pathParams(param("value", value)));
             String response = getStringForGet(route);
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     @Test
@@ -69,7 +69,7 @@ public final class BoxedPathParamTest {
                 pathParams(param("value", value)));
             String response = getStringForGet(route);
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     @Test
@@ -81,7 +81,7 @@ public final class BoxedPathParamTest {
                 pathParams(param("value", value)));
             String response = getStringForGet(route);
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     @Test
@@ -93,7 +93,7 @@ public final class BoxedPathParamTest {
                 pathParams(param("value", value)));
             String response = getStringForGet(route);
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     @Test
@@ -105,7 +105,7 @@ public final class BoxedPathParamTest {
                 pathParams(param("value", value)));
             String response = getStringForGet(route);
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     @Test
@@ -117,7 +117,7 @@ public final class BoxedPathParamTest {
                 pathParams(param("value", value)));
             String response = getStringForGet(route);
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     @Test
@@ -129,7 +129,7 @@ public final class BoxedPathParamTest {
                 pathParams(param("value", value)));
             String response = getStringForGet(route);
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     @Test
@@ -141,7 +141,7 @@ public final class BoxedPathParamTest {
                 pathParams(param("value", value)));
             String response = getStringForGet(route);
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     @Test
@@ -153,7 +153,7 @@ public final class BoxedPathParamTest {
                 pathParams(param("value", value)));
             String response = getStringForGet(route);
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     @Test
@@ -165,7 +165,7 @@ public final class BoxedPathParamTest {
                 pathParams(param("value", value)));
             String response = getStringForGet(route);
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     @Test
@@ -177,7 +177,7 @@ public final class BoxedPathParamTest {
                 pathParams(param("value", value)));
             String response = getStringForGet(route);
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     @Test
@@ -189,7 +189,7 @@ public final class BoxedPathParamTest {
                 pathParams(param("value", value)));
             String response = getStringForGet(route);
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     @Test
@@ -201,7 +201,7 @@ public final class BoxedPathParamTest {
                 pathParams(param("value", value)));
             String response = getStringForGet(route);
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     @Test
@@ -213,7 +213,7 @@ public final class BoxedPathParamTest {
                 pathParams(param("value", value)));
             String response = getStringForGet(route);
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     @Test
@@ -225,7 +225,7 @@ public final class BoxedPathParamTest {
                 pathParams(param("value", value)));
             String response = getStringForGet(route);
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     @Test
@@ -237,7 +237,7 @@ public final class BoxedPathParamTest {
                 pathParams(param("value", value)));
             String response = getStringForGet(route);
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     @Test
@@ -249,6 +249,6 @@ public final class BoxedPathParamTest {
                 pathParams(param("value", value)));
             String response = getStringForGet(route);
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 }

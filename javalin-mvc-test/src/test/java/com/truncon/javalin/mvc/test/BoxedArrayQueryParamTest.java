@@ -32,7 +32,7 @@ public final class BoxedArrayQueryParamTest {
             Boolean[] actual = getJsonResponseForGet(route, Boolean[].class);
             Boolean[] expected = new Boolean[] { false, null, true };
             Assert.assertArrayEquals(expected, actual);
-        }).join();
+        });
     }
 
     @Test
@@ -47,7 +47,7 @@ public final class BoxedArrayQueryParamTest {
             Integer[] actual = getJsonResponseForGet(route, Integer[].class);
             Integer[] expected = new Integer[] { Integer.MIN_VALUE, null, Integer.MAX_VALUE };
             Assert.assertArrayEquals(expected, actual);
-        }).join();
+        });
     }
 
     @Test
@@ -62,7 +62,7 @@ public final class BoxedArrayQueryParamTest {
             Double[] actual = getJsonResponseForGet(route, Double[].class);
             Double[] expected = new Double[] { Double.MIN_VALUE, null, Double.MAX_VALUE };
             Assert.assertArrayEquals(expected, actual);
-        }).join();
+        });
     }
 
     @Test
@@ -77,7 +77,7 @@ public final class BoxedArrayQueryParamTest {
             Byte[] actual = getJsonResponseForGet(route, Byte[].class);
             Byte[] expected = new Byte[] { Byte.MIN_VALUE, null, Byte.MAX_VALUE };
             Assert.assertArrayEquals(expected, actual);
-        }).join();
+        });
     }
 
     @Test
@@ -92,7 +92,7 @@ public final class BoxedArrayQueryParamTest {
             Short[] actual = getJsonResponseForGet(route, Short[].class);
             Short[] expected = new Short[] { Short.MIN_VALUE, null, Short.MAX_VALUE };
             Assert.assertArrayEquals(expected, actual);
-        }).join();
+        });
     }
 
     @Test
@@ -107,7 +107,7 @@ public final class BoxedArrayQueryParamTest {
             Float[] actual = getJsonResponseForGet(route, Float[].class);
             Float[] expected = new Float[] { Float.MIN_VALUE, null, Float.MAX_VALUE };
             Assert.assertArrayEquals(expected, actual);
-        }).join();
+        });
     }
 
     @Test
@@ -122,7 +122,7 @@ public final class BoxedArrayQueryParamTest {
             Character[] actual = getJsonResponseForGet(route, Character[].class);
             Character[] expected = new Character[] { Character.MIN_VALUE, null, Character.MAX_VALUE };
             Assert.assertArrayEquals(expected, actual);
-        }).join();
+        });
     }
 
     @Test
@@ -137,7 +137,7 @@ public final class BoxedArrayQueryParamTest {
             Long[] actual = getJsonResponseForGet(route, Long[].class);
             Long[] expected = new Long[] { Long.MIN_VALUE, null, Long.MAX_VALUE };
             Assert.assertArrayEquals(expected, actual);
-        }).join();
+        });
     }
 
     @Test
@@ -152,7 +152,7 @@ public final class BoxedArrayQueryParamTest {
             Date[] actual = getJsonResponseForGet(route, Date[].class);
             Date[] expected = new Date[] { value, null };
             Assert.assertArrayEquals(expected, actual);
-        }).join();
+        });
     }
 
     @Test
@@ -167,7 +167,7 @@ public final class BoxedArrayQueryParamTest {
             Instant[] actual = getJsonResponseForGet(route, Instant[].class);
             Instant[] expected = new Instant[] { value, null };
             Assert.assertArrayEquals(expected, actual);
-        }).join();
+        });
     }
 
     @Test
@@ -184,7 +184,7 @@ public final class BoxedArrayQueryParamTest {
             ZonedDateTime[] actual = getJsonResponseForGet(route, ZonedDateTime[].class);
             ZonedDateTime[] expected = new ZonedDateTime[] { value, null };
             Assert.assertArrayEquals(expected, actual);
-        }).join();
+        });
     }
 
     @Test
@@ -201,7 +201,7 @@ public final class BoxedArrayQueryParamTest {
             OffsetDateTime[] actual = getJsonResponseForGet(route, OffsetDateTime[].class);
             OffsetDateTime[] expected = new OffsetDateTime[] { value, null };
             Assert.assertArrayEquals(expected, actual);
-        }).join();
+        });
     }
 
     @Test
@@ -216,7 +216,7 @@ public final class BoxedArrayQueryParamTest {
             LocalDateTime[] actual = getJsonResponseForGet(route, LocalDateTime[].class);
             LocalDateTime[] expected = new LocalDateTime[] { value, null };
             Assert.assertArrayEquals(expected, actual);
-        }).join();
+        });
     }
 
     @Test
@@ -231,7 +231,7 @@ public final class BoxedArrayQueryParamTest {
             LocalDate[] actual = getJsonResponseForGet(route, LocalDate[].class);
             LocalDate[] expected = new LocalDate[] { value, null };
             Assert.assertArrayEquals(expected, actual);
-        }).join();
+        });
     }
 
     @Test
@@ -246,7 +246,7 @@ public final class BoxedArrayQueryParamTest {
             BigInteger[] actual = getJsonResponseForGet(route, BigInteger[].class);
             BigInteger[] expected = new BigInteger[] { value, null };
             Assert.assertArrayEquals(expected, actual);
-        }).join();
+        });
     }
 
     @Test
@@ -261,7 +261,7 @@ public final class BoxedArrayQueryParamTest {
             BigDecimal[] actual = getJsonResponseForGet(route, BigDecimal[].class);
             BigDecimal[] expected = new BigDecimal[] { value, null };
             Assert.assertArrayEquals(expected, actual);
-        }).join();
+        });
     }
 
     @Test
@@ -276,6 +276,6 @@ public final class BoxedArrayQueryParamTest {
             UUID[] actual = getJsonResponseForGet(route, UUID[].class);
             UUID[] expected = new UUID[] { value, null };
             Assert.assertArrayEquals(expected, actual);
-        }).join();
+        });
     }
 }

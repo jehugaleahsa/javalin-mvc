@@ -25,7 +25,7 @@ public final class PrimitiveFormDataTest {
             String route = buildRoute(PrimitiveFormDataController.BOOLEAN_ROUTE);
             String response = getStringForFormDataAndGet(route, formData(param("value", value)));
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     @Test
@@ -35,7 +35,7 @@ public final class PrimitiveFormDataTest {
             String route = buildRoute(PrimitiveFormDataController.INTEGER_ROUTE);
             String response = getStringForFormDataAndGet(route, formData(param("value", value)));
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     @Test
@@ -45,7 +45,7 @@ public final class PrimitiveFormDataTest {
             String route = buildRoute(PrimitiveFormDataController.DOUBLE_ROUTE);
             String response = getStringForFormDataAndGet(route, formData(param("value", value)));
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     @Test
@@ -55,7 +55,7 @@ public final class PrimitiveFormDataTest {
             String route = buildRoute(PrimitiveFormDataController.BYTE_ROUTE);
             String response = getStringForFormDataAndGet(route, formData(param("value", value)));
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     @Test
@@ -65,7 +65,7 @@ public final class PrimitiveFormDataTest {
             String route = buildRoute(PrimitiveFormDataController.SHORT_ROUTE);
             String response = getStringForFormDataAndGet(route, formData(param("value", value)));
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     @Test
@@ -75,7 +75,7 @@ public final class PrimitiveFormDataTest {
             String route = buildRoute(PrimitiveFormDataController.FLOAT_ROUTE);
             String response = getStringForFormDataAndGet(route, formData(param("value", value)));
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     @Test
@@ -85,7 +85,7 @@ public final class PrimitiveFormDataTest {
             String route = buildRoute(PrimitiveFormDataController.CHAR_ROUTE);
             String response = getStringForFormDataAndGet(route, formData(param("value", value)));
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     @Test
@@ -95,7 +95,7 @@ public final class PrimitiveFormDataTest {
             String route = buildRoute(PrimitiveFormDataController.LONG_ROUTE);
             String response = getStringForFormDataAndGet(route, formData(param("value", value)));
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     // endregion
@@ -109,7 +109,7 @@ public final class PrimitiveFormDataTest {
             String route = buildRoute(PrimitiveFormDataController.BOOLEAN_ROUTE);
             String response = getStringForFormDataAndPost(route, formData(param("value", value)));
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     @Test
@@ -119,7 +119,7 @@ public final class PrimitiveFormDataTest {
             String route = buildRoute(PrimitiveFormDataController.INTEGER_ROUTE);
             String response = getStringForFormDataAndPost(route, formData(param("value", value)));
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     @Test
@@ -129,7 +129,7 @@ public final class PrimitiveFormDataTest {
             String route = buildRoute(PrimitiveFormDataController.DOUBLE_ROUTE);
             String response = getStringForFormDataAndPost(route, formData(param("value", value)));
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     @Test
@@ -139,7 +139,7 @@ public final class PrimitiveFormDataTest {
             String route = buildRoute(PrimitiveFormDataController.BYTE_ROUTE);
             String response = getStringForFormDataAndPost(route, formData(param("value", value)));
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     @Test
@@ -149,7 +149,7 @@ public final class PrimitiveFormDataTest {
             String route = buildRoute(PrimitiveFormDataController.SHORT_ROUTE);
             String response = getStringForFormDataAndPost(route, formData(param("value", value)));
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     @Test
@@ -159,7 +159,7 @@ public final class PrimitiveFormDataTest {
             String route = buildRoute(PrimitiveFormDataController.FLOAT_ROUTE);
             String response = getStringForFormDataAndPost(route, formData(param("value", value)));
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     @Test
@@ -169,7 +169,7 @@ public final class PrimitiveFormDataTest {
             String route = buildRoute(PrimitiveFormDataController.CHAR_ROUTE);
             String response = getStringForFormDataAndPost(route, formData(param("value", value)));
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     @Test
@@ -179,7 +179,7 @@ public final class PrimitiveFormDataTest {
             String route = buildRoute(PrimitiveFormDataController.LONG_ROUTE);
             String response = getStringForFormDataAndPost(route, formData(param("value", value)));
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     // endregion
@@ -193,7 +193,7 @@ public final class PrimitiveFormDataTest {
             String route = buildRoute(PrimitiveFormDataController.BOOLEAN_ROUTE);
             String response = getStringForFormDataAndPut(route, formData(param("value", value)));
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     @Test
@@ -203,7 +203,7 @@ public final class PrimitiveFormDataTest {
             String route = buildRoute(PrimitiveFormDataController.INTEGER_ROUTE);
             String response = getStringForFormDataAndPut(route, formData(param("value", value)));
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     @Test
@@ -213,7 +213,7 @@ public final class PrimitiveFormDataTest {
             String route = buildRoute(PrimitiveFormDataController.DOUBLE_ROUTE);
             String response = getStringForFormDataAndPut(route, formData(param("value", value)));
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     @Test
@@ -223,7 +223,7 @@ public final class PrimitiveFormDataTest {
             String route = buildRoute(PrimitiveFormDataController.BYTE_ROUTE);
             String response = getStringForFormDataAndPut(route, formData(param("value", value)));
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     @Test
@@ -233,7 +233,7 @@ public final class PrimitiveFormDataTest {
             String route = buildRoute(PrimitiveFormDataController.SHORT_ROUTE);
             String response = getStringForFormDataAndPut(route, formData(param("value", value)));
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     @Test
@@ -243,7 +243,7 @@ public final class PrimitiveFormDataTest {
             String route = buildRoute(PrimitiveFormDataController.FLOAT_ROUTE);
             String response = getStringForFormDataAndPut(route, formData(param("value", value)));
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     @Test
@@ -253,7 +253,7 @@ public final class PrimitiveFormDataTest {
             String route = buildRoute(PrimitiveFormDataController.CHAR_ROUTE);
             String response = getStringForFormDataAndPut(route, formData(param("value", value)));
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     @Test
@@ -263,7 +263,7 @@ public final class PrimitiveFormDataTest {
             String route = buildRoute(PrimitiveFormDataController.LONG_ROUTE);
             String response = getStringForFormDataAndPut(route, formData(param("value", value)));
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     // endregion
@@ -277,7 +277,7 @@ public final class PrimitiveFormDataTest {
             String route = buildRoute(PrimitiveFormDataController.BOOLEAN_ROUTE);
             String response = getStringForFormDataAndPatch(route, formData(param("value", value)));
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     @Test
@@ -287,7 +287,7 @@ public final class PrimitiveFormDataTest {
             String route = buildRoute(PrimitiveFormDataController.INTEGER_ROUTE);
             String response = getStringForFormDataAndPatch(route, formData(param("value", value)));
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     @Test
@@ -297,7 +297,7 @@ public final class PrimitiveFormDataTest {
             String route = buildRoute(PrimitiveFormDataController.DOUBLE_ROUTE);
             String response = getStringForFormDataAndPatch(route, formData(param("value", value)));
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     @Test
@@ -307,7 +307,7 @@ public final class PrimitiveFormDataTest {
             String route = buildRoute(PrimitiveFormDataController.BYTE_ROUTE);
             String response = getStringForFormDataAndPatch(route, formData(param("value", value)));
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     @Test
@@ -317,7 +317,7 @@ public final class PrimitiveFormDataTest {
             String route = buildRoute(PrimitiveFormDataController.SHORT_ROUTE);
             String response = getStringForFormDataAndPatch(route, formData(param("value", value)));
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     @Test
@@ -327,7 +327,7 @@ public final class PrimitiveFormDataTest {
             String route = buildRoute(PrimitiveFormDataController.FLOAT_ROUTE);
             String response = getStringForFormDataAndPatch(route, formData(param("value", value)));
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     @Test
@@ -337,7 +337,7 @@ public final class PrimitiveFormDataTest {
             String route = buildRoute(PrimitiveFormDataController.CHAR_ROUTE);
             String response = getStringForFormDataAndPatch(route, formData(param("value", value)));
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     @Test
@@ -347,7 +347,7 @@ public final class PrimitiveFormDataTest {
             String route = buildRoute(PrimitiveFormDataController.LONG_ROUTE);
             String response = getStringForFormDataAndPatch(route, formData(param("value", value)));
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     // endregion
@@ -361,7 +361,7 @@ public final class PrimitiveFormDataTest {
             String route = buildRoute(PrimitiveFormDataController.BOOLEAN_ROUTE);
             String response = getStringForFormDataAndDelete(route, formData(param("value", value)));
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     @Test
@@ -371,7 +371,7 @@ public final class PrimitiveFormDataTest {
             String route = buildRoute(PrimitiveFormDataController.INTEGER_ROUTE);
             String response = getStringForFormDataAndDelete(route, formData(param("value", value)));
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     @Test
@@ -381,7 +381,7 @@ public final class PrimitiveFormDataTest {
             String route = buildRoute(PrimitiveFormDataController.DOUBLE_ROUTE);
             String response = getStringForFormDataAndDelete(route, formData(param("value", value)));
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     @Test
@@ -391,7 +391,7 @@ public final class PrimitiveFormDataTest {
             String route = buildRoute(PrimitiveFormDataController.BYTE_ROUTE);
             String response = getStringForFormDataAndDelete(route, formData(param("value", value)));
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     @Test
@@ -401,7 +401,7 @@ public final class PrimitiveFormDataTest {
             String route = buildRoute(PrimitiveFormDataController.SHORT_ROUTE);
             String response = getStringForFormDataAndDelete(route, formData(param("value", value)));
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     @Test
@@ -411,7 +411,7 @@ public final class PrimitiveFormDataTest {
             String route = buildRoute(PrimitiveFormDataController.FLOAT_ROUTE);
             String response = getStringForFormDataAndDelete(route, formData(param("value", value)));
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     @Test
@@ -421,7 +421,7 @@ public final class PrimitiveFormDataTest {
             String route = buildRoute(PrimitiveFormDataController.CHAR_ROUTE);
             String response = getStringForFormDataAndDelete(route, formData(param("value", value)));
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     @Test
@@ -431,7 +431,7 @@ public final class PrimitiveFormDataTest {
             String route = buildRoute(PrimitiveFormDataController.LONG_ROUTE);
             String response = getStringForFormDataAndDelete(route, formData(param("value", value)));
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     // endregion
@@ -445,7 +445,7 @@ public final class PrimitiveFormDataTest {
             String route = buildRoute(PrimitiveFormDataController.BOOLEAN_ROUTE);
             String response = getStringForFormDataAndHead(route, formData(param("value", value)));
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     @Test
@@ -455,7 +455,7 @@ public final class PrimitiveFormDataTest {
             String route = buildRoute(PrimitiveFormDataController.INTEGER_ROUTE);
             String response = getStringForFormDataAndHead(route, formData(param("value", value)));
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     @Test
@@ -465,7 +465,7 @@ public final class PrimitiveFormDataTest {
             String route = buildRoute(PrimitiveFormDataController.DOUBLE_ROUTE);
             String response = getStringForFormDataAndHead(route, formData(param("value", value)));
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     @Test
@@ -475,7 +475,7 @@ public final class PrimitiveFormDataTest {
             String route = buildRoute(PrimitiveFormDataController.BYTE_ROUTE);
             String response = getStringForFormDataAndHead(route, formData(param("value", value)));
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     @Test
@@ -485,7 +485,7 @@ public final class PrimitiveFormDataTest {
             String route = buildRoute(PrimitiveFormDataController.SHORT_ROUTE);
             String response = getStringForFormDataAndHead(route, formData(param("value", value)));
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     @Test
@@ -495,7 +495,7 @@ public final class PrimitiveFormDataTest {
             String route = buildRoute(PrimitiveFormDataController.FLOAT_ROUTE);
             String response = getStringForFormDataAndHead(route, formData(param("value", value)));
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     @Test
@@ -505,7 +505,7 @@ public final class PrimitiveFormDataTest {
             String route = buildRoute(PrimitiveFormDataController.CHAR_ROUTE);
             String response = getStringForFormDataAndHead(route, formData(param("value", value)));
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     @Test
@@ -515,7 +515,7 @@ public final class PrimitiveFormDataTest {
             String route = buildRoute(PrimitiveFormDataController.LONG_ROUTE);
             String response = getStringForFormDataAndHead(route, formData(param("value", value)));
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     // endregion
@@ -529,7 +529,7 @@ public final class PrimitiveFormDataTest {
             String route = buildRoute(PrimitiveFormDataController.BOOLEAN_ROUTE);
             String response = getStringForFormDataAndOptions(route, formData(param("value", value)));
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     @Test
@@ -539,7 +539,7 @@ public final class PrimitiveFormDataTest {
             String route = buildRoute(PrimitiveFormDataController.INTEGER_ROUTE);
             String response = getStringForFormDataAndOptions(route, formData(param("value", value)));
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     @Test
@@ -549,7 +549,7 @@ public final class PrimitiveFormDataTest {
             String route = buildRoute(PrimitiveFormDataController.DOUBLE_ROUTE);
             String response = getStringForFormDataAndOptions(route, formData(param("value", value)));
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     @Test
@@ -559,7 +559,7 @@ public final class PrimitiveFormDataTest {
             String route = buildRoute(PrimitiveFormDataController.BYTE_ROUTE);
             String response = getStringForFormDataAndOptions(route, formData(param("value", value)));
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     @Test
@@ -569,7 +569,7 @@ public final class PrimitiveFormDataTest {
             String route = buildRoute(PrimitiveFormDataController.SHORT_ROUTE);
             String response = getStringForFormDataAndOptions(route, formData(param("value", value)));
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     @Test
@@ -579,7 +579,7 @@ public final class PrimitiveFormDataTest {
             String route = buildRoute(PrimitiveFormDataController.FLOAT_ROUTE);
             String response = getStringForFormDataAndOptions(route, formData(param("value", value)));
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     @Test
@@ -589,7 +589,7 @@ public final class PrimitiveFormDataTest {
             String route = buildRoute(PrimitiveFormDataController.CHAR_ROUTE);
             String response = getStringForFormDataAndOptions(route, formData(param("value", value)));
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     @Test
@@ -599,7 +599,7 @@ public final class PrimitiveFormDataTest {
             String route = buildRoute(PrimitiveFormDataController.LONG_ROUTE);
             String response = getStringForFormDataAndOptions(route, formData(param("value", value)));
             Assert.assertEquals(value, response);
-        }).join();
+        });
     }
 
     // endregion

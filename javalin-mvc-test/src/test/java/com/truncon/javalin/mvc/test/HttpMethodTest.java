@@ -13,6 +13,6 @@ public class HttpMethodTest {
             String route = RouteBuilder.buildRoute(HttpMethodController.GET_ROUTE);
             String response = getStringForGet(route);
             Assert.assertEquals("GET", response);
-        }).join();
+        });
     }
 }

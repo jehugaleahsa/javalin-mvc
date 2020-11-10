@@ -42,7 +42,7 @@ public final class BindModelTest {
             Assert.assertEquals(Float.MAX_VALUE, model.getFloat(), 0.0f);
             Assert.assertEquals(Character.MAX_VALUE, model.getChar());
             Assert.assertEquals(Long.MAX_VALUE, model.getLong());
-        }).join();
+        });
     }
 
     @Test
@@ -68,7 +68,7 @@ public final class BindModelTest {
             Assert.assertEquals(Float.MAX_VALUE, model.getFloat(), 0.0f);
             Assert.assertEquals(Character.MAX_VALUE, model.getChar());
             Assert.assertEquals(Long.MAX_VALUE, model.getLong());
-        }).join();
+        });
     }
 
     @Test
@@ -94,7 +94,7 @@ public final class BindModelTest {
             Assert.assertEquals(Float.MAX_VALUE, model.floatValue, 0.0f);
             Assert.assertEquals(Character.MAX_VALUE, model.charValue);
             Assert.assertEquals(Long.MAX_VALUE, model.longValue);
-        }).join();
+        });
     }
 
     @Test
@@ -120,7 +120,7 @@ public final class BindModelTest {
             Assert.assertEquals(Float.MAX_VALUE, model.floatValue, 0.0f);
             Assert.assertEquals(Character.MAX_VALUE, model.charValue);
             Assert.assertEquals(Long.MAX_VALUE, model.longValue);
-        }).join();
+        });
     }
 
     @Test
@@ -146,7 +146,7 @@ public final class BindModelTest {
             Assert.assertEquals(Float.MAX_VALUE, model.getFloat(), 0.0f);
             Assert.assertEquals(Character.MAX_VALUE, model.getChar());
             Assert.assertEquals(Long.MAX_VALUE, model.getLong());
-        }).join();
+        });
     }
 
     @Test
@@ -172,7 +172,7 @@ public final class BindModelTest {
             Assert.assertEquals(Float.MAX_VALUE, model.getFloat(), 0.0f);
             Assert.assertEquals(Character.MAX_VALUE, model.getChar());
             Assert.assertEquals(Long.MAX_VALUE, model.getLong());
-        }).join();
+        });
     }
 
     @Test
@@ -198,7 +198,7 @@ public final class BindModelTest {
             Assert.assertEquals(Float.MAX_VALUE, model.floatValue, 0.0f);
             Assert.assertEquals(Character.MAX_VALUE, model.charValue);
             Assert.assertEquals(Long.MAX_VALUE, model.longValue);
-        }).join();
+        });
     }
 
     @Test
@@ -224,7 +224,7 @@ public final class BindModelTest {
             Assert.assertEquals(Float.MAX_VALUE, model.floatValue, 0.0f);
             Assert.assertEquals(Character.MAX_VALUE, model.charValue);
             Assert.assertEquals(Long.MAX_VALUE, model.longValue);
-        }).join();
+        });
     }
 
     @Test
@@ -242,6 +242,6 @@ public final class BindModelTest {
             Assert.assertEquals("field", model.field.field);
             Assert.assertNotNull(model.getSetter());
             Assert.assertEquals("setter", model.getSetter().setter);
-        }).join();
+        });
     }
 }
