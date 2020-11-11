@@ -1,4 +1,4 @@
-package com.truncon.javalin.mvc.test.controllers.ws.primitives;
+package com.truncon.javalin.mvc.test.controllers.ws.boxed;
 
 import com.truncon.javalin.mvc.api.ws.WsActionResult;
 import com.truncon.javalin.mvc.api.ws.WsConnect;
@@ -12,24 +12,24 @@ import com.truncon.javalin.mvc.api.ws.WsErrorContext;
 import com.truncon.javalin.mvc.api.ws.WsMessage;
 import com.truncon.javalin.mvc.api.ws.WsMessageContext;
 
-@WsController(route = PrimitiveShortParameterController.ROUTE)
-public final class PrimitiveShortParameterController {
-    public static final String ROUTE = "/ws/params/primitives/short/:value";
+@WsController(route = BoxedIntegerParameterController.ROUTE)
+public final class BoxedIntegerParameterController {
+    public static final String ROUTE = "/ws/params/boxed/integer/:value";
 
     @WsConnect
-    public void connect(WsConnectContext context, short value) {
+    public void connect(WsConnectContext context, Integer value) {
     }
 
     @WsDisconnect
-    public void disconnect(WsDisconnectContext context, short value) {
+    public void disconnect(WsDisconnectContext context, Integer value) {
     }
 
     @WsError
-    public void error(WsErrorContext context, short value) {
+    public void error(WsErrorContext context, Integer value) {
     }
 
     @WsMessage
-    public WsActionResult message(WsMessageContext context, short value) {
-        return new WsContentResult(Short.toString(value));
+    public WsActionResult message(WsMessageContext context, Integer value) {
+        return new WsContentResult(value == null ? null : Integer.toString(value));
     }
 }

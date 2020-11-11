@@ -1,4 +1,4 @@
-package com.truncon.javalin.mvc.test.controllers.ws.primitives;
+package com.truncon.javalin.mvc.test.controllers.ws.reference;
 
 import com.truncon.javalin.mvc.api.ws.WsActionResult;
 import com.truncon.javalin.mvc.api.ws.WsConnect;
@@ -12,24 +12,26 @@ import com.truncon.javalin.mvc.api.ws.WsErrorContext;
 import com.truncon.javalin.mvc.api.ws.WsMessage;
 import com.truncon.javalin.mvc.api.ws.WsMessageContext;
 
-@WsController(route = PrimitiveShortParameterController.ROUTE)
-public final class PrimitiveShortParameterController {
-    public static final String ROUTE = "/ws/params/primitives/short/:value";
+import java.math.BigInteger;
+
+@WsController(route = BigIntegerParameterController.ROUTE)
+public final class BigIntegerParameterController {
+    public static final String ROUTE = "/ws/params/reference/big-integer/:value";
 
     @WsConnect
-    public void connect(WsConnectContext context, short value) {
+    public void connect(WsConnectContext context, BigInteger value) {
     }
 
     @WsDisconnect
-    public void disconnect(WsDisconnectContext context, short value) {
+    public void disconnect(WsDisconnectContext context, BigInteger value) {
     }
 
     @WsError
-    public void error(WsErrorContext context, short value) {
+    public void error(WsErrorContext context, BigInteger value) {
     }
 
     @WsMessage
-    public WsActionResult message(WsMessageContext context, short value) {
-        return new WsContentResult(Short.toString(value));
+    public WsActionResult message(WsMessageContext context, BigInteger value) {
+        return new WsContentResult(value == null ? null : value.toString());
     }
 }

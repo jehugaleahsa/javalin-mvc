@@ -1,6 +1,7 @@
 package com.truncon.javalin.mvc.test;
 
 import org.eclipse.jetty.websocket.api.Session;
+import org.eclipse.jetty.websocket.api.StatusCode;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketClose;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketConnect;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketError;
@@ -53,7 +54,13 @@ public final class WsTestUtils {
             try {
                 CompletableFuture<Session> future = (CompletableFuture<Session>) client.connect(socket, uri, request);
                 return future.thenApply(session -> new SessionManager(client, socket, session))
-                    .thenCompose(sm -> testBody.apply(sm).thenRun(sm::close));
+                    .thenCompose(sm -> testBody.apply(sm).handleAsync((r, ex) -> {
+                        sm.close();
+                        if (ex != null) {
+                            throw new CompletionException(ex);
+                        }
+                        return r;
+                    }));
             } catch (IOException exception) {
                 throw new UncheckedIOException(exception);
             }
@@ -93,8 +100,9 @@ public final class WsTestUtils {
 
         public void close() {
             try {
-                session.close();
+                session.close(StatusCode.NORMAL, "OK");
                 client.stop();
+                client.destroy();
             } catch (Exception exception) {
                 throw new CompletionException(exception);
             }
