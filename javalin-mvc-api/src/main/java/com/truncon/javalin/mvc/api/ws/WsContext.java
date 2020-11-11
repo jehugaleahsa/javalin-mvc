@@ -7,6 +7,12 @@ package com.truncon.javalin.mvc.api.ws;
  */
 public interface WsContext {
     /**
+     * Gets the unique ID of the session.
+     * @return The unique session ID.
+     */
+    String getSessionId();
+
+    /**
      * Gets the {@link WsRequest} object for retrieving the request details.
      * @return the request object.
      */

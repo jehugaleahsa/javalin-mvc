@@ -1,4 +1,4 @@
-package com.truncon.javalin.mvc.test.controllers.ws;
+package com.truncon.javalin.mvc.test.controllers.ws.primitives;
 
 import com.truncon.javalin.mvc.api.ws.WsActionResult;
 import com.truncon.javalin.mvc.api.ws.WsConnect;
@@ -12,24 +12,24 @@ import com.truncon.javalin.mvc.api.ws.WsErrorContext;
 import com.truncon.javalin.mvc.api.ws.WsMessage;
 import com.truncon.javalin.mvc.api.ws.WsMessageContext;
 
-@WsController(route = PrimitiveIntegerParameterController.ROUTE)
-public final class PrimitiveIntegerParameterController {
-    public static final String ROUTE = "/ws/params/primitives/integer/:value";
+@WsController(route = PrimitiveCharacterParameterController.ROUTE)
+public final class PrimitiveCharacterParameterController {
+    public static final String ROUTE = "/ws/params/primitives/character/:value";
 
     @WsConnect
-    public void connect(WsConnectContext context) {
+    public void connect(WsConnectContext context, char value) {
     }
 
     @WsDisconnect
-    public void disconnect(WsDisconnectContext context) {
+    public void disconnect(WsDisconnectContext context, char value) {
     }
 
     @WsError
-    public void error(WsErrorContext context) {
+    public void error(WsErrorContext context, char value) {
     }
 
     @WsMessage
-    public WsActionResult message(int value) {
-        return new WsContentResult(Integer.toString(value));
+    public WsActionResult message(WsMessageContext context, char value) {
+        return new WsContentResult(Character.toString(value));
     }
 }

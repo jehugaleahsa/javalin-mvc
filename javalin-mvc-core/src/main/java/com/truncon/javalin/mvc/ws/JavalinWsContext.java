@@ -13,6 +13,11 @@ public abstract class JavalinWsContext implements WsContext {
     }
 
     @Override
+    public String getSessionId() {
+        return context.getSessionId();
+    }
+
+    @Override
     public WsRequest getRequest() {
         return new JavalinWsRequest(context);
     }
