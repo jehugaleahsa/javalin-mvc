@@ -22,6 +22,7 @@ import com.truncon.javalin.mvc.api.ws.WsRequest;
 import com.truncon.javalin.mvc.api.ws.WsValueSource;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.ImmutableTriple;
 
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
@@ -49,12 +50,13 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public final class HelperMethodBuilder {
     public static final Map<Class<?>, ConversionHelper> CONVERSION_HELPER_LOOKUP = getConversionHelperLookup();
@@ -128,7 +130,7 @@ public final class HelperMethodBuilder {
     private final Set<ImmutablePair<WsValueSource, Class<?>>> addedSingletonWsSourceHelpers = new HashSet<>();
     private final Set<ImmutablePair<WsValueSource, Class<?>>> addedArrayWsSourceHelpers = new HashSet<>();
     private final Map<ImmutablePair<ValueSource, String>, String> complexConversionLookup = new HashMap<>();
-    private final Map<ImmutablePair<WsValueSource, String>, String> complexWsConversionLookup = new HashMap<>();
+    private final Map<ImmutableTriple<WsValueSource, String, String>, String> complexWsConversionLookup = new HashMap<>();
     private final Map<String, Integer> complexConversionCounts = new HashMap<>();
     private final Set<Class<?>> jsonMethods = new HashSet<>();
 
@@ -219,11 +221,11 @@ public final class HelperMethodBuilder {
         } else {
             methodBodyBuilder.addStatement("$T model = injector.$L()", element.asType(), modelName);
         }
-        List<Element> memberElements = element.getEnclosedElements().stream()
-            .filter(e -> e.getKind() == ElementKind.FIELD || e.getKind() == ElementKind.METHOD)
-            .filter(e -> defaultSource != ValueSource.Any || hasFromAnnotation(e) || hasMemberBinding(e))
-            .filter(e -> isValidBindTarget(e, false))
-            .collect(Collectors.toList());
+        Collection<Element> memberElements = getBoundMemberElements(
+            element,
+            false,
+            e -> defaultSource != ValueSource.Any || hasFromAnnotation(e) || hasMemberBinding(e)
+        ).collect(Collectors.toList());
         for (Element memberElement : memberElements) {
             if (!addPrimitiveSetter(memberElement, methodBodyBuilder, defaultSource)) {
                 ValueSource defaultSubSource = getDefaultFromBinding(memberElement);
@@ -374,30 +376,43 @@ public final class HelperMethodBuilder {
     }
 
     public boolean hasMemberBinding(Element element) {
+        return hasMemberBinding(element, HelperMethodBuilder::hasFromAnnotation);
+    }
+
+    private boolean hasMemberBinding(Element element, Function<Element, Boolean> hasAnnotation) {
         if (element.getKind() == ElementKind.PARAMETER) {
             TypeElement typeElement = container.getTypeUtils().getTypeElement(element.asType());
-            return hasMemberBinding(typeElement);
+            return hasMemberBinding(typeElement, hasAnnotation);
         } else if (element.getKind() == ElementKind.FIELD) {
             TypeElement typeElement = container.getTypeUtils().getTypeElement(element.asType());
-            return hasMemberBinding(typeElement);
+            return hasMemberBinding(typeElement, hasAnnotation);
         } else if (element.getKind() == ElementKind.METHOD) {
             ExecutableElement method = (ExecutableElement) element;
             if (!method.getModifiers().contains(Modifier.STATIC) && method.getParameters().size() == 1) {
                 VariableElement parameterElement = method.getParameters().get(0);
                 TypeElement typeElement = container.getTypeUtils().getTypeElement(parameterElement.asType());
-                return hasMemberBinding(typeElement);
+                return hasMemberBinding(typeElement, hasAnnotation);
             }
         }
         return false;
     }
 
-    private boolean hasMemberBinding(TypeElement element) {
+    private boolean hasMemberBinding(TypeElement element, Function<Element, Boolean> hasAnnotation) {
         if (element == null) {
             return false;
         }
-        return element.getEnclosedElements().stream()
+        boolean hasBinding = element.getEnclosedElements().stream()
             .filter(e -> e.getKind() == ElementKind.FIELD || e.getKind() == ElementKind.METHOD)
-            .anyMatch(HelperMethodBuilder::hasFromAnnotation);
+            .anyMatch(hasAnnotation::apply);
+        if (hasBinding) {
+            return true;
+        }
+        TypeMirror superType = element.getSuperclass();
+        if (superType.getKind() == TypeKind.NONE || container.getTypeUtils().isType(superType, Object.class)) {
+            return false;
+        }
+        TypeElement superTypeElement = container.getTypeUtils().getTypeElement(superType);
+        return hasMemberBinding(superTypeElement, hasAnnotation);
     }
 
     public static boolean hasFromAnnotation(Element element) {
@@ -425,7 +440,10 @@ public final class HelperMethodBuilder {
     }
 
     public String addConversionMethod(TypeElement element, WsValueSource defaultSource, Class<?> contextType) {
-        ImmutablePair<WsValueSource, String> key = ImmutablePair.of(defaultSource, contextType.getSimpleName());
+        ImmutableTriple<WsValueSource, String, String> key = ImmutableTriple.of(
+            defaultSource,
+            element.getQualifiedName().toString(),
+            contextType.getSimpleName());
         String methodName = complexWsConversionLookup.get(key);
         if (methodName != null) {
             return methodName;
@@ -437,11 +455,11 @@ public final class HelperMethodBuilder {
         } else {
             methodBodyBuilder.addStatement("$T model = injector.$L()", element.asType(), modelName);
         }
-        List<Element> memberElements = element.getEnclosedElements().stream()
-            .filter(e -> e.getKind() == ElementKind.FIELD || e.getKind() == ElementKind.METHOD)
-            .filter(e -> defaultSource != WsValueSource.Any || hasWsFromAnnotation(e))
-            .filter(e -> isValidBindTarget(e, true))
-            .collect(Collectors.toList());
+        Collection<Element> memberElements = getBoundMemberElements(
+            element,
+            true,
+            e -> defaultSource != WsValueSource.Any || hasWsFromAnnotation(e) || hasMemberBinding(e)
+        ).collect(Collectors.toList());
         for (Element memberElement : memberElements) {
             if (!addPrimitiveSetter(memberElement, methodBodyBuilder, defaultSource, contextType)) {
                 WsValueSource defaultSubSource = getDefaultWsFromBinding(memberElement);
@@ -472,6 +490,20 @@ public final class HelperMethodBuilder {
         complexWsConversionLookup.put(key, methodName);
         complexConversionCounts.put(simpleName, count + 1);
         return methodName;
+    }
+
+    private Stream<? extends Element> getBoundMemberElements(TypeElement element, boolean isWebSockets, Function<Element, Boolean> hasBinding) {
+        Stream<? extends Element> currentMembers = element.getEnclosedElements().stream()
+            .filter(e -> e.getKind() == ElementKind.FIELD || e.getKind() == ElementKind.METHOD)
+            .filter(hasBinding::apply)
+            .filter(e -> isValidBindTarget(e, isWebSockets));
+        TypeMirror superType = element.getSuperclass();
+        if (superType.getKind() == TypeKind.NONE || container.getTypeUtils().isType(superType, Object.class)) {
+            return currentMembers;
+        }
+        TypeElement superTypeElement = container.getTypeUtils().getTypeElement(superType);
+        Stream<? extends Element> baseMembers = getBoundMemberElements(superTypeElement, isWebSockets, hasBinding);
+        return Stream.concat(currentMembers, baseMembers);
     }
 
     public static boolean hasWsFromAnnotation(Element element) {
@@ -533,30 +565,7 @@ public final class HelperMethodBuilder {
     }
 
     public boolean hasWsMemberBinding(Element element) {
-        if (element.getKind() == ElementKind.PARAMETER) {
-            TypeElement typeElement = container.getTypeUtils().getTypeElement(element.asType());
-            return hasWsMemberBinding(typeElement);
-        } else if (element.getKind() == ElementKind.FIELD) {
-            TypeElement typeElement = container.getTypeUtils().getTypeElement(element.asType());
-            return hasWsMemberBinding(typeElement);
-        } else if (element.getKind() == ElementKind.METHOD) {
-            ExecutableElement method = (ExecutableElement) element;
-            if (!method.getModifiers().contains(Modifier.STATIC) && method.getParameters().size() == 1) {
-                VariableElement parameterElement = method.getParameters().get(0);
-                TypeElement typeElement = container.getTypeUtils().getTypeElement(parameterElement.asType());
-                return hasWsMemberBinding(typeElement);
-            }
-        }
-        return false;
-    }
-
-    private boolean hasWsMemberBinding(TypeElement element) {
-        if (element == null) {
-            return false;
-        }
-        return element.getEnclosedElements().stream()
-            .filter(e -> e.getKind() == ElementKind.FIELD || e.getKind() == ElementKind.METHOD)
-            .anyMatch(HelperMethodBuilder::hasWsFromAnnotation);
+        return hasMemberBinding(element, HelperMethodBuilder::hasWsFromAnnotation);
     }
 
     public String addSourceMethod(ValueSource valueSource, boolean isArray) {
