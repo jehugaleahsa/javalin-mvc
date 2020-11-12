@@ -3,7 +3,7 @@ package com.truncon.javalin.mvc.ws;
 import com.truncon.javalin.mvc.api.ws.WsContext;
 import com.truncon.javalin.mvc.api.ws.WsRequest;
 import com.truncon.javalin.mvc.api.ws.WsResponse;
-import io.javalin.plugin.json.JavalinJackson;
+import io.javalin.plugin.json.JavalinJson;
 
 public abstract class JavalinWsContext implements WsContext {
     private final io.javalin.websocket.WsContext context;
@@ -29,12 +29,12 @@ public abstract class JavalinWsContext implements WsContext {
 
     @Override
     public String toJson(Object data) {
-        return JavalinJackson.INSTANCE.toJson(data);
+        return JavalinJson.toJson(data);
     }
 
     @Override
     public <T> T fromJson(String json, Class<T> dataClass) {
-        return JavalinJackson.INSTANCE.fromJson(json, dataClass);
+        return JavalinJson.fromJson(json, dataClass);
     }
 
     @Override

@@ -1,16 +1,28 @@
 package com.truncon.javalin.mvc.annotations.processing;
 
 import com.squareup.javapoet.CodeBlock;
-import com.truncon.javalin.mvc.api.*;
+import com.truncon.javalin.mvc.api.ActionResult;
+import com.truncon.javalin.mvc.api.HttpConnect;
+import com.truncon.javalin.mvc.api.HttpContext;
+import com.truncon.javalin.mvc.api.HttpDelete;
+import com.truncon.javalin.mvc.api.HttpGet;
+import com.truncon.javalin.mvc.api.HttpHead;
+import com.truncon.javalin.mvc.api.HttpOptions;
+import com.truncon.javalin.mvc.api.HttpPatch;
+import com.truncon.javalin.mvc.api.HttpPost;
+import com.truncon.javalin.mvc.api.HttpPut;
+import com.truncon.javalin.mvc.api.JsonResult;
 import io.javalin.http.Handler;
-import com.truncon.javalin.mvc.DefaultModelBinder;
 import com.truncon.javalin.mvc.JavalinHttpContext;
 
-import javax.lang.model.element.*;
+import javax.lang.model.element.Element;
+import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.Name;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 import java.lang.annotation.Annotation;
-import java.util.*;
+import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -122,10 +134,6 @@ final class RouteGenerator {
             handlerBuilder.addStatement("$T injector = scopeFactory.get()", container.getType());
         }
         handlerBuilder.addStatement("$T wrapper = new $T(ctx)", HttpContext.class, JavalinHttpContext.class);
-        if (ParameterGenerator.isBinderNeeded(container.getTypeUtils(), method)) {
-            handlerBuilder.addStatement("$T binder = new $T(wrapper.getRequest())", ModelBinder.class, DefaultModelBinder.class);
-        }
-
         Name controllerName = container.getDependencyName(controller.getType());
         if (controllerName != null) {
             handlerBuilder.addStatement("$T controller = injector.$L()", controller.getType(), controllerName);

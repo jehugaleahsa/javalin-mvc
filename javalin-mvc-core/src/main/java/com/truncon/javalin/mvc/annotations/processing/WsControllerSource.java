@@ -172,13 +172,6 @@ final class WsControllerSource {
         final String wrapper = "context";
         handlerBuilder.addStatement("$T $N = new $T($N)", contextInterface, wrapper, contextImpl, context);
         addController(helperBuilder.getContainer(), handlerBuilder);
-        if (ParameterGenerator.isWsBinderNeeded(helperBuilder.getContainer().getTypeUtils(), method, contextInterface)) {
-            handlerBuilder.addStatement(
-                "$T binder = new $T($N)",
-                WsModelBinder.class,
-                DefaultWsModelBinder.class,
-                wrapper);
-        }
         String parameters = ParameterGenerator.bindWsParameters(
                 method,
                 context,

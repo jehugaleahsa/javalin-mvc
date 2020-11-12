@@ -2,11 +2,11 @@ package com.truncon.javalin.mvc;
 
 import java.util.Objects;
 
-import io.javalin.http.Context;
-import io.javalin.plugin.json.JavalinJackson;
 import com.truncon.javalin.mvc.api.HttpContext;
 import com.truncon.javalin.mvc.api.HttpRequest;
 import com.truncon.javalin.mvc.api.HttpResponse;
+import io.javalin.http.Context;
+import io.javalin.plugin.json.JavalinJson;
 
 public final class JavalinHttpContext implements HttpContext {
     private final Context context;
@@ -28,12 +28,12 @@ public final class JavalinHttpContext implements HttpContext {
 
     @Override
     public String toJson(Object data) {
-        return JavalinJackson.INSTANCE.toJson(data);
+        return JavalinJson.toJson(data);
     }
 
     @Override
     public <T> T fromJson(String json, Class<T> dataClass) {
-        return JavalinJackson.INSTANCE.fromJson(json, dataClass);
+        return JavalinJson.fromJson(json, dataClass);
     }
 
     @Override

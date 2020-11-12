@@ -1,10 +1,13 @@
 package com.truncon.javalin.mvc.annotations.processing;
 
+import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
+import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
+import com.squareup.javapoet.TypeVariableName;
 import com.truncon.javalin.mvc.api.FromCookie;
 import com.truncon.javalin.mvc.api.FromForm;
 import com.truncon.javalin.mvc.api.FromHeader;
@@ -27,6 +30,7 @@ import javax.lang.model.element.Modifier;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
+import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -56,6 +60,7 @@ public final class HelperMethodBuilder {
     public static final Map<Class<?>, ConversionHelper> CONVERSION_HELPER_LOOKUP = getConversionHelperLookup();
     private static final Map<ValueSource, SourceHelper> SOURCE_HELPER_LOOKUP = getSourceHelperLookup();
     private static final Map<WsValueSource, WsSourceHelper> WS_SOURCE_HELPER_LOOKUP = getWsSourceHelperLookup();
+    private static final String JSON_METHOD_NAME = "toJson";
 
     private static Map<Class<?>, ConversionHelper> getConversionHelperLookup() {
         Map<Class<?>, ConversionHelper> lookup = new HashMap<>();
@@ -125,6 +130,7 @@ public final class HelperMethodBuilder {
     private final Map<ImmutablePair<ValueSource, String>, String> complexConversionLookup = new HashMap<>();
     private final Map<ImmutablePair<WsValueSource, String>, String> complexWsConversionLookup = new HashMap<>();
     private final Map<String, Integer> complexConversionCounts = new HashMap<>();
+    private final Set<Class<?>> jsonMethods = new HashSet<>();
 
     public HelperMethodBuilder(ContainerSource container, TypeSpec.Builder typeBuilder) {
         this.container = container;
@@ -140,7 +146,7 @@ public final class HelperMethodBuilder {
         for (Class<?> parameterClass : HelperMethodBuilder.CONVERSION_HELPER_LOOKUP.keySet()) {
             if (typeUtils.isType(parameterType, parameterClass)) {
                 return parameterClass;
-            } else {
+            } else if (parameterType.getKind() == TypeKind.ARRAY) {
                 Class<?> arrayClass = TypeUtils.getArrayClass(parameterClass);
                 if (typeUtils.isType(parameterType, arrayClass)) {
                     return arrayClass;
@@ -419,7 +425,7 @@ public final class HelperMethodBuilder {
     }
 
     public String addConversionMethod(TypeElement element, WsValueSource defaultSource, Class<?> contextType) {
-        ImmutablePair<WsValueSource, String> key = ImmutablePair.of(defaultSource, element.getQualifiedName().toString());
+        ImmutablePair<WsValueSource, String> key = ImmutablePair.of(defaultSource, contextType.getSimpleName());
         String methodName = complexWsConversionLookup.get(key);
         if (methodName != null) {
             return methodName;
@@ -574,6 +580,49 @@ public final class HelperMethodBuilder {
             sourceHelper.buildSingletonHelper(this, wrapperType);
             return sourceHelper.getSingletonName();
         }
+    }
+
+    public String addJsonMethod() {
+        if (jsonMethods.contains(HttpContext.class)) {
+            return JSON_METHOD_NAME;
+        }
+        TypeVariableName typeArgument = TypeVariableName.get("T");
+        MethodSpec method = MethodSpec.methodBuilder(JSON_METHOD_NAME)
+            .addModifiers(Modifier.PRIVATE, Modifier.STATIC)
+            .addTypeVariable(typeArgument)
+            .returns(typeArgument)
+            .addParameter(HttpContext.class, "context", Modifier.FINAL)
+            .addParameter(ParameterizedTypeName.get(ClassName.get(Class.class), typeArgument), "type", Modifier.FINAL)
+            .addCode(CodeBlock.builder()
+                .addStatement("$T request = context.getRequest()", HttpRequest.class)
+                .addStatement("return request.getBodyFromJson(type)")
+                .build()
+            )
+            .build();
+        typeBuilder.addMethod(method);
+        jsonMethods.add(HttpContext.class);
+        return JSON_METHOD_NAME;
+    }
+
+    public String addWsJsonMethod(Class<?> wrapperType) {
+        if (jsonMethods.contains(wrapperType)) {
+            return JSON_METHOD_NAME;
+        }
+        TypeVariableName typeArgument = TypeVariableName.get("T");
+        MethodSpec method = MethodSpec.methodBuilder(JSON_METHOD_NAME)
+            .addModifiers(Modifier.PRIVATE, Modifier.STATIC)
+            .addTypeVariable(typeArgument)
+            .returns(typeArgument)
+            .addParameter(wrapperType, "context", Modifier.FINAL)
+            .addParameter(ParameterizedTypeName.get(ClassName.get(Class.class), typeArgument), "type", Modifier.FINAL)
+            .addCode(CodeBlock.builder()
+                .addStatement("return context.getMessage(type)")
+                .build()
+            )
+            .build();
+        typeBuilder.addMethod(method);
+        jsonMethods.add(wrapperType);
+        return JSON_METHOD_NAME;
     }
 
     // region ConversionHelper

@@ -2,10 +2,11 @@ package com.truncon.javalin.mvc.ws;
 
 import com.truncon.javalin.mvc.api.ws.WsRequest;
 import io.javalin.websocket.WsContext;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -44,7 +45,7 @@ public final class JavalinWsRequest implements WsRequest {
 
     @Override
     public Map<String, Collection<String>> getQueryLookup() {
-        return Collections.unmodifiableMap(context.queryParamMap());
+        return copy(context.queryParamMap());
     }
 
     @Override
@@ -78,12 +79,24 @@ public final class JavalinWsRequest implements WsRequest {
     }
 
     private static Map<String, Collection<String>> explode(Map<String, String> map) {
-        return map.keySet().stream().collect(Collectors.toMap(k -> k, k -> listOf(map.get(k))));
+        return map.entrySet().stream()
+            .collect(Collectors.toMap(Map.Entry::getKey, e -> listOf(e.getValue())));
     }
 
     private static List<String> listOf(String item) {
         List<String> list = new ArrayList<>();
-        list.add(item);
+        list.add(StringUtils.trimToNull(item));
         return list;
+    }
+
+    private static Map<String, Collection<String>> copy(Map<String, List<String>> map) {
+        Map<String, Collection<String>> copy = new LinkedHashMap<>(map.size());
+        for (Map.Entry<String, List<String>> entry : map.entrySet()) {
+            Collection<String> values = copy.computeIfAbsent(entry.getKey(), k -> new ArrayList<>(entry.getValue().size()));
+            for (String value : entry.getValue()) {
+                values.add(value.isEmpty() ? null : value);
+            }
+        }
+        return copy;
     }
 }

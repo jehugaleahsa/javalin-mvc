@@ -37,7 +37,8 @@ public final class TypeUtils {
         if (type == null) {
             return false;
         } else if (parameterType.getKind() == TypeKind.ARRAY) {
-            return type.isArray() && isType(((ArrayType) parameterType).getComponentType(), type.getComponentType());
+            ArrayType arrayType = (ArrayType) parameterType;
+            return type.isArray() && isType(arrayType.getComponentType(), type.getComponentType());
         } else if (type.isPrimitive()) {
             Class<?> primitiveType = getPrimitiveType(parameterType);
             return primitiveType == type;
@@ -78,9 +79,40 @@ public final class TypeUtils {
 
     public static Class<?> getArrayClass(Class<?> type) {
         try {
-            return Class.forName("[L" + type.getCanonicalName() + ";");
-        } catch (ClassNotFoundException e) {
+            String name = getArrayClassName(type);
+            ClassLoader classLoader = type.getClassLoader();
+            if (classLoader == null) {
+                return Class.forName(name);
+            } else {
+                return classLoader.loadClass(name);
+            }
+        } catch (ClassNotFoundException exception) {
             return null;
+        }
+    }
+
+    private static String getArrayClassName(Class<?> type) {
+        if (type.isArray()) {
+            return "[" + type.getName();
+        }
+        if (type == boolean.class) {
+            return "[Z";
+        } else if (type == byte.class) {
+            return "[B";
+        } else if (type == char.class) {
+            return "[C";
+        } else if (type == double.class) {
+            return "[D";
+        } else if (type == float.class) {
+            return "[F";
+        } else if (type == int.class) {
+            return "[I";
+        } else if (type == long.class) {
+            return "[J";
+        } else if (type == short.class) {
+            return "[S";
+        } else {
+            return "[L" + type.getName() + ";";
         }
     }
 }

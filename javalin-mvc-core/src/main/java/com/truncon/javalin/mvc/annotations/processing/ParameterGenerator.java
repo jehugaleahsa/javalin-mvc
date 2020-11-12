@@ -23,12 +23,6 @@ final class ParameterGenerator {
         return new ParameterGenerator(parameter);
     }
 
-    public static boolean isBinderNeeded(TypeUtils typeUtils, ExecutableElement method) {
-        return method.getParameters().stream()
-            .map(ParameterGenerator::getParameterGenerator)
-            .anyMatch(g -> g.isBinderNeeded(typeUtils));
-    }
-
     public static String bindParameters(
             ExecutableElement method,
             String context,
@@ -39,12 +33,6 @@ final class ParameterGenerator {
             .map(g -> g.generateParameter(context, wrapper, helperBuilder))
             .toArray(String[]::new);
         return String.join(", ", arguments);
-    }
-
-    public static boolean isWsBinderNeeded(TypeUtils typeUtils, ExecutableElement method, Class<?> wrapperType) {
-        return method.getParameters().stream()
-            .map(ParameterGenerator::getParameterGenerator)
-            .anyMatch(p -> p.isWsBinderNeeded(typeUtils, wrapperType));
     }
 
     public static String bindWsParameters(
@@ -58,27 +46,6 @@ final class ParameterGenerator {
                 .map(g -> g.generateWsParameter(context, wrapperType, wrapper, helperBuilder))
                 .toArray(String[]::new);
         return String.join(", ", arguments);
-    }
-
-    public VariableElement getParameter() {
-        return parameter;
-    }
-
-    public boolean isBinderNeeded(TypeUtils typeUtils) {
-        TypeMirror parameterType = parameter.asType();
-        if (typeUtils.isType(parameterType, Context.class)) {
-            return false;
-        } else if (typeUtils.isType(parameterType, HttpContext.class)) {
-            return false;
-        } else if (typeUtils.isType(parameterType, HttpRequest.class)) {
-            return false;
-        } else if (typeUtils.isType(parameterType, HttpResponse.class)) {
-            return false;
-        } else if (typeUtils.isType(parameterType, FileUpload.class)) {
-            return false;
-        } else {
-            return true;
-        }
     }
 
     public String generateParameter(String context, String wrapper, HelperMethodBuilder helperBuilder) {
@@ -119,13 +86,8 @@ final class ParameterGenerator {
         }
 
         // Lastly, assume the type should be converted using JSON.
-        return CodeBlock.of(
-                "($T)binder.getValue($S, $T.class, $T.$L)",
-                parameterType,
-                parameterName,
-                parameterType,
-                ValueSource.class,
-                valueSource).toString();
+        String jsonMethod = helperBuilder.addJsonMethod();
+        return CodeBlock.of("$N($N, $T.class)", jsonMethod, wrapper, parameterType).toString();
     }
 
     private String getNonBinderParameter(String context, String wrapper, TypeUtils typeUtils, TypeMirror parameterType) {
@@ -142,12 +104,6 @@ final class ParameterGenerator {
         } else {
             return null;
         }
-    }
-
-    public boolean isWsBinderNeeded(TypeUtils typeUtils, Class<?> wrapperType) {
-        TypeMirror parameterType = parameter.asType();
-        String parameter = getNonBinderWsParameter(typeUtils, "context", wrapperType, "wrapper", parameterType);
-        return StringUtils.isBlank(parameter);
     }
 
     public String generateWsParameter(String context, Class<?> wrapperType, String wrapper, HelperMethodBuilder helperBuilder) {
@@ -188,16 +144,18 @@ final class ParameterGenerator {
                 .toString();
         }
 
-        return CodeBlock.of(
-                "($T)binder.getValue($S, $T.class, $T.$L)",
-                parameterType,
-                parameterName,
-                parameterType,
-                WsValueSource.class,
-                valueSource).toString();
+        if (wrapperType != WsMessageContext.class) {
+            // Ignore requests to bind unrecognized types to the other WebSocket methods.
+            // Provide explicit cast to prevent overloads from generating ambiguity errors.
+            return CodeBlock.of("($T) null", parameterType).toString();
+        }
+
+        // Lastly, assume the type should be converted using JSON.
+        String jsonMethod = helperBuilder.addWsJsonMethod(wrapperType);
+        return CodeBlock.of("$N($N, $T.class)", jsonMethod, wrapper, parameterType).toString();
     }
 
-    private String getNonBinderWsParameter(
+    private static String getNonBinderWsParameter(
             TypeUtils typeUtils,
             String context,
             Class<?> wrapperType,
@@ -218,7 +176,7 @@ final class ParameterGenerator {
         }
     }
 
-    private boolean isBuiltInWsContextType(TypeUtils typeUtils, Class<?> wrapperType, TypeMirror parameterType) {
+    private static boolean isBuiltInWsContextType(TypeUtils typeUtils, Class<?> wrapperType, TypeMirror parameterType) {
         if (typeUtils.isType(parameterType, io.javalin.websocket.WsContext.class)) {
             return true;
         } else if (wrapperType.equals(WsConnectContext.class)
@@ -250,7 +208,7 @@ final class ParameterGenerator {
         return annotatedName.trim();
     }
 
-    private ValueSource getValueSource(VariableElement parameter) {
+    private static ValueSource getValueSource(VariableElement parameter) {
         if (parameter.getAnnotation(FromHeader.class) != null) {
             return ValueSource.Header;
         }
@@ -269,7 +227,7 @@ final class ParameterGenerator {
         return ValueSource.Any;
     }
 
-    private WsValueSource getWsValueSource(VariableElement parameter) {
+    private static WsValueSource getWsValueSource(VariableElement parameter) {
         if (parameter.getAnnotation(FromMessage.class) != null) {
             return WsValueSource.Message;
         }
