@@ -3,6 +3,7 @@ package com.truncon.javalin.mvc.test;
 import com.truncon.javalin.mvc.test.controllers.ws.models.BindFromJsonModelController;
 import com.truncon.javalin.mvc.test.controllers.ws.models.BindSettersFromQueryModelController;
 import com.truncon.javalin.mvc.test.models.PrimitiveModel;
+import io.javalin.plugin.json.JavalinJson;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -54,8 +55,9 @@ public final class WsBindModelTest {
         model.setDouble(Double.MAX_VALUE);
         model.setChar('a');
         model.setBoolean(true);
-        AsyncTestUtils.runTestAsync(app ->
-            WsTestUtils.ws(route, session -> session.sendStringAndAwaitResponse("").thenAccept(response -> {
+        AsyncTestUtils.runTestAsync(app -> {
+            String json = JavalinJson.toJson(model);
+            return WsTestUtils.ws(route, session -> session.sendStringAndAwaitResponse(json).thenAccept(response -> {
                 PrimitiveModel actual = parseJson(response, PrimitiveModel.class);
                 Assert.assertEquals(model.getByte(), actual.getByte());
                 Assert.assertEquals(model.getShort(), actual.getShort());
@@ -65,7 +67,7 @@ public final class WsBindModelTest {
                 Assert.assertEquals(model.getDouble(), actual.getDouble(), 0.0);
                 Assert.assertEquals(model.getChar(), actual.getChar());
                 Assert.assertEquals(model.getBoolean(), actual.getBoolean());
-            }))
-        );
+            }));
+        });
     }
 }

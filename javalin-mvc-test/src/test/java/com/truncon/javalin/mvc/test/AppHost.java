@@ -3,7 +3,7 @@ package com.truncon.javalin.mvc.test;
 import java.util.concurrent.CompletableFuture;
 
 public final class AppHost {
-    public static final int PORT = 57021;
+    public static final int PORT = 59933;
     private final App app;
 
     private AppHost(App app) {
