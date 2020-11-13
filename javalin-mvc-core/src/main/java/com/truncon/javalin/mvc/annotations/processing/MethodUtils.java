@@ -8,17 +8,13 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.Elements;
-import javax.lang.model.util.Types;
 import java.util.concurrent.CompletableFuture;
 
 final class MethodUtils {
-    private final Types typeUtils;
-    private final Elements elementUtils;
+    private final TypeUtils typeUtils;
 
-    public MethodUtils(Types typeUtils, Elements elementUtils) {
+    public MethodUtils(TypeUtils typeUtils) {
         this.typeUtils = typeUtils;
-        this.elementUtils = elementUtils;
     }
 
     public boolean hasVoidReturnType(ExecutableElement method) {
@@ -36,7 +32,7 @@ final class MethodUtils {
 
     private boolean hasActionResultReturnType(ExecutableElement method, Class<?> actionResultType) {
         TypeMirror returnType = method.getReturnType();
-        TypeMirror resultType = elementUtils.getTypeElement(actionResultType.getCanonicalName()).asType();
+        TypeMirror resultType = typeUtils.getTypeElement(actionResultType.getCanonicalName()).asType();
         return typeUtils.isSubtype(returnType, resultType);
     }
 
@@ -50,8 +46,8 @@ final class MethodUtils {
 
     private boolean hasFutureActionResultReturnType(ExecutableElement method, Class<?> actionResultType) {
         TypeMirror returnType = method.getReturnType();
-        TypeMirror resultType = elementUtils.getTypeElement(actionResultType.getCanonicalName()).asType();
-        TypeElement futureType = elementUtils.getTypeElement(CompletableFuture.class.getCanonicalName());
+        TypeMirror resultType = typeUtils.getTypeElement(actionResultType.getCanonicalName()).asType();
+        TypeElement futureType = typeUtils.getTypeElement(CompletableFuture.class.getCanonicalName());
         DeclaredType futureResultType = typeUtils.getDeclaredType(futureType, resultType);
         return typeUtils.isSubtype(returnType, futureResultType);
     }
@@ -59,7 +55,7 @@ final class MethodUtils {
     public boolean hasFutureSimpleReturnType(ExecutableElement method) {
         TypeMirror returnType = typeUtils.erasure(method.getReturnType());
         TypeMirror futureType = typeUtils.erasure(
-            elementUtils.getTypeElement(CompletableFuture.class.getCanonicalName()).asType());
+            typeUtils.getTypeElement(CompletableFuture.class.getCanonicalName()).asType());
         return typeUtils.isSubtype(returnType, futureType);
     }
 }

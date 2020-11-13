@@ -1,31 +1,35 @@
 package com.truncon.javalin.mvc.annotations.processing;
 
-import java.util.*;
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.Messager;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.SourceVersion;
-import javax.lang.model.element.*;
-import javax.lang.model.util.Elements;
-import javax.lang.model.util.Types;
+import javax.lang.model.element.Element;
+import javax.lang.model.element.TypeElement;
 import javax.tools.Diagnostic;
 
 import com.truncon.javalin.mvc.api.Controller;
+import com.truncon.javalin.mvc.api.ControllerComponent;
+import com.truncon.javalin.mvc.api.Converter;
+import com.truncon.javalin.mvc.api.UseConverter;
+import com.truncon.javalin.mvc.api.ws.WsController;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 public final class ControllerProcessor extends AbstractProcessor {
-    private Types typeUtils;
-    private Elements elementUtils;
+    private TypeUtils typeUtils;
     private Filer filer;
     private Messager messager;
 
     @Override
 	public synchronized void init(ProcessingEnvironment env) {
     	super.init(env);
-    	typeUtils = env.getTypeUtils();
-    	elementUtils = env.getElementUtils();
+    	typeUtils = new TypeUtils(env.getElementUtils(), env.getTypeUtils());
     	filer = env.getFiler();
 		messager = env.getMessager();
     }
@@ -33,17 +37,19 @@ public final class ControllerProcessor extends AbstractProcessor {
 	@Override
 	public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment env) {
         try {
-            List<ControllerSource> controllers = ControllerSource.getControllers(typeUtils, elementUtils, env);
-            List<WsControllerSource> wsControllers = WsControllerSource.getWsControllers(typeUtils, elementUtils, env);
+            List<ControllerSource> controllers = ControllerSource.getControllers(typeUtils, env);
+            List<WsControllerSource> wsControllers = WsControllerSource.getWsControllers(typeUtils, env);
             if (controllers.isEmpty() && wsControllers.isEmpty()) {
                 return true;
             }
-            ContainerSource container = ContainerSource.getContainerSource(typeUtils, elementUtils, env);
+            ContainerSource container = ContainerSource.getContainerSource(typeUtils, env);
+            List<ConverterBuilder> converters = ConverterBuilder.getConverterBuilders(typeUtils, env);
             ControllerRegistryGenerator generator = new ControllerRegistryGenerator(
                 container,
                 controllers,
-                wsControllers);
-            generator.generateRoutes(filer);
+                wsControllers,
+                converters);
+            generator.generateRegistry(filer);
         } catch (ProcessingMultiException exception) {
             for (ProcessingException subException : exception.getExceptions()) {
                 for (Element element : subException.getElements()) {
@@ -65,7 +71,11 @@ public final class ControllerProcessor extends AbstractProcessor {
 	@Override
 	public Set<String> getSupportedAnnotationTypes() {
 		Set<String> types = new HashSet<>();
+		types.add(Converter.class.getCanonicalName());
+		types.add(UseConverter.class.getCanonicalName());
 		types.add(Controller.class.getCanonicalName());
+		types.add(WsController.class.getCanonicalName());
+		types.add(ControllerComponent.class.getCanonicalName());
 		return types;
     }
 

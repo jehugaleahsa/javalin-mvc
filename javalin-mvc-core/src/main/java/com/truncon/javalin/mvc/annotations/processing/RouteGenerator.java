@@ -18,8 +18,6 @@ import com.truncon.javalin.mvc.JavalinHttpContext;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Name;
-import javax.lang.model.util.Elements;
-import javax.lang.model.util.Types;
 import java.lang.annotation.Annotation;
 import java.util.List;
 import java.util.Objects;
@@ -29,8 +27,7 @@ import java.util.stream.Stream;
 
 final class RouteGenerator {
     private final ControllerSource controller;
-    private final Types typeUtils;
-    private final Elements elementUtils;
+    private final TypeUtils typeUtils;
     private final ExecutableElement method;
     private final String methodType;
     private final String route;
@@ -38,7 +35,6 @@ final class RouteGenerator {
     private RouteGenerator(ControllerSource controller, ExecutableElement method, String methodType, String route) {
         this.controller = controller;
         this.typeUtils = controller.getTypeUtils();
-        this.elementUtils = controller.getElementUtils();
         this.method = method;
         this.methodType = methodType;
         this.route = route;
@@ -54,14 +50,6 @@ final class RouteGenerator {
 
     public String getRoute() {
         return route;
-    }
-
-    Types getTypeUtils() {
-        return typeUtils;
-    }
-
-    Elements getElementUtils() {
-        return elementUtils;
     }
 
     Element getMethodElement() {
@@ -125,13 +113,14 @@ final class RouteGenerator {
         return method.getAnnotation(annotationClass);
     }
 
-    public CodeBlock generateRoute(String app, int index, HelperMethodBuilder helperBuilder) {
+    public CodeBlock generateRouteHandler(String app, int index, HelperMethodBuilder helperBuilder) {
         ContainerSource container = helperBuilder.getContainer();
         CodeBlock.Builder handlerBuilder = CodeBlock.builder();
         handlerBuilder.beginControlFlow("$T handler$L = (ctx) ->", Handler.class, index);
 
+        // TODO - Only create an injector if it is actually needed.
         if (container.isFound()) {
-            handlerBuilder.addStatement("$T injector = scopeFactory.get()", container.getType());
+            handlerBuilder.addStatement("$T injector = $N.get()", container.getType(), ControllerRegistryGenerator.SCOPE_FACTORY_NAME);
         }
         handlerBuilder.addStatement("$T wrapper = new $T(ctx)", HttpContext.class, JavalinHttpContext.class);
         Name controllerName = container.getDependencyName(controller.getType());
@@ -149,7 +138,7 @@ final class RouteGenerator {
             handlerBuilder.beginControlFlow("try");
         }
         String parameters = bindParameters("ctx", "wrapper", helperBuilder);
-        MethodUtils methodUtils = new MethodUtils(typeUtils, elementUtils);
+        MethodUtils methodUtils = new MethodUtils(typeUtils);
         if (methodUtils.hasVoidReturnType(method)) {
             handlerBuilder.addStatement(
                 "controller.$N(" + parameters + ")",

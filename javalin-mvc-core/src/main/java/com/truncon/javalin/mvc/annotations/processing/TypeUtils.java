@@ -1,8 +1,10 @@
 package com.truncon.javalin.mvc.annotations.processing;
 
+import javax.lang.model.element.Element;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.ArrayType;
+import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
@@ -114,5 +116,21 @@ public final class TypeUtils {
         } else {
             return "[L" + type.getName() + ";";
         }
+    }
+
+    public boolean isSubtype(TypeMirror type1, TypeMirror type2) {
+        return typeUtils.isSubtype(type1, type2);
+    }
+
+    public DeclaredType getDeclaredType(TypeElement element, TypeMirror... types) {
+        return typeUtils.getDeclaredType(element, types);
+    }
+
+    public TypeMirror erasure(TypeMirror type) {
+        return typeUtils.erasure(type);
+    }
+
+    public Element asElement(TypeMirror type) {
+        return typeUtils.asElement(type);
     }
 }

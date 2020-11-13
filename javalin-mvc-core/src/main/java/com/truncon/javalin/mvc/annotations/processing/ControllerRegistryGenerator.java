@@ -33,21 +33,29 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 final class ControllerRegistryGenerator {
+    public static final String APP_NAME = "app";
+    public static final String REGISTRY_PACKAGE_NAME = "com.truncon.javalin.mvc";
+    public static final String REGISTRY_CLASS_NAME = "JavalinControllerRegistry";
+    public static final String SCOPE_FACTORY_NAME = "scopeFactory";
+
     private final ContainerSource container;
     private final List<ControllerSource> controllers;
     private final List<WsControllerSource> wsControllers;
+    private final List<ConverterBuilder> converters;
 
     public ControllerRegistryGenerator(
             ContainerSource container,
             List<ControllerSource> controllers,
-            List<WsControllerSource> wsControllers) {
+            List<WsControllerSource> wsControllers,
+            List<ConverterBuilder> converters) {
         this.container = container;
         this.controllers = controllers;
         this.wsControllers = wsControllers;
+        this.converters = converters;
     }
 
-    public void generateRoutes(Filer filer) throws IOException, ProcessingException {
-        TypeSpec.Builder registryTypeBuilder = TypeSpec.classBuilder("JavalinControllerRegistry")
+    public void generateRegistry(Filer filer) throws IOException, ProcessingException {
+        TypeSpec.Builder registryTypeBuilder = TypeSpec.classBuilder(REGISTRY_CLASS_NAME)
             .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
             .addSuperinterface(ControllerRegistry.class);
 
@@ -60,13 +68,18 @@ final class ControllerRegistryGenerator {
             TypeName factoryType = ParameterizedTypeName.get(
                 ClassName.get(Supplier.class),
                 TypeName.get(container.getType()));
-            FieldSpec scopeFactoryField = FieldSpec.builder(factoryType, "scopeFactory", Modifier.PRIVATE, Modifier.FINAL).build();
+            FieldSpec scopeFactoryField = FieldSpec.builder(
+                factoryType,
+                SCOPE_FACTORY_NAME,
+                Modifier.PRIVATE,
+                Modifier.FINAL
+            ).build();
             registryTypeBuilder.addField(scopeFactoryField);
 
             MethodSpec constructor = MethodSpec.constructorBuilder()
                 .addModifiers(Modifier.PUBLIC)
-                .addParameter(factoryType, "scopeFactory")
-                .addStatement("this.scopeFactory = scopeFactory")
+                .addParameter(factoryType, SCOPE_FACTORY_NAME)
+                .addStatement("this.$N = $N", SCOPE_FACTORY_NAME, SCOPE_FACTORY_NAME)
                 .build();
             registryTypeBuilder.addMethod(constructor);
         } else {
@@ -76,28 +89,27 @@ final class ControllerRegistryGenerator {
             registryTypeBuilder.addMethod(constructor);
         }
 
-        final String APP_NAME = "app";
         HelperMethodBuilder helperBuilder = new HelperMethodBuilder(container, registryTypeBuilder);
         MethodSpec register = MethodSpec.methodBuilder("register")
             .addAnnotation(Override.class)
             .addModifiers(Modifier.PUBLIC)
             .addParameter(Javalin.class, APP_NAME, Modifier.FINAL)
-            .addCode(createActionMethods(APP_NAME, helperBuilder))
-            .addCode(createWsEndpoints(APP_NAME, helperBuilder))
+            .addCode(createHttpRouteHandlers(helperBuilder))
+            .addCode(createWsRouteHandlers(helperBuilder))
             .build();
         registryTypeBuilder.addMethod(register);
 
         TypeSpec registryType = registryTypeBuilder.build();
-        JavaFile registryFile = JavaFile.builder("com.truncon.javalin.mvc", registryType)
+        JavaFile registryFile = JavaFile.builder(REGISTRY_PACKAGE_NAME, registryType)
             .indent("    ")
             .build();
-        JavaFileObject file = filer.createSourceFile("com.truncon.javalin.mvc.JavalinControllerRegistry");
+        JavaFileObject file = filer.createSourceFile(REGISTRY_PACKAGE_NAME + "." + REGISTRY_CLASS_NAME);
         try (Writer writer = file.openWriter()) {
             registryFile.writeTo(writer);
         }
     }
 
-    private CodeBlock createActionMethods(String app, HelperMethodBuilder helperBuilder) {
+    private CodeBlock createHttpRouteHandlers(HelperMethodBuilder helperBuilder) {
         AtomicInteger index = new AtomicInteger();
         Collection<RouteGenerator> generators = controllers.stream()
             .map(ControllerSource::getRouteGenerators)
@@ -105,10 +117,12 @@ final class ControllerRegistryGenerator {
             .collect(Collectors.toList());
         detectDuplicateRoutes(generators);
         return generators.stream()
-            .map(g -> g.generateRoute(app, index.getAndIncrement(), helperBuilder))
+            .map(g -> g.generateRouteHandler(APP_NAME, index.getAndIncrement(), helperBuilder))
             .collect(CodeBlock.joining("\n"));
     }
 
+    // TODO - Move this into the ControllerSource
+    // TODO - Copy this into the WsControllerSource
     private static void detectDuplicateRoutes(Collection<RouteGenerator> generators) {
         Map<ImmutablePair<String, String>, Set<RouteGenerator>> pairs = new HashMap<>();
         for (RouteGenerator generator : generators) {
@@ -145,9 +159,9 @@ final class ControllerRegistryGenerator {
         }
     }
 
-    private CodeBlock createWsEndpoints(String app, HelperMethodBuilder helperBuilder) throws ProcessingException {
+    private CodeBlock createWsRouteHandlers(HelperMethodBuilder helperBuilder) throws ProcessingException {
         return wsControllers.stream()
-            .map(s -> s.generateEndpoint(app, helperBuilder))
+            .map(s -> s.generateRouteHandler(APP_NAME, helperBuilder))
             .filter(Objects::nonNull)
             .collect(CodeBlock.joining("\n"));
     }

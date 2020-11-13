@@ -4,10 +4,12 @@ import dagger.Component;
 import com.truncon.javalin.mvc.api.ControllerComponent;
 
 import javax.annotation.processing.RoundEnvironment;
-import javax.lang.model.element.*;
+import javax.lang.model.element.Element;
+import javax.lang.model.element.ElementKind;
+import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.Name;
+import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.Elements;
-import javax.lang.model.util.Types;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -18,12 +20,8 @@ final class ContainerSource {
     private final TypeElement containerElement;
     private final List<ExecutableElement> dependencies;
 
-    private ContainerSource(
-            Types types,
-            Elements elements,
-            TypeElement containerElement,
-            List<ExecutableElement> dependencies) {
-        this.typeUtils = new TypeUtils(elements, types);
+    private ContainerSource(TypeUtils typeUtils, TypeElement containerElement, List<ExecutableElement> dependencies) {
+        this.typeUtils = typeUtils;
         this.containerElement = containerElement;
         this.dependencies = dependencies;
     }
@@ -32,36 +30,31 @@ final class ContainerSource {
         return typeUtils;
     }
 
-    public static ContainerSource getContainerSource(
-            Types typeUtils,
-            Elements elementUtils,
-            RoundEnvironment environment) throws ProcessingException {
+    public static ContainerSource getContainerSource(TypeUtils typeUtils, RoundEnvironment environment) throws ProcessingException {
         List<? extends TypeElement> elements = environment.getElementsAnnotatedWith(Component.class).stream()
                 .filter(e -> e.getKind() == ElementKind.INTERFACE)
                 .filter(e -> e.getAnnotation(ControllerComponent.class) != null)
-                .map(e -> (TypeElement)e)
+                .map(e -> (TypeElement) e)
                 .collect(Collectors.toList());
         if (elements.size() > 1) {
             Element[] badElements = elements.toArray(new Element[0]);
             throw new ProcessingException("Multiple Dagger Components annotated with ControllerComponent were found.", badElements);
         }
         if (elements.size() == 0) {
-            return new ContainerSource(typeUtils, elementUtils, null, new ArrayList<>());
+            return new ContainerSource(typeUtils, null, new ArrayList<>());
         }
-        Element element = elements.toArray(new Element[0])[0];
-        TypeElement typeElement = (TypeElement)element;
-
+        TypeElement typeElement = elements.get(0);
         List<ExecutableElement> dependencies = getDependencies(typeUtils, typeElement).collect(Collectors.toList());
-        return new ContainerSource(typeUtils, elementUtils, typeElement, dependencies);
+        return new ContainerSource(typeUtils, typeElement, dependencies);
     }
 
-    private static Stream<ExecutableElement> getDependencies(Types typeUtils, TypeElement container) {
+    private static Stream<ExecutableElement> getDependencies(TypeUtils typeUtils, TypeElement container) {
         return Stream.concat(
             container.getEnclosedElements().stream()
                 .filter(e -> e.getKind() == ElementKind.METHOD)
-                .map(e -> (ExecutableElement)e),
+                .map(e -> (ExecutableElement) e),
             container.getInterfaces().stream()
-                .map(i -> (TypeElement)typeUtils.asElement(i))
+                .map(i -> (TypeElement) typeUtils.asElement(i))
                 .flatMap(i -> getDependencies(typeUtils, i))
         );
 

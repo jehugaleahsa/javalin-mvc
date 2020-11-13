@@ -1,35 +1,51 @@
 package com.truncon.javalin.mvc.annotations.processing;
 
 import com.squareup.javapoet.CodeBlock;
-import com.truncon.javalin.mvc.api.ws.*;
-import com.truncon.javalin.mvc.ws.*;
+import com.truncon.javalin.mvc.api.ws.WsActionResult;
+import com.truncon.javalin.mvc.api.ws.WsBinaryMessage;
+import com.truncon.javalin.mvc.api.ws.WsBinaryMessageContext;
+import com.truncon.javalin.mvc.api.ws.WsConnect;
+import com.truncon.javalin.mvc.api.ws.WsConnectContext;
+import com.truncon.javalin.mvc.api.ws.WsController;
+import com.truncon.javalin.mvc.api.ws.WsDisconnect;
+import com.truncon.javalin.mvc.api.ws.WsDisconnectContext;
+import com.truncon.javalin.mvc.api.ws.WsError;
+import com.truncon.javalin.mvc.api.ws.WsErrorContext;
+import com.truncon.javalin.mvc.api.ws.WsJsonResult;
+import com.truncon.javalin.mvc.api.ws.WsMessage;
+import com.truncon.javalin.mvc.api.ws.WsMessageContext;
+import com.truncon.javalin.mvc.ws.JavalinWsBinaryMessageContext;
+import com.truncon.javalin.mvc.ws.JavalinWsConnectContext;
+import com.truncon.javalin.mvc.ws.JavalinWsDisconnectContext;
+import com.truncon.javalin.mvc.ws.JavalinWsErrorContext;
+import com.truncon.javalin.mvc.ws.JavalinWsMessageContext;
 
 import javax.annotation.processing.RoundEnvironment;
-import javax.lang.model.element.*;
-import javax.lang.model.util.Elements;
-import javax.lang.model.util.Types;
+import javax.lang.model.element.Element;
+import javax.lang.model.element.ElementKind;
+import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.Name;
+import javax.lang.model.element.TypeElement;
 import java.lang.annotation.Annotation;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 final class WsControllerSource {
-    private final Types typeUtils;
-    private final Elements elementUtils;
+    private final TypeUtils typeUtils;
     private final TypeElement controllerElement;
 
-    private WsControllerSource(Types typeUtils, Elements elementUtils, TypeElement controllerElement) {
+    private WsControllerSource(TypeUtils typeUtils, TypeElement controllerElement) {
         this.typeUtils = typeUtils;
-        this.elementUtils = elementUtils;
         this.controllerElement = controllerElement;
     }
 
-    public static List<WsControllerSource> getWsControllers(Types typeUtils, Elements elementUtils, RoundEnvironment environment) throws ProcessingException {
+    public static List<WsControllerSource> getWsControllers(TypeUtils typeUtils, RoundEnvironment environment) throws ProcessingException {
         Set<? extends Element> controllerElements = environment.getElementsAnnotatedWith(WsController.class);
         checkControllerElements(controllerElements);
         return controllerElements.stream()
             .map(e -> (TypeElement)e)
-            .map(e -> new WsControllerSource(typeUtils, elementUtils, e))
+            .map(e -> new WsControllerSource(typeUtils, e))
             .collect(Collectors.toList());
     }
 
@@ -42,7 +58,7 @@ final class WsControllerSource {
         }
     }
 
-    public CodeBlock generateEndpoint(String app, HelperMethodBuilder helperBuilder) throws ProcessingException {
+    public CodeBlock generateRouteHandler(String app, HelperMethodBuilder helperBuilder) throws ProcessingException {
         ExecutableElement connectMethod = getAnnotatedMethod(WsConnect.class);
         ExecutableElement disconnectMethod = getAnnotatedMethod(WsDisconnect.class);
         ExecutableElement errorMethod = getAnnotatedMethod(WsError.class);
@@ -178,7 +194,7 @@ final class WsControllerSource {
                 contextInterface,
                 wrapper,
                 helperBuilder);
-        MethodUtils methodUtils = new MethodUtils(typeUtils, elementUtils);
+        MethodUtils methodUtils = new MethodUtils(typeUtils);
         if (methodUtils.hasVoidReturnType(method)) {
             handlerBuilder.addStatement("controller.$N(" + parameters + ")", method.getSimpleName());
         } else if (methodUtils.hasWsActionResultReturnType(method)) {
@@ -211,7 +227,7 @@ final class WsControllerSource {
     private void addController(ContainerSource container, CodeBlock.Builder handlerBuilder) {
         Name controllerName = container.getDependencyName(controllerElement);
         if (container.isFound() && controllerName != null) {
-            handlerBuilder.addStatement("$T injector = scopeFactory.get()", container.getType());
+            handlerBuilder.addStatement("$T injector = $N.get()", container.getType(), ControllerRegistryGenerator.SCOPE_FACTORY_NAME);
             handlerBuilder.addStatement("$T controller = injector.$L()", controllerElement, controllerName);
         } else {
             handlerBuilder.addStatement("$T controller = new $T()", controllerElement, controllerElement);
