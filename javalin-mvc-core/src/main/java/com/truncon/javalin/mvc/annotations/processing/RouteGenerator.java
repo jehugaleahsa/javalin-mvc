@@ -20,6 +20,7 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Name;
 import java.lang.annotation.Annotation;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -113,7 +114,10 @@ final class RouteGenerator {
         return method.getAnnotation(annotationClass);
     }
 
-    public CodeBlock generateRouteHandler(String app, int index, HelperMethodBuilder helperBuilder) {
+    public CodeBlock generateRouteHandler(
+            int index,
+            HelperMethodBuilder helperBuilder,
+            Map<String, ConverterBuilder> converterLookup) {
         ContainerSource container = helperBuilder.getContainer();
         CodeBlock.Builder handlerBuilder = CodeBlock.builder();
         handlerBuilder.beginControlFlow("$T handler$L = (ctx) ->", Handler.class, index);
@@ -137,7 +141,7 @@ final class RouteGenerator {
             handlerBuilder.addStatement("Exception caughtException = null;");
             handlerBuilder.beginControlFlow("try");
         }
-        String parameters = bindParameters("ctx", "wrapper", helperBuilder);
+        String parameters = bindParameters("ctx", "wrapper", helperBuilder, converterLookup);
         MethodUtils methodUtils = new MethodUtils(typeUtils);
         if (methodUtils.hasVoidReturnType(method)) {
             handlerBuilder.addStatement(
@@ -188,7 +192,7 @@ final class RouteGenerator {
 
         return CodeBlock.builder()
             .add(handlerBuilder.build())
-            .addStatement("$N.$L($S, handler$L)", app, methodType, route, index)
+            .addStatement("$N.$L($S, handler$L)", ControllerRegistryGenerator.APP_NAME, methodType, route, index)
             .build();
     }
 
@@ -202,8 +206,12 @@ final class RouteGenerator {
         }
     }
 
-    private String bindParameters(String context, String wrapper, HelperMethodBuilder helperBuilder) {
-        return ParameterGenerator.bindParameters(method, context, wrapper, helperBuilder);
+    private String bindParameters(
+            String context,
+            String wrapper,
+            HelperMethodBuilder helperBuilder,
+            Map<String, ConverterBuilder> converterLookup) {
+        return ParameterGenerator.bindParameters(method, context, wrapper, helperBuilder, converterLookup);
     }
 
     private static void generateAfterHandlers(

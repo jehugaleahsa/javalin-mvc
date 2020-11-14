@@ -11,9 +11,20 @@ import static com.truncon.javalin.mvc.test.RouteBuilder.queryParams;
 
 public final class ConversionTest {
     @Test
-    public void testConversion_staticConverter() {
+    public void testConversion_staticConverter_context() {
+        String baseRoute = ConversionController.GET_CONVERSION_CONTEXT_QUERY_ROUTE;
+        testRoute(baseRoute);
+    }
+
+    @Test
+    public void testConversion_staticConverter_request() {
+        String baseRoute = ConversionController.GET_CONVERSION_REQUEST_QUERY_ROUTE;
+        testRoute(baseRoute);
+    }
+
+    private void testRoute(String baseRoute) {
         AsyncTestUtils.runTest(app -> {
-            String route = buildRouteWithQueryParams(ConversionController.GET_CONVERSION_QUERY_ROUTE, queryParams(
+            String route = buildRouteWithQueryParams(baseRoute, queryParams(
                 param("boolean", Boolean.toString(true)),
                 param("byte", Byte.toString((byte) 11)),
                 param("char", "a"),

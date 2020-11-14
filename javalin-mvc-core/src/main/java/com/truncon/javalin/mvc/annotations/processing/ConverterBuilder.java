@@ -46,9 +46,11 @@ public final class ConverterBuilder {
             .map(ExecutableElement.class::cast)
             .collect(Collectors.toList());
         checkConverterElements(typeUtils, elements);
-        return elements.stream()
+        List<ConverterBuilder> converters = elements.stream()
             .map(e -> create(typeUtils, e))
             .collect(Collectors.toList());
+        checkConverters(converters);
+        return converters;
     }
 
     private static void checkConverterElements(TypeUtils typeUtils, List<ExecutableElement> elements) throws ProcessingException {
@@ -63,8 +65,8 @@ public final class ConverterBuilder {
         if (!badArgumentMethods.isEmpty()) {
             String message = "Methods marked with the @Converter annotation must accept a context or request object, "
                 + "an optional binding name, and an optional value source. For HTTP, an HttpContext or HttpRequest "
-                + "object is expected. For WebSockets, a WsContext (or sub-interface) or WsRequest is expected. The "
-                + "binding name will be a string matching the action method parameter name or @Named annotation value."
+                + "object is expected. For WebSockets, a WsContext (or a sub-interface) or WsRequest is expected. The "
+                + "binding name will be a string matching the action method parameter name or @Named annotation value. "
                 + "The third parameter should be a ValueSource for HTTP or WsValueSource for WebSockets.";
             throw new ProcessingException(message, badArgumentMethods.toArray(new Element[0]));
         }
@@ -84,10 +86,7 @@ public final class ConverterBuilder {
         }
         TypeMirror sourceType = parameters.get(2).asType();
         TypeMirror contextType = parameters.get(0).asType();
-        if (parameters.size() > 2 && !isSourceType(typeUtils, sourceType, contextType)) {
-            return true;
-        }
-        return false;
+        return parameters.size() > 2 && !isSourceType(typeUtils, sourceType, contextType);
     }
 
     private static boolean isContextOrRequestType(TypeUtils typeUtils, VariableElement variableElement) {
@@ -115,11 +114,26 @@ public final class ConverterBuilder {
         return new ConverterBuilder(typeUtils, name, converterType, method);
     }
 
+    private static void checkConverters(List<ConverterBuilder> converters) {
+        ProcessingException[] exceptions = converters.stream()
+            .collect(Collectors.groupingBy(ConverterBuilder::getName))
+            .entrySet().stream()
+            .filter(e -> e.getValue().size() > 1)
+            .map(e -> new ProcessingException("Multiple converters have the same name: " + e.getKey() + ".",
+                e.getValue().stream()
+                    .map(c -> c.conversionMethod)
+                    .toArray(ExecutableElement[]::new)))
+            .toArray(ProcessingException[]::new);
+        if (exceptions.length > 0) {
+            throw new ProcessingMultiException(exceptions);
+        }
+    }
+
     public String getName() {
         return name;
     }
 
-    public boolean hasContextType(Class<?> contextType) {
+    public boolean hasContextOrRequestType(Class<?> contextType) {
         return typeUtils.isType(conversionMethod.getParameters().get(0).asType(), contextType);
     }
 
@@ -128,6 +142,23 @@ public final class ConverterBuilder {
             String contextOrRequestName,
             String parameterName,
             ValueSource valueSource) {
+        return getConverterCallBody(container, contextOrRequestName, parameterName, ValueSource.class, valueSource);
+    }
+
+    public CodeBlock getConverterCall(
+            ContainerSource container,
+            String contextOrRequestName,
+            String parameterName,
+            WsValueSource valueSource) {
+        return getConverterCallBody(container, contextOrRequestName, parameterName, WsValueSource.class, valueSource);
+    }
+
+    private <TValueSource extends Enum<TValueSource>> CodeBlock getConverterCallBody(
+            ContainerSource container,
+            String contextOrRequestName,
+            String parameterName,
+            Class<? extends TValueSource> sourceClass,
+            TValueSource valueSource) {
         CodeBlock.Builder callBuilder = CodeBlock.builder();
         if (conversionMethod.getModifiers().contains(Modifier.STATIC)) {
             callBuilder.add("$T", conversionClass.asType());
@@ -143,8 +174,8 @@ public final class ConverterBuilder {
         if (hasNameParameter()) {
             callBuilder.add(", $S", parameterName);
         }
-        if (hasSourceParameter(ValueSource.class)) {
-            callBuilder.add(", $T.$N", ValueSource.class, valueSource.name());
+        if (hasSourceParameter(sourceClass)) {
+            callBuilder.add(", $T.$N", sourceClass, valueSource.name());
         }
         callBuilder.add(")");
         return callBuilder.build();

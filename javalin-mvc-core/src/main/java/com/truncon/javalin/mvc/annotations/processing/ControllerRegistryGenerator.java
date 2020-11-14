@@ -41,7 +41,7 @@ final class ControllerRegistryGenerator {
     private final ContainerSource container;
     private final List<ControllerSource> controllers;
     private final List<WsControllerSource> wsControllers;
-    private final List<ConverterBuilder> converters;
+    private final Map<String, ConverterBuilder> converterLookup;
 
     public ControllerRegistryGenerator(
             ContainerSource container,
@@ -51,7 +51,8 @@ final class ControllerRegistryGenerator {
         this.container = container;
         this.controllers = controllers;
         this.wsControllers = wsControllers;
-        this.converters = converters;
+        this.converterLookup = converters.stream()
+            .collect(Collectors.toMap(ConverterBuilder::getName, c -> c));
     }
 
     public void generateRegistry(Filer filer) throws IOException, ProcessingException {
@@ -117,12 +118,10 @@ final class ControllerRegistryGenerator {
             .collect(Collectors.toList());
         detectDuplicateRoutes(generators);
         return generators.stream()
-            .map(g -> g.generateRouteHandler(APP_NAME, index.getAndIncrement(), helperBuilder))
+            .map(g -> g.generateRouteHandler(index.getAndIncrement(), helperBuilder, converterLookup))
             .collect(CodeBlock.joining("\n"));
     }
 
-    // TODO - Move this into the ControllerSource
-    // TODO - Copy this into the WsControllerSource
     private static void detectDuplicateRoutes(Collection<RouteGenerator> generators) {
         Map<ImmutablePair<String, String>, Set<RouteGenerator>> pairs = new HashMap<>();
         for (RouteGenerator generator : generators) {
@@ -137,9 +136,10 @@ final class ControllerRegistryGenerator {
         }
         if (!duplicates.isEmpty()) {
             List<ProcessingException> exceptions = new ArrayList<>(duplicates.size());
-            List<String> messages = new ArrayList<>();
             for (Map.Entry<ImmutablePair<String, String>, Set<RouteGenerator>> pair : duplicates.entrySet()) {
-                String methods = pair.getValue().stream().map(RouteGenerator::getQualifiedMethodName).collect(Collectors.joining(", "));
+                String methods = pair.getValue().stream()
+                    .map(RouteGenerator::getQualifiedMethodName)
+                    .collect(Collectors.joining(", "));
                 String subMessage = "Multiple handlers exist for: "
                     + pair.getKey().getLeft().toUpperCase() // Method
                     + " "
@@ -147,21 +147,19 @@ final class ControllerRegistryGenerator {
                     + ". Implementations found: "
                     + methods
                     + ".";
-                messages.add(subMessage);
                 List<Element> elements = new ArrayList<>();
                 for (RouteGenerator generator : pair.getValue()) {
                      elements.add(generator.getMethodElement());
                 }
                 exceptions.add(new ProcessingException(subMessage, elements.toArray(new Element[0])));
             }
-            String message = String.join("\n", messages);
-            throw new ProcessingMultiException(message, exceptions.toArray(new ProcessingException[0]));
+            throw new ProcessingMultiException(exceptions.toArray(new ProcessingException[0]));
         }
     }
 
     private CodeBlock createWsRouteHandlers(HelperMethodBuilder helperBuilder) throws ProcessingException {
         return wsControllers.stream()
-            .map(s -> s.generateRouteHandler(APP_NAME, helperBuilder))
+            .map(s -> s.generateRouteHandler(helperBuilder, converterLookup))
             .filter(Objects::nonNull)
             .collect(CodeBlock.joining("\n"));
     }

@@ -11,6 +11,7 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeMirror;
+import java.util.Map;
 
 final class ParameterGenerator {
     private final VariableElement parameter;
@@ -19,18 +20,15 @@ final class ParameterGenerator {
         this.parameter = parameter;
     }
 
-    public static ParameterGenerator getParameterGenerator(VariableElement parameter) {
-        return new ParameterGenerator(parameter);
-    }
-
     public static String bindParameters(
             ExecutableElement method,
             String context,
             String wrapper,
-            HelperMethodBuilder helperBuilder) {
+            HelperMethodBuilder helperBuilder,
+            Map<String, ConverterBuilder> converterLookup) {
         String[] arguments = method.getParameters().stream()
-            .map(ParameterGenerator::getParameterGenerator)
-            .map(g -> g.generateParameter(context, wrapper, helperBuilder))
+            .map(ParameterGenerator::new)
+            .map(g -> g.generateParameter(context, wrapper, helperBuilder, converterLookup))
             .toArray(String[]::new);
         return String.join(", ", arguments);
     }
@@ -40,15 +38,20 @@ final class ParameterGenerator {
             String context,
             Class<?> wrapperType,
             String wrapper,
-            HelperMethodBuilder helperBuilder) {
+            HelperMethodBuilder helperBuilder,
+            Map<String, ConverterBuilder> converterLookup) {
         String[] arguments = method.getParameters().stream()
-                .map(ParameterGenerator::getParameterGenerator)
-                .map(g -> g.generateWsParameter(context, wrapperType, wrapper, helperBuilder))
+                .map(ParameterGenerator::new)
+                .map(g -> g.generateWsParameter(context, wrapperType, wrapper, helperBuilder, converterLookup))
                 .toArray(String[]::new);
         return String.join(", ", arguments);
     }
 
-    public String generateParameter(String context, String wrapper, HelperMethodBuilder helperBuilder) {
+    public String generateParameter(
+            String context,
+            String wrapper,
+            HelperMethodBuilder helperBuilder,
+            Map<String, ConverterBuilder> converterLookup) {
         TypeMirror parameterType = parameter.asType();
         TypeUtils typeUtils = helperBuilder.getContainer().getTypeUtils();
         String nonBinderParameter = getNonBinderParameter(context, wrapper, typeUtils, parameterType);
@@ -57,6 +60,24 @@ final class ParameterGenerator {
         }
         String parameterName = getParameterName();
         ValueSource valueSource = getValueSource(parameter);
+
+        String converterName = getConverterName();
+        ConverterBuilder converter = converterLookup.get(converterName);
+        if (converter != null) {
+            ContainerSource container = helperBuilder.getContainer();
+            if (converter.hasContextOrRequestType(HttpContext.class)) {
+                return converter.getConverterCall(container, wrapper, parameterName, valueSource).toString();
+            } else if (converter.hasContextOrRequestType(HttpRequest.class)) {
+                String requestName = wrapper + ".getRequest()";
+                return converter.getConverterCall(container, requestName, parameterName, valueSource).toString();
+            } else {
+                String message = "The conversion method '"
+                    + converterName
+                    + "' cannot be used with HTTP action methods.";
+                throw new ProcessingException(message, parameter);
+            }
+        }
+
         // First check if we can provide a simple converter for the parameter type.
         Class<?> parameterClass = helperBuilder.getParameterClass(parameterType);
         if (parameterClass != null) {
@@ -90,6 +111,18 @@ final class ParameterGenerator {
         return CodeBlock.of("$N($N, $T.class)", jsonMethod, wrapper, parameterType).toString();
     }
 
+    private String getConverterName() {
+        // Always prefer a action method parameter annotation over a type annotation.
+        UseConverter parameterUsage = parameter.getAnnotation(UseConverter.class);
+        if (parameterUsage != null) {
+            return parameterUsage.value();
+        }
+        // Look to see if the type itself has a preferred conversion method.
+        TypeMirror parameterType = parameter.asType();
+        UseConverter typeUsage = parameterType.getAnnotation(UseConverter.class);
+        return typeUsage == null ? null : typeUsage.value();
+    }
+
     private String getNonBinderParameter(String context, String wrapper, TypeUtils typeUtils, TypeMirror parameterType) {
         if (typeUtils.isType(parameterType, Context.class)) {
             return context;
@@ -106,7 +139,12 @@ final class ParameterGenerator {
         }
     }
 
-    public String generateWsParameter(String context, Class<?> wrapperType, String wrapper, HelperMethodBuilder helperBuilder) {
+    public String generateWsParameter(
+            String context,
+            Class<?> wrapperType,
+            String wrapper,
+            HelperMethodBuilder helperBuilder,
+            Map<String, ConverterBuilder> converterLookup) {
         TypeMirror parameterType = parameter.asType();
         TypeUtils typeUtils = helperBuilder.getContainer().getTypeUtils();
         String nonBinderParameter = getNonBinderWsParameter(typeUtils, context, wrapperType, wrapper, parameterType);

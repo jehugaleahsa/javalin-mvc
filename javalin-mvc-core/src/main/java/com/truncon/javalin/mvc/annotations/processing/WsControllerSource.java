@@ -28,6 +28,7 @@ import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 import java.lang.annotation.Annotation;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -44,7 +45,7 @@ final class WsControllerSource {
         Set<? extends Element> controllerElements = environment.getElementsAnnotatedWith(WsController.class);
         checkControllerElements(controllerElements);
         return controllerElements.stream()
-            .map(e -> (TypeElement)e)
+            .map(e -> (TypeElement) e)
             .map(e -> new WsControllerSource(typeUtils, e))
             .collect(Collectors.toList());
     }
@@ -56,9 +57,23 @@ final class WsControllerSource {
         if (badElements.length > 0) {
             throw new ProcessingException("WsController annotations can only be applied to classes.", badElements);
         }
+        ProcessingException[] exceptions = elements.stream()
+            .collect(Collectors.groupingBy(WsControllerSource::getRoute))
+            .entrySet().stream()
+            .filter(e -> e.getValue().size() > 1)
+            .map(e -> new ProcessingException(
+                "Multiple WebSocket controllers have the same route: " + e.getKey() + ".",
+                e.getValue().toArray(new Element[0]))
+            )
+            .toArray(ProcessingException[]::new);
+        if (exceptions.length > 0) {
+            throw new ProcessingMultiException(exceptions);
+        }
     }
 
-    public CodeBlock generateRouteHandler(String app, HelperMethodBuilder helperBuilder) throws ProcessingException {
+    public CodeBlock generateRouteHandler(
+            HelperMethodBuilder helperBuilder,
+            Map<String, ConverterBuilder> converterLookup) throws ProcessingException {
         ExecutableElement connectMethod = getAnnotatedMethod(WsConnect.class);
         ExecutableElement disconnectMethod = getAnnotatedMethod(WsDisconnect.class);
         ExecutableElement errorMethod = getAnnotatedMethod(WsError.class);
@@ -73,13 +88,13 @@ final class WsControllerSource {
         }
 
         CodeBlock.Builder handlerBuilder = CodeBlock.builder();
-        handlerBuilder.beginControlFlow("$N.ws($S, (ws) ->", app, getRoute());
+        handlerBuilder.beginControlFlow("$N.ws($S, (ws) ->", ControllerRegistryGenerator.APP_NAME, getRoute());
 
-        addOnConnectHandler(handlerBuilder, connectMethod, helperBuilder);
-        addOnDisconnectHandler(handlerBuilder, disconnectMethod, helperBuilder);
-        addOnErrorHandler(handlerBuilder, errorMethod, helperBuilder);
-        addOnMessageHandler(handlerBuilder, messageMethod, helperBuilder);
-        addOnBinaryMessageHandler(handlerBuilder, binaryMessageMethod, helperBuilder);
+        addOnConnectHandler(handlerBuilder, connectMethod, helperBuilder, converterLookup);
+        addOnDisconnectHandler(handlerBuilder, disconnectMethod, helperBuilder, converterLookup);
+        addOnErrorHandler(handlerBuilder, errorMethod, helperBuilder, converterLookup);
+        addOnMessageHandler(handlerBuilder, messageMethod, helperBuilder, converterLookup);
+        addOnBinaryMessageHandler(handlerBuilder, binaryMessageMethod, helperBuilder, converterLookup);
 
         handlerBuilder.endControlFlow(")");
         return handlerBuilder.build();
@@ -89,7 +104,7 @@ final class WsControllerSource {
         List<ExecutableElement> methods = controllerElement.getEnclosedElements().stream()
             .filter(e -> e.getKind() == ElementKind.METHOD)
             .filter(e -> e.getAnnotation(annotationType) != null)
-            .map(e -> (ExecutableElement)e)
+            .map(e -> (ExecutableElement) e)
             .collect(Collectors.toList());
         if (methods.isEmpty()) {
             return null;
@@ -104,73 +119,87 @@ final class WsControllerSource {
     }
 
     private String getRoute() {
-        WsController route = controllerElement.getAnnotation(WsController.class);
-        return route.route();
+        return getRoute(controllerElement);
+    }
+
+    private static String getRoute(Element element) {
+        WsController annotation = element.getAnnotation(WsController.class);
+        return annotation.route();
     }
 
     private void addOnConnectHandler(
             CodeBlock.Builder handlerBuilder,
             ExecutableElement method,
-            HelperMethodBuilder helperBuilder) {
+            HelperMethodBuilder helperBuilder,
+            Map<String, ConverterBuilder> converterLookup) {
         addHandler(
             handlerBuilder,
             "onConnect",
             WsConnectContext.class,
             JavalinWsConnectContext.class,
             method,
-            helperBuilder);
+            helperBuilder,
+            converterLookup);
     }
 
     private void addOnDisconnectHandler(
             CodeBlock.Builder handlerBuilder,
             ExecutableElement method,
-            HelperMethodBuilder helperBuilder) {
+            HelperMethodBuilder helperBuilder,
+            Map<String, ConverterBuilder> converterLookup) {
         addHandler(
             handlerBuilder,
             "onClose",
             WsDisconnectContext.class,
             JavalinWsDisconnectContext.class,
             method,
-            helperBuilder);
+            helperBuilder,
+            converterLookup);
     }
 
     private void addOnErrorHandler(
             CodeBlock.Builder handlerBuilder,
             ExecutableElement method,
-            HelperMethodBuilder helperBuilder) {
+            HelperMethodBuilder helperBuilder,
+            Map<String, ConverterBuilder> converterLookup) {
         addHandler(
             handlerBuilder,
             "onError",
             WsErrorContext.class,
             JavalinWsErrorContext.class,
             method,
-            helperBuilder);
+            helperBuilder,
+            converterLookup);
     }
 
     private void addOnMessageHandler(
             CodeBlock.Builder handlerBuilder,
             ExecutableElement method,
-            HelperMethodBuilder helperBuilder) {
+            HelperMethodBuilder helperBuilder,
+            Map<String, ConverterBuilder> converterLookup) {
         addHandler(
             handlerBuilder,
             "onMessage",
             WsMessageContext.class,
             JavalinWsMessageContext.class,
             method,
-            helperBuilder);
+            helperBuilder,
+            converterLookup);
     }
 
     private void addOnBinaryMessageHandler(
             CodeBlock.Builder handlerBuilder,
             ExecutableElement method,
-            HelperMethodBuilder helperBuilder) {
+            HelperMethodBuilder helperBuilder,
+            Map<String, ConverterBuilder> converterLookup) {
         addHandler(
             handlerBuilder,
             "onBinaryMessage",
             WsBinaryMessageContext.class,
             JavalinWsBinaryMessageContext.class,
             method,
-            helperBuilder);
+            helperBuilder,
+            converterLookup);
     }
 
     private void addHandler(
@@ -179,7 +208,8 @@ final class WsControllerSource {
             Class<?> contextInterface,
             Class<?> contextImpl,
             ExecutableElement method,
-            HelperMethodBuilder helperBuilder) {
+            HelperMethodBuilder helperBuilder,
+            Map<String, ConverterBuilder> converterLookup) {
         if (method == null) {
             return;
         }
@@ -193,7 +223,8 @@ final class WsControllerSource {
                 context,
                 contextInterface,
                 wrapper,
-                helperBuilder);
+                helperBuilder,
+                converterLookup);
         MethodUtils methodUtils = new MethodUtils(typeUtils);
         if (methodUtils.hasVoidReturnType(method)) {
             handlerBuilder.addStatement("controller.$N(" + parameters + ")", method.getSimpleName());

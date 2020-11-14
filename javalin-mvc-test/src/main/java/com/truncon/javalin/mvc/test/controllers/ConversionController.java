@@ -9,9 +9,15 @@ import com.truncon.javalin.mvc.test.models.ConversionModel;
 
 @Controller
 public final class ConversionController {
-    public static final String GET_CONVERSION_QUERY_ROUTE = "/api/bind/models/conversion/query";
-    @HttpGet(route = GET_CONVERSION_QUERY_ROUTE)
-    public ActionResult getConversionModelFromQuery(@UseConverter("static-model-converter") ConversionModel model) {
+    public static final String GET_CONVERSION_CONTEXT_QUERY_ROUTE = "/api/bind/models/conversion/context/query";
+    @HttpGet(route = GET_CONVERSION_CONTEXT_QUERY_ROUTE)
+    public ActionResult getConversionModelFromContextQuery(@UseConverter("static-model-converter-context") ConversionModel model) {
+        return new JsonResult(model);
+    }
+
+    public static final String GET_CONVERSION_REQUEST_QUERY_ROUTE = "/api/bind/models/conversion/request/query";
+    @HttpGet(route = GET_CONVERSION_REQUEST_QUERY_ROUTE)
+    public ActionResult getConversionModelFromRequestQuery(@UseConverter("static-model-converter-request") ConversionModel model) {
         return new JsonResult(model);
     }
 }

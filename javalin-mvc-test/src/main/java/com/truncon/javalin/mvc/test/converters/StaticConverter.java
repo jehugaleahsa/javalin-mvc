@@ -14,9 +14,14 @@ public final class StaticConverter {
     private StaticConverter() {
     }
 
-    @Converter("static-model-converter")
+    @Converter("static-model-converter-context")
     public static ConversionModel convert(HttpContext context, String name, ValueSource valueSource) {
         HttpRequest request = context.getRequest();
+        return convert(request, name, valueSource);
+    }
+
+    @Converter("static-model-converter-request")
+    public static ConversionModel convert(HttpRequest request, String name, ValueSource valueSource) {
         Map<String, Collection<String>> lookup = getSourceLookup(request, valueSource);
         ConversionModel model = new ConversionModel();
         model.setBoolean(parseBoolean(getString(lookup, "boolean")));

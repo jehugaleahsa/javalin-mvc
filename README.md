@@ -136,7 +136,7 @@ You can also inject the `HttpContext`, the `HttpRequest` and/or the `HttpRespons
 
 Your action methods should return instances of `ActionResult`. An `ActionResult` exists for each type of response (JSON, plain text, status codes, redirects, etc.). You can also return `void`, in which case you must provide a response via `HttpResponse`.
 
-#### Pending Features
+#### Supported Features
 Here is a list of supported and/or desired features. An `x` means it is already supported. Feel free to submit an issue for feature requests!!!
 
 * [x] Specify controllers via `@Controller`
@@ -159,8 +159,11 @@ Here is a list of supported and/or desired features. An `x` means it is already 
         * [x] ZonedDateTime
         * [x] LocalDateTime
         * [x] LocalDate
+        * [x] YearMonth
+        * [x] Year
     * [x] UUID
     * [x] Arrays
+    * [ ] Collection types (List<T>, Set<T>, Map<K, V>, etc.) 
     * [x] File uploads
 * [x] Bind Java object from request body (JSON)
 * [x] Bind Java object from other sources
@@ -195,12 +198,12 @@ Here is a list of supported and/or desired features. An `x` means it is already 
     * [x] Specify routes via WsController
     * [x] Support WsConnect, WsDisconnect, WsError, WsMessage and WsBinaryMessage annotations
     * [x] Support for data binding
-    * [ ] Support for @Before and @After handlers (does this make sense?)
+    * [ ] Support for @Before and @After handlers
 
 ## Dagger
 Dependency injection is at the core of modern software projects. It supports switching between implementations at runtime and promotes testability. Historically, dependency injection has utilized runtime reflection to instantiate objects and inject them. However, waiting to perform injection until runtime comes with the risk of missing bindings that will lead to system failure. There's also the overhead of constructing objects using reflection. However, the [Dagger](https://google.github.io/dagger/) project uses annotation processing to provide compile-time dependency injection. This provides all the benefits of using an inversion of control (IoC) container without the risk of missing bindings causing runtime failures. There's also minimal overhead because there's no reflection involved.
 
-Dagger is integrated into `javalin-mvc-core`, somewhat dictating the use of Dagger (although, I'm working on making it optional some day). Dagger, being a compile-time DI library, has a somewhat different API than other DI libraries. Instead of having a global `injector.get(Class<?> clz)` method that can be used to retrieve every type of object, there are specific methods for each dependency. Ideally, a generic DI interface could be provided so `javalin-mvc-core` could work against *any* DI library, but this dramatic difference in API makes that infeasible. It was a tough decision, but I ended up choosing Dagger. Technically, you can wire in your own choice of DI library on top of Dagger.
+Dagger is integrated into `javalin-mvc-core`, making Dagger the default DI; however, your code will still compile if you choose not to use it. Dagger, being a compile-time DI library, has a somewhat different API than other DI libraries. Instead of having a global `injector.get(Class<?> clz)` method that can be used to retrieve every type of object, there are specific methods for each dependency. Ideally, a generic DI interface could be provided so `javalin-mvc-core` could work against *any* DI library, but this dramatic difference in API makes that infeasible. It was a tough decision, but I ended up choosing Dagger. Technically, you can wire in your own choice of DI library on top of Dagger.
 
 The `javalin-mvc-core` project needs to know how to instantiate objects with Dagger; to do this, you must mark your Dagger container with the `ControllerComponent` annotation. Your Dagger container will, minimally, look like this:
 
