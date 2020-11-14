@@ -90,7 +90,7 @@ final class ControllerRegistryGenerator {
             registryTypeBuilder.addMethod(constructor);
         }
 
-        HelperMethodBuilder helperBuilder = new HelperMethodBuilder(container, registryTypeBuilder);
+        HelperMethodBuilder helperBuilder = new HelperMethodBuilder(container, converterLookup, registryTypeBuilder);
         MethodSpec register = MethodSpec.methodBuilder("register")
             .addAnnotation(Override.class)
             .addModifiers(Modifier.PUBLIC)

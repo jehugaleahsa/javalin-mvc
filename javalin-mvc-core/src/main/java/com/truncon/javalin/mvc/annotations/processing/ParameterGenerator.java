@@ -36,7 +36,7 @@ final class ParameterGenerator {
     public static String bindWsParameters(
             ExecutableElement method,
             String context,
-            Class<?> wrapperType,
+            Class<? extends WsContext> wrapperType,
             String wrapper,
             HelperMethodBuilder helperBuilder,
             Map<String, ConverterBuilder> converterLookup) {
@@ -78,7 +78,6 @@ final class ParameterGenerator {
             }
         }
 
-        // First check if we can provide a simple converter for the parameter type.
         Class<?> parameterClass = helperBuilder.getParameterClass(parameterType);
         if (parameterClass != null) {
             Class<?> actualClass = parameterClass.isArray()
@@ -94,8 +93,6 @@ final class ParameterGenerator {
             }
         }
 
-        // Next, check if this is an object with a @From* annotation or if one of the type's
-        // public members has a @From* annotation decorating it.
         ValueSource defaultBinding = HelperMethodBuilder.getDefaultFromBinding(parameter);
         if (defaultBinding != ValueSource.Any || helperBuilder.hasMemberBinding(parameter)) {
             TypeElement element = typeUtils.getTypeElement(parameterType);
@@ -106,7 +103,6 @@ final class ParameterGenerator {
                 .toString();
         }
 
-        // Lastly, assume the type should be converted using JSON.
         String jsonMethod = helperBuilder.addJsonMethod();
         return CodeBlock.of("$N($N, $T.class)", jsonMethod, wrapper, parameterType).toString();
     }
@@ -141,7 +137,7 @@ final class ParameterGenerator {
 
     public String generateWsParameter(
             String context,
-            Class<?> wrapperType,
+            Class<? extends WsContext> wrapperType,
             String wrapper,
             HelperMethodBuilder helperBuilder,
             Map<String, ConverterBuilder> converterLookup) {
@@ -152,9 +148,26 @@ final class ParameterGenerator {
             return nonBinderParameter;
         }
 
-        // First check if we can provide a simple converter for the parameter type.
         String parameterName = getParameterName();
         WsValueSource valueSource = getWsValueSource(parameter);
+
+        String converterName = getConverterName();
+        ConverterBuilder converter = converterLookup.get(converterName);
+        if (converter != null) {
+            ContainerSource container = helperBuilder.getContainer();
+            if (converter.hasContextOrRequestType(WsContext.class) || converter.hasContextOrRequestType(wrapperType)) {
+                return converter.getConverterCall(container, wrapper, parameterName, valueSource).toString();
+            } else if (converter.hasContextOrRequestType(WsRequest.class)) {
+                String requestName = wrapper + ".getRequest()";
+                return converter.getConverterCall(container, requestName, parameterName, valueSource).toString();
+            } else {
+                String message = "The conversion method '"
+                    + converterName
+                    + "' cannot be used with WebSocket action methods.";
+                throw new ProcessingException(message, parameter);
+            }
+        }
+
         Class<?> parameterClass = helperBuilder.getParameterClass(parameterType);
         if (parameterClass != null) {
             Class<?> actualClass = parameterClass.isArray()

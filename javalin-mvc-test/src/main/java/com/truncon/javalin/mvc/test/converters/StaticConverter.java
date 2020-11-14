@@ -4,6 +4,9 @@ import com.truncon.javalin.mvc.api.Converter;
 import com.truncon.javalin.mvc.api.HttpContext;
 import com.truncon.javalin.mvc.api.HttpRequest;
 import com.truncon.javalin.mvc.api.ValueSource;
+import com.truncon.javalin.mvc.api.ws.WsContext;
+import com.truncon.javalin.mvc.api.ws.WsRequest;
+import com.truncon.javalin.mvc.api.ws.WsValueSource;
 import com.truncon.javalin.mvc.test.models.ConversionModel;
 
 import java.util.Collection;
@@ -57,6 +60,49 @@ public final class StaticConverter {
         return model;
     }
 
+    @Converter("static-model-converter-ws-context")
+    public static ConversionModel convert(WsContext context) {
+        WsRequest request = context.getRequest();
+        return convert(request, null, WsValueSource.Any);
+    }
+
+    @Converter("static-model-converter-ws-request")
+    public static ConversionModel convert(WsRequest request) {
+        return convert(request, null, WsValueSource.Any);
+    }
+
+    @Converter("static-model-converter-ws-context-name")
+    public static ConversionModel convert(WsContext context, String name) {
+        WsRequest request = context.getRequest();
+        return convert(request, name, WsValueSource.Any);
+    }
+
+    @Converter("static-model-converter-ws-request-name")
+    public static ConversionModel convert(WsRequest request, String name) {
+        return convert(request, name, WsValueSource.Any);
+    }
+
+    @Converter("static-model-converter-ws-context-name-source")
+    public static ConversionModel convert(WsContext context, String name, WsValueSource valueSource) {
+        WsRequest request = context.getRequest();
+        return convert(request, name, valueSource);
+    }
+
+    @Converter("static-model-converter-ws-request-name-source")
+    public static ConversionModel convert(WsRequest request, String name, WsValueSource valueSource) {
+        Map<String, Collection<String>> lookup = getSourceLookup(request, valueSource);
+        ConversionModel model = new ConversionModel();
+        model.setBoolean(parseBoolean(getString(lookup, "boolean")));
+        model.setByte((byte) (parseByte(getString(lookup, "byte")) * 2));
+        model.setChar(Character.toUpperCase(parseChar(getString(lookup, "char"))));
+        model.setDouble(parseDouble(getString(lookup, "double")) * 2);
+        model.setFloat(parseFloat(getString(lookup, "float")) * 2);
+        model.setInteger(parseInt(getString(lookup, "int")) * 2);
+        model.setLong(parseLong(getString(lookup, "long")) * 2);
+        model.setShort((short) (parseShort(getString(lookup, "short")) * 2));
+        return model;
+    }
+
     private static Map<String, Collection<String>> getSourceLookup(HttpRequest request, ValueSource valueSource) {
         switch (valueSource) {
             case Path:
@@ -72,6 +118,27 @@ public final class StaticConverter {
             default: {
                 Map<String, Collection<String>> lookup = new LinkedHashMap<>();
                 lookup.putAll(request.getFormLookup());
+                lookup.putAll(request.getQueryLookup());
+                lookup.putAll(request.getPathLookup());
+                lookup.putAll(request.getCookieLookup());
+                lookup.putAll(request.getHeaderLookup());
+                return lookup;
+            }
+        }
+    }
+
+    private static Map<String, Collection<String>> getSourceLookup(WsRequest request, WsValueSource valueSource) {
+        switch (valueSource) {
+            case Path:
+                return request.getPathLookup();
+            case QueryString:
+                return request.getQueryLookup();
+            case Header:
+                return request.getHeaderLookup();
+            case Cookie:
+                return request.getCookieLookup();
+            default: {
+                Map<String, Collection<String>> lookup = new LinkedHashMap<>();
                 lookup.putAll(request.getQueryLookup());
                 lookup.putAll(request.getPathLookup());
                 lookup.putAll(request.getCookieLookup());

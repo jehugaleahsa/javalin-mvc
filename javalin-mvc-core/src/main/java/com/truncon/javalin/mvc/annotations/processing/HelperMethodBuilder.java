@@ -16,7 +16,9 @@ import com.truncon.javalin.mvc.api.FromQuery;
 import com.truncon.javalin.mvc.api.HttpContext;
 import com.truncon.javalin.mvc.api.HttpRequest;
 import com.truncon.javalin.mvc.api.Named;
+import com.truncon.javalin.mvc.api.UseConverter;
 import com.truncon.javalin.mvc.api.ValueSource;
+import com.truncon.javalin.mvc.api.ws.WsContext;
 import com.truncon.javalin.mvc.api.ws.WsMessageContext;
 import com.truncon.javalin.mvc.api.ws.WsRequest;
 import com.truncon.javalin.mvc.api.ws.WsValueSource;
@@ -122,6 +124,7 @@ public final class HelperMethodBuilder {
     }
 
     private final ContainerSource container;
+    private final Map<String, ConverterBuilder> converterLookup;
     private final TypeSpec.Builder typeBuilder;
     private final Set<Class<?>> addedSingletonConversionHelpers = new HashSet<>();
     private final Set<Class<?>> addedArrayConversionHelpers = new HashSet<>();
@@ -134,8 +137,12 @@ public final class HelperMethodBuilder {
     private final Map<String, Integer> complexConversionCounts = new HashMap<>();
     private final Set<Class<?>> jsonMethods = new HashSet<>();
 
-    public HelperMethodBuilder(ContainerSource container, TypeSpec.Builder typeBuilder) {
+    public HelperMethodBuilder(
+            ContainerSource container,
+            Map<String, ConverterBuilder> converterLookup,
+            TypeSpec.Builder typeBuilder) {
         this.container = container;
+        this.converterLookup = converterLookup;
         this.typeBuilder = typeBuilder;
     }
 
@@ -227,17 +234,21 @@ public final class HelperMethodBuilder {
             e -> defaultSource != ValueSource.Any || hasFromAnnotation(e) || hasMemberBinding(e)
         ).collect(Collectors.toList());
         for (Element memberElement : memberElements) {
-            if (!addPrimitiveSetter(memberElement, methodBodyBuilder, defaultSource)) {
-                ValueSource defaultSubSource = getDefaultFromBinding(memberElement);
-                if (defaultSubSource != ValueSource.Any || hasMemberBinding(memberElement)) {
-                    TypeElement subElement = container.getTypeUtils().getTypeElement(getParameterType(memberElement));
-                    String conversionMethod = addConversionMethod(subElement, defaultSource);
-                    String valueExpression = CodeBlock.builder()
-                        .add("$N($N)", conversionMethod, "context")
-                        .build()
-                        .toString();
-                    setMember(memberElement, methodBodyBuilder, valueExpression);
-                }
+            if (addConverterSetter(memberElement, methodBodyBuilder, defaultSource)) {
+                continue;
+            }
+            if (addPrimitiveSetter(memberElement, methodBodyBuilder, defaultSource)) {
+                continue;
+            }
+            ValueSource defaultSubSource = getDefaultFromBinding(memberElement);
+            if (defaultSubSource != ValueSource.Any || hasMemberBinding(memberElement)) {
+                TypeElement subElement = container.getTypeUtils().getTypeElement(getParameterType(memberElement));
+                String conversionMethod = addConversionMethod(subElement, defaultSource);
+                String valueExpression = CodeBlock.builder()
+                    .add("$N($N)", conversionMethod, "context")
+                    .build()
+                    .toString();
+                setMember(memberElement, methodBodyBuilder, valueExpression);
             }
         }
         methodBodyBuilder.addStatement("return model");
@@ -285,15 +296,66 @@ public final class HelperMethodBuilder {
         }
     }
 
+    private boolean addConverterSetter(
+            Element memberElement,
+            CodeBlock.Builder methodBodyBuilder,
+            ValueSource defaultSource) {
+        String converterName = getConverterName(memberElement);
+        if (converterName == null) {
+            return false;
+        }
+        ConverterBuilder converter = converterLookup.get(converterName);
+        if (converter == null) {
+            return false;
+        }
+
+        String memberName = getMemberName(memberElement);
+        ValueSource valueSource = getMemberValueSource(memberElement, defaultSource);
+        if (converter.hasContextOrRequestType(HttpContext.class)) {
+            String call = converter.getConverterCall(container, "wrapper", memberName, valueSource).toString();
+            setMember(memberElement, methodBodyBuilder, call);
+            return true;
+        } else if (converter.hasContextOrRequestType(HttpRequest.class)) {
+            String requestName = "wrapper.getRequest()";
+            String call = converter.getConverterCall(container, requestName, memberName, valueSource).toString();
+            setMember(memberElement, methodBodyBuilder, call);
+            return true;
+        } else {
+            String message = "The conversion method '"
+                + converterName
+                + "' cannot be used with HTTP action methods.";
+            throw new ProcessingException(message, memberElement);
+        }
+    }
+
+    private String getConverterName(Element memberElement) {
+        // We look in three places for @UseConverter annotations. In order or precedence:
+        // 1) On the setter method parameter
+        // 2) On the member declaration
+        // 3) On the member type definition
+        if (memberElement.getKind() == ElementKind.METHOD) {
+            ExecutableElement method = (ExecutableElement) memberElement;
+            VariableElement parameter = method.getParameters().get(0); // We already checked there's one parameter
+            UseConverter parameterConverter = parameter.getAnnotation(UseConverter.class);
+            if (parameterConverter != null) {
+                return parameterConverter.value();
+            }
+        }
+        UseConverter memberConverter = memberElement.getAnnotation(UseConverter.class);
+        if (memberConverter != null) {
+            return memberConverter.value();
+        }
+        TypeMirror parameterType = getParameterType(memberElement);
+        UseConverter typeConverter = parameterType.getAnnotation(UseConverter.class);
+        return typeConverter == null ? null : typeConverter.value();
+    }
+
     private boolean addPrimitiveSetter(
             Element memberElement,
             CodeBlock.Builder methodBodyBuilder,
             ValueSource defaultSource) {
         Class<?> parameterClass = getParameterClass(memberElement);
         if (parameterClass == null) {
-            if (memberElement.getSimpleName().toString().equals("container")) {
-                throw new RuntimeException("1");
-            }
             return false;
         }
         Class<?> actualClass = parameterClass.isArray()
@@ -301,16 +363,10 @@ public final class HelperMethodBuilder {
             : parameterClass;
         String conversionMethod = addConversionMethod(actualClass, parameterClass.isArray());
         if (conversionMethod == null) {
-            if (memberElement.getSimpleName().toString().equals("container")) {
-                throw new RuntimeException("1");
-            }
             return false;
         }
         String memberName = getMemberName(memberElement);
         if (memberName == null) {
-            if (memberElement.getSimpleName().toString().equals("container")) {
-                throw new RuntimeException("3");
-            }
             return false;
         }
         ValueSource valueSource = getMemberValueSource(memberElement, defaultSource);
@@ -327,9 +383,6 @@ public final class HelperMethodBuilder {
             methodBodyBuilder.addStatement("model.$N(" + valueExpression + ")", member.getSimpleName());
             return true;
         } else {
-            if (member.getSimpleName().toString().equals("container")) {
-                throw new RuntimeException("4");
-            }
             return false;
         }
     }
@@ -439,7 +492,10 @@ public final class HelperMethodBuilder {
         return WsValueSource.Any;
     }
 
-    public String addConversionMethod(TypeElement element, WsValueSource defaultSource, Class<?> contextType) {
+    public String addConversionMethod(
+            TypeElement element,
+            WsValueSource defaultSource,
+            Class<? extends WsContext> contextType) {
         ImmutableTriple<WsValueSource, String, String> key = ImmutableTriple.of(
             defaultSource,
             element.getQualifiedName().toString(),
@@ -461,17 +517,21 @@ public final class HelperMethodBuilder {
             e -> defaultSource != WsValueSource.Any || hasWsFromAnnotation(e) || hasMemberBinding(e)
         ).collect(Collectors.toList());
         for (Element memberElement : memberElements) {
-            if (!addPrimitiveSetter(memberElement, methodBodyBuilder, defaultSource, contextType)) {
-                WsValueSource defaultSubSource = getDefaultWsFromBinding(memberElement);
-                if (defaultSubSource != WsValueSource.Any || hasWsMemberBinding(memberElement)) {
-                    TypeElement subElement = container.getTypeUtils().getTypeElement(getParameterType(memberElement));
-                    String conversionMethod = addConversionMethod(subElement, defaultSource, contextType);
-                    String valueExpression = CodeBlock.builder()
-                        .add("$N($N)", conversionMethod, "context")
-                        .build()
-                        .toString();
-                    setMember(memberElement, methodBodyBuilder, valueExpression);
-                }
+            if (addConverterSetter(memberElement, methodBodyBuilder, contextType, defaultSource)) {
+                continue;
+            }
+            if (addPrimitiveSetter(memberElement, methodBodyBuilder, defaultSource, contextType)) {
+                continue;
+            }
+            WsValueSource defaultSubSource = getDefaultWsFromBinding(memberElement);
+            if (defaultSubSource != WsValueSource.Any || hasWsMemberBinding(memberElement)) {
+                TypeElement subElement = container.getTypeUtils().getTypeElement(getParameterType(memberElement));
+                String conversionMethod = addConversionMethod(subElement, defaultSource, contextType);
+                String valueExpression = CodeBlock.builder()
+                    .add("$N($N)", conversionMethod, "context")
+                    .build()
+                    .toString();
+                setMember(memberElement, methodBodyBuilder, valueExpression);
             }
         }
         methodBodyBuilder.addStatement("return model");
@@ -490,6 +550,39 @@ public final class HelperMethodBuilder {
         complexWsConversionLookup.put(key, methodName);
         complexConversionCounts.put(simpleName, count + 1);
         return methodName;
+    }
+
+    private boolean addConverterSetter(
+            Element memberElement,
+            CodeBlock.Builder methodBodyBuilder,
+            Class<? extends WsContext> contextType,
+            WsValueSource defaultSource) {
+        String converterName = getConverterName(memberElement);
+        if (converterName == null) {
+            return false;
+        }
+        ConverterBuilder converter = converterLookup.get(converterName);
+        if (converter == null) {
+            return false;
+        }
+
+        String memberName = getMemberName(memberElement);
+        WsValueSource valueSource = getMemberValueSource(memberElement, defaultSource);
+        if (converter.hasContextOrRequestType(WsContext.class) || converter.hasContextOrRequestType(contextType)) {
+            String call = converter.getConverterCall(container, "wrapper", memberName, valueSource).toString();
+            setMember(memberElement, methodBodyBuilder, call);
+            return true;
+        } else if (converter.hasContextOrRequestType(WsRequest.class)) {
+            String requestName = "wrapper.getRequest()";
+            String call = converter.getConverterCall(container, requestName, memberName, valueSource).toString();
+            setMember(memberElement, methodBodyBuilder, call);
+            return true;
+        } else {
+            String message = "The conversion method '"
+                + converterName
+                + "' cannot be used with WebSocket action methods.";
+            throw new ProcessingException(message, memberElement);
+        }
     }
 
     private Stream<? extends Element> getBoundMemberElements(TypeElement element, boolean isWebSockets, Function<Element, Boolean> hasBinding) {
@@ -520,9 +613,6 @@ public final class HelperMethodBuilder {
             Class<?> contextType) {
         Class<?> parameterClass = getParameterClass(memberElement);
         if (parameterClass == null) {
-            if (memberElement.getSimpleName().toString().equals("container")) {
-                throw new RuntimeException("No parameter class for string.");
-            }
             return false;
         }
         Class<?> actualClass = parameterClass.isArray()
@@ -530,16 +620,10 @@ public final class HelperMethodBuilder {
             : parameterClass;
         String conversionMethod = addConversionMethod(actualClass, parameterClass.isArray());
         if (conversionMethod == null) {
-            if (memberElement.getSimpleName().toString().equals("container")) {
-                throw new RuntimeException("No conversion method for string.");
-            }
             return false;
         }
         String memberName = getMemberName(memberElement);
         if (memberName == null) {
-            if (memberElement.getSimpleName().toString().equals("container")) {
-                throw new RuntimeException("No member name for string.");
-            }
             return false;
         }
         WsValueSource valueSource = getMemberValueSource(memberElement, defaultSource);

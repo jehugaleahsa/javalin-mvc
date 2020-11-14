@@ -6,6 +6,7 @@ import com.truncon.javalin.mvc.api.ws.WsBinaryMessage;
 import com.truncon.javalin.mvc.api.ws.WsBinaryMessageContext;
 import com.truncon.javalin.mvc.api.ws.WsConnect;
 import com.truncon.javalin.mvc.api.ws.WsConnectContext;
+import com.truncon.javalin.mvc.api.ws.WsContext;
 import com.truncon.javalin.mvc.api.ws.WsController;
 import com.truncon.javalin.mvc.api.ws.WsDisconnect;
 import com.truncon.javalin.mvc.api.ws.WsDisconnectContext;
@@ -205,7 +206,7 @@ final class WsControllerSource {
     private void addHandler(
             CodeBlock.Builder handlerBuilder,
             String javalinHandler,
-            Class<?> contextInterface,
+            Class<? extends WsContext> contextInterface,
             Class<?> contextImpl,
             ExecutableElement method,
             HelperMethodBuilder helperBuilder,

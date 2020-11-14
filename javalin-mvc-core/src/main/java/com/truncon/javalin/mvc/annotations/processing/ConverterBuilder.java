@@ -12,6 +12,7 @@ import com.truncon.javalin.mvc.api.ws.WsErrorContext;
 import com.truncon.javalin.mvc.api.ws.WsMessageContext;
 import com.truncon.javalin.mvc.api.ws.WsRequest;
 import com.truncon.javalin.mvc.api.ws.WsValueSource;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 
 import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.element.Element;
@@ -21,7 +22,10 @@ import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeMirror;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public final class ConverterBuilder {
@@ -74,19 +78,39 @@ public final class ConverterBuilder {
 
     private static boolean hasBadArguments(TypeUtils typeUtils, ExecutableElement method) {
         List<? extends VariableElement> parameters = method.getParameters();
-        // A context object is always required
-        if (parameters.isEmpty() || !isContextOrRequestType(typeUtils, parameters.get(0))) {
+        // At most there can be a context/request, String name, and a ValueSource.
+        if (parameters.size() > 3) {
             return true;
         }
-        if (parameters.size() > 1 && !typeUtils.isType(parameters.get(1).asType(), String.class)) {
+        // A context/request object is always required
+        List<VariableElement> contexts = parameters.stream()
+            .filter(p -> isContextOrRequestType(typeUtils, p))
+            .collect(Collectors.toList());
+        if (contexts.size() != 1) {
             return true;
         }
-        if (parameters.size() <= 2) {
+        List<VariableElement> remaining = new ArrayList<>(parameters);
+        remaining.removeAll(contexts);
+        // There should only be one name parameter, or none.
+        List<VariableElement> names = remaining.stream()
+            .filter(p -> typeUtils.isType(p.asType(), String.class))
+            .collect(Collectors.toList());
+        if (names.size() > 1) {
+            return true;
+        }
+        remaining.removeAll(names);
+        // At this point, the only remaining parameter should be a value source.
+        // We might also not have any additional parameters. If we have more than
+        // one remaining parameter, then there must not have been a name so we have
+        // an extra parameter we can't bind.
+        if (remaining.isEmpty()) {
             return false;
+        } else if (remaining.size() > 1) {
+            return true;
         }
-        TypeMirror sourceType = parameters.get(2).asType();
-        TypeMirror contextType = parameters.get(0).asType();
-        return parameters.size() > 2 && !isSourceType(typeUtils, sourceType, contextType);
+        TypeMirror contextType = contexts.get(0).asType();
+        TypeMirror sourceType = remaining.get(0).asType();
+        return !isSourceType(typeUtils, sourceType, contextType);
     }
 
     private static boolean isContextOrRequestType(TypeUtils typeUtils, VariableElement variableElement) {
@@ -170,30 +194,56 @@ public final class ConverterBuilder {
                 callBuilder.add("injector.$L()", converterName);
             }
         }
-        callBuilder.add(".$N($N", conversionMethod.getSimpleName(), contextOrRequestName);
-        if (hasNameParameter()) {
-            callBuilder.add(", $S", parameterName);
+        callBuilder.add(".$N(", conversionMethod.getSimpleName());
+
+        // We don't force the order of the conversion method parameters so this code below
+        // makes sure we call the conversion method in whatever order is necessary, skipping
+        // over optional arguments that aren't needed.
+        int contextPosition = getContextOrRequestPosition();
+        int namePosition = getNamePosition();
+        int sourcePosition = getSourcePosition(sourceClass);
+        int size = 1 + (namePosition == -1 ? 0 : 1) + (sourcePosition == -1 ? 0 : 1);
+        CodeBlock[] blocks = new CodeBlock[size];
+        blocks[contextPosition] = CodeBlock.builder().add("$N", contextOrRequestName).build();
+        if (namePosition != -1) {
+            blocks[namePosition] = CodeBlock.builder().add("$S", parameterName).build();
         }
-        if (hasSourceParameter(sourceClass)) {
-            callBuilder.add(", $T.$N", sourceClass, valueSource.name());
+        if (sourcePosition != -1) {
+            blocks[sourcePosition] = CodeBlock.builder().add("$T.$N", sourceClass, valueSource.name()).build();
         }
+        callBuilder.add(CodeBlock.join(Arrays.asList(blocks), ", "));
+
         callBuilder.add(")");
         return callBuilder.build();
     }
 
-    private boolean hasNameParameter() {
-        if (conversionMethod.getParameters().size() < 2) {
-            return false;
+    private int getContextOrRequestPosition() {
+        for (int index = 0; index != conversionMethod.getParameters().size(); ++index) {
+            VariableElement parameter = conversionMethod.getParameters().get(index);
+            if (isContextOrRequestType(typeUtils, parameter)) {
+                return index;
+            }
         }
-        VariableElement parameter = conversionMethod.getParameters().get(1);
-        return typeUtils.isType(parameter.asType(), String.class);
+        return -1; // This should not be possible since we validated beforehand
     }
 
-    private boolean hasSourceParameter(Class<?> valueSourceType) {
-        if (conversionMethod.getParameters().size() < 3) {
-            return false;
+    private int getNamePosition() {
+        for (int index = 0; index != conversionMethod.getParameters().size(); ++index) {
+            VariableElement parameter = conversionMethod.getParameters().get(index);
+            if (typeUtils.isType(parameter.asType(), String.class)) {
+                return index;
+            }
         }
-        VariableElement parameter = conversionMethod.getParameters().get(2);
-        return typeUtils.isType(parameter.asType(), valueSourceType);
+        return -1; // This can happen if the name parameter is not provided.
+    }
+
+    private int getSourcePosition(Class<?> valueSourceType) {
+        for (int index = 0; index != conversionMethod.getParameters().size(); ++index) {
+            VariableElement parameter = conversionMethod.getParameters().get(index);
+            if (typeUtils.isType(parameter.asType(), valueSourceType)) {
+                return index;
+            }
+        }
+        return -1; // This can happen if the name parameter is not provided.
     }
 }
