@@ -11,14 +11,38 @@ import static com.truncon.javalin.mvc.test.RouteBuilder.queryParams;
 
 public final class ConversionTest {
     @Test
-    public void testConversion_staticConverter_context() {
-        String baseRoute = ConversionController.GET_CONVERSION_CONTEXT_QUERY_ROUTE;
+    public void testConversion_staticConverter_context_oneParameter() {
+        String baseRoute = ConversionController.GET_CONVERSION_CONTEXT1_QUERY_ROUTE;
         testRoute(baseRoute);
     }
 
     @Test
-    public void testConversion_staticConverter_request() {
-        String baseRoute = ConversionController.GET_CONVERSION_REQUEST_QUERY_ROUTE;
+    public void testConversion_staticConverter_request_oneParameter() {
+        String baseRoute = ConversionController.GET_CONVERSION_REQUEST1_QUERY_ROUTE;
+        testRoute(baseRoute);
+    }
+
+    @Test
+    public void testConversion_staticConverter_context_twoParameters() {
+        String baseRoute = ConversionController.GET_CONVERSION_CONTEXT2_QUERY_ROUTE;
+        testRoute(baseRoute);
+    }
+
+    @Test
+    public void testConversion_staticConverter_request_twoParameters() {
+        String baseRoute = ConversionController.GET_CONVERSION_REQUEST2_QUERY_ROUTE;
+        testRoute(baseRoute);
+    }
+
+    @Test
+    public void testConversion_staticConverter_context_threeParameters() {
+        String baseRoute = ConversionController.GET_CONVERSION_CONTEXT3_QUERY_ROUTE;
+        testRoute(baseRoute);
+    }
+
+    @Test
+    public void testConversion_staticConverter_request_threeParameters() {
+        String baseRoute = ConversionController.GET_CONVERSION_REQUEST3_QUERY_ROUTE;
         testRoute(baseRoute);
     }
 

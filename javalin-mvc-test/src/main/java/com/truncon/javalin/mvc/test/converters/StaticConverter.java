@@ -15,12 +15,34 @@ public final class StaticConverter {
     }
 
     @Converter("static-model-converter-context")
+    public static ConversionModel convert(HttpContext context) {
+        HttpRequest request = context.getRequest();
+        return convert(request, null, ValueSource.Any);
+    }
+
+    @Converter("static-model-converter-request")
+    public static ConversionModel convert(HttpRequest request) {
+        return convert(request, null, ValueSource.Any);
+    }
+
+    @Converter("static-model-converter-context-name")
+    public static ConversionModel convert(HttpContext context, String name) {
+        HttpRequest request = context.getRequest();
+        return convert(request, name, ValueSource.Any);
+    }
+
+    @Converter("static-model-converter-request-name")
+    public static ConversionModel convert(HttpRequest request, String name) {
+        return convert(request, name, ValueSource.Any);
+    }
+
+    @Converter("static-model-converter-context-name-source")
     public static ConversionModel convert(HttpContext context, String name, ValueSource valueSource) {
         HttpRequest request = context.getRequest();
         return convert(request, name, valueSource);
     }
 
-    @Converter("static-model-converter-request")
+    @Converter("static-model-converter-request-name-source")
     public static ConversionModel convert(HttpRequest request, String name, ValueSource valueSource) {
         Map<String, Collection<String>> lookup = getSourceLookup(request, valueSource);
         ConversionModel model = new ConversionModel();
