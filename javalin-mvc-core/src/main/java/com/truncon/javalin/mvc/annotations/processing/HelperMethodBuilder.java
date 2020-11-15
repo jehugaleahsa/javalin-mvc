@@ -315,11 +315,11 @@ public final class HelperMethodBuilder {
         String memberName = getMemberName(memberElement);
         ValueSource valueSource = getMemberValueSource(memberElement, defaultSource);
         if (converter.hasContextOrRequestType(HttpContext.class)) {
-            String call = converter.getConverterCall(container, "wrapper", memberName, valueSource).toString();
+            String call = converter.getConverterCall(container, "context", memberName, valueSource).toString();
             setMember(memberElement, methodBodyBuilder, call);
             return true;
         } else if (converter.hasContextOrRequestType(HttpRequest.class)) {
-            String requestName = "wrapper.getRequest()";
+            String requestName = "context.getRequest()";
             String call = converter.getConverterCall(container, requestName, memberName, valueSource).toString();
             setMember(memberElement, methodBodyBuilder, call);
             return true;
@@ -575,11 +575,11 @@ public final class HelperMethodBuilder {
         String memberName = getMemberName(memberElement);
         WsValueSource valueSource = getMemberValueSource(memberElement, defaultSource);
         if (converter.hasContextOrRequestType(WsContext.class) || converter.hasContextOrRequestType(contextType)) {
-            String call = converter.getConverterCall(container, "wrapper", memberName, valueSource).toString();
+            String call = converter.getConverterCall(container, "context", memberName, valueSource).toString();
             setMember(memberElement, methodBodyBuilder, call);
             return true;
         } else if (converter.hasContextOrRequestType(WsRequest.class)) {
-            String requestName = "wrapper.getRequest()";
+            String requestName = "context.getRequest()";
             String call = converter.getConverterCall(container, requestName, memberName, valueSource).toString();
             setMember(memberElement, methodBodyBuilder, call);
             return true;

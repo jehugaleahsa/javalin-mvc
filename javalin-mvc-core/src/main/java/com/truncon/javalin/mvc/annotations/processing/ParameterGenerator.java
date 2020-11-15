@@ -67,7 +67,6 @@ final class ParameterGenerator {
             if (converterName != null) {
                 String message = "No converter named '"
                     + converterName
-                    + converterLookup.size()
                     + "' exists.";
                 throw new ProcessingException(message, parameter);
             }
