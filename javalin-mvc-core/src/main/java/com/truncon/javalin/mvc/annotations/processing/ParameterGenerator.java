@@ -6,10 +6,12 @@ import com.truncon.javalin.mvc.api.ws.*;
 import io.javalin.http.Context;
 import org.apache.commons.lang3.StringUtils;
 
-import javax.lang.model.element.ElementKind;
+import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
+import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import java.util.Map;
 
@@ -129,6 +131,14 @@ final class ParameterGenerator {
         }
         // Look to see if the type itself has a preferred conversion method.
         TypeMirror parameterType = parameter.asType();
+        if (parameterType.getKind() == TypeKind.DECLARED) {
+            DeclaredType declaredType = (DeclaredType) parameterType;
+            Element element = declaredType.asElement();
+            UseConverter declaredConverter = element.getAnnotation(UseConverter.class);
+            if (declaredConverter != null) {
+                return declaredConverter.value();
+            }
+        }
         UseConverter typeUsage = parameterType.getAnnotation(UseConverter.class);
         return typeUsage == null ? null : typeUsage.value();
     }

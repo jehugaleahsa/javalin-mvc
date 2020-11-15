@@ -33,6 +33,7 @@ import javax.lang.model.element.Modifier;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
+import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import java.math.BigDecimal;
@@ -358,6 +359,14 @@ public final class HelperMethodBuilder {
             return memberConverter.value();
         }
         TypeMirror parameterType = getParameterType(memberElement);
+        if (parameterType.getKind() == TypeKind.DECLARED) {
+            DeclaredType declaredType = (DeclaredType) parameterType;
+            Element element = declaredType.asElement();
+            UseConverter declarationConverter = element.getAnnotation(UseConverter.class);
+            if (declarationConverter != null) {
+                return declarationConverter.value();
+            }
+        }
         UseConverter typeConverter = parameterType.getAnnotation(UseConverter.class);
         return typeConverter == null ? null : typeConverter.value();
     }

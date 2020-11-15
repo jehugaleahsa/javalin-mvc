@@ -1,14 +1,21 @@
 package com.truncon.javalin.mvc.test;
 
 import com.truncon.javalin.mvc.test.controllers.ConversionController;
+import com.truncon.javalin.mvc.test.controllers.PairController;
 import com.truncon.javalin.mvc.test.models.ConversionModel;
 import com.truncon.javalin.mvc.test.models.HttpModelWithConversionModel;
+import com.truncon.javalin.mvc.test.models.Pair;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.IOException;
+
 import static com.truncon.javalin.mvc.test.QueryUtils.getJsonResponseForGet;
+import static com.truncon.javalin.mvc.test.QueryUtils.getStringForGet;
+import static com.truncon.javalin.mvc.test.RouteBuilder.buildRouteWithPathParams;
 import static com.truncon.javalin.mvc.test.RouteBuilder.buildRouteWithQueryParams;
 import static com.truncon.javalin.mvc.test.RouteBuilder.param;
+import static com.truncon.javalin.mvc.test.RouteBuilder.pathParams;
 import static com.truncon.javalin.mvc.test.RouteBuilder.queryParams;
 
 public final class ConversionTest {
@@ -112,6 +119,19 @@ public final class ConversionTest {
             assertConversionModel(model.field);
             assertConversionModel(model.getModel1());
             assertConversionModel(model.getModel2());
+        });
+    }
+
+    @Test
+    public void testConversion_typeSpecifiesConverter() throws IOException {
+        Pair pair = new Pair(123, 456);
+        String route = buildRouteWithPathParams(PairController.ROUTE, pathParams(param("value", pair.toString())));
+        AsyncTestUtils.runTest(app -> {
+            String response = getStringForGet(route);
+            Pair returnedPair = Pair.parse(response);
+            Assert.assertNotNull(returnedPair);
+            Assert.assertEquals(pair.getFirst(), returnedPair.getFirst());
+            Assert.assertEquals(pair.getSecond(), returnedPair.getSecond());
         });
     }
 }

@@ -126,6 +126,10 @@ public final class TypeUtils {
         return typeUtils.getDeclaredType(element, types);
     }
 
+    public TypeMirror getType(DeclaredType declaredType) {
+        return elementUtils.getTypeElement(declaredType.toString()).asType();
+    }
+
     public TypeMirror erasure(TypeMirror type) {
         return typeUtils.erasure(type);
     }

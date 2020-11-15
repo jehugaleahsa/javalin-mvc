@@ -1,6 +1,8 @@
 package com.truncon.javalin.mvc.api;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -175,4 +177,39 @@ public interface HttpRequest {
      * @return the file.
      */
     FileUpload getFile(String name);
+
+    /**
+     * Gets the lookup associated with the specified value source.
+     * @param valueSource The source of the lookup values to retrieve.
+     * @return The lookup associated with the given source.
+     */
+    default Map<String, Collection<String>> getSourceLookup(ValueSource valueSource) {
+        if (valueSource == null) {
+            return Collections.emptyMap();
+        }
+        switch (valueSource) {
+            case Path:
+                return getPathLookup();
+            case QueryString:
+                return getQueryLookup();
+            case Header:
+                return getHeaderLookup();
+            case Cookie:
+                return getCookieLookup();
+            case FormData:
+                return getFormLookup();
+            case Any: {
+                // Ordered for security reasons
+                Map<String, Collection<String>> lookup = new LinkedHashMap<>();
+                lookup.putAll(getFormLookup());
+                lookup.putAll(getQueryLookup());
+                lookup.putAll(getPathLookup());
+                lookup.putAll(getCookieLookup());
+                lookup.putAll(getHeaderLookup());
+                return lookup;
+            }
+            default:
+                return Collections.emptyMap();
+        }
+    }
 }

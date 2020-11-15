@@ -1,6 +1,10 @@
 package com.truncon.javalin.mvc.api.ws;
 
+import com.truncon.javalin.mvc.api.ValueSource;
+
 import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -86,4 +90,37 @@ public interface WsRequest {
      * @return the key/value pair lookup.
      */
     Map<String, Collection<String>> getCookieLookup();
+
+    /**
+     * Gets the lookup associated with the specified value source.
+     *
+     * @param valueSource The source of the lookup values to retrieve.
+     * @return The lookup associated with the given source.
+     */
+    default Map<String, Collection<String>> getSourceLookup(ValueSource valueSource) {
+        if (valueSource == null) {
+            return Collections.emptyMap();
+        }
+        switch (valueSource) {
+            case Path:
+                return getPathLookup();
+            case QueryString:
+                return getQueryLookup();
+            case Header:
+                return getHeaderLookup();
+            case Cookie:
+                return getCookieLookup();
+            case Any: {
+                // Ordered for security reasons
+                Map<String, Collection<String>> lookup = new LinkedHashMap<>();
+                lookup.putAll(getQueryLookup());
+                lookup.putAll(getPathLookup());
+                lookup.putAll(getCookieLookup());
+                lookup.putAll(getHeaderLookup());
+                return lookup;
+            }
+            default:
+                return Collections.emptyMap();
+        }
+    }
 }
