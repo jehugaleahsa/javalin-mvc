@@ -100,7 +100,7 @@ Javalin MVC uses annotation processing (more on this later) so must be setup in 
 </build>
 ```
 
-I have no idea how to configure Javalin MVC to run with Gradle, although it should mirror closely how how Dagger is configured. Feel free to submit a PR with the steps listed here if you get this working and you're feeling generous. 😁
+I have no idea how to configure Javalin MVC to run with Gradle, although it should mirror closely how Dagger is configured. Feel free to submit a PR with the steps listed here if you get this working and you're feeling generous. 😁
 
 ## Defining a controller
 A controller is a class decorated with the `@Controller` annotation. It can have one or more methods annotated with `@HttpGet`, `@HttpPost`, `@HttpPut`, `@HttpPatch`, `@HttpDelete`, `@HttpHead`, or `@HttpOptions`. Each method is associated with a route and will cause a Javalin route handler to be generated. The route handler simply creates an instance of the controller, then calls the method. Simple!
@@ -200,14 +200,14 @@ Here is a list of supported and/or desired features. An `x` means it is already 
     * [ ] Allow specifying common route prefix for all action methods.
 * [x] Specify routes via `@HttpGet`, `@HttpPost`, etc.
 * [x] Bind parameters from headers, cookies, URL parameters, query strings, and form data by name.
-    * [x] Strings
-    * [x] Integer (reference type only)
-    * [x] Boolean (reference type only)
-    * [x] Long (reference type only)
-    * [x] Short (reference type only)
-    * [x] Byte (reference type only)
-    * [x] Double (reference type only)
-    * [x] Float (reference type only)
+    * [x] String
+    * [x] Integer/int
+    * [x] Boolean/boolean
+    * [x] Long/long
+    * [x] Short/short
+    * [x] Byte/byte
+    * [x] Double/double
+    * [x] Float/float
     * [x] BigInteger
     * [x] BigDecimal
     * [x] Dates
