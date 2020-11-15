@@ -39,6 +39,17 @@ public final class StaticConverter {
         return convert(request, name, ValueSource.Any);
     }
 
+    @Converter("static-model-converter-context-source")
+    public static ConversionModel convert(HttpContext context, ValueSource source) {
+        HttpRequest request = context.getRequest();
+        return convert(request, null, source);
+    }
+
+    @Converter("static-model-converter-request-source")
+    public static ConversionModel convert(HttpRequest request, ValueSource source) {
+        return convert(request, null, source);
+    }
+
     @Converter("static-model-converter-context-name-source")
     public static ConversionModel convert(HttpContext context, String name, ValueSource valueSource) {
         HttpRequest request = context.getRequest();
@@ -80,6 +91,17 @@ public final class StaticConverter {
     @Converter("static-model-converter-ws-request-name")
     public static ConversionModel convert(WsRequest request, String name) {
         return convert(request, name, WsValueSource.Any);
+    }
+
+    @Converter("static-model-converter-ws-context-source")
+    public static ConversionModel convert(WsContext context, WsValueSource source) {
+        WsRequest request = context.getRequest();
+        return convert(request, null, source);
+    }
+
+    @Converter("static-model-converter-ws-request-source")
+    public static ConversionModel convert(WsRequest request, WsValueSource source) {
+        return convert(request, null, source);
     }
 
     @Converter("static-model-converter-ws-context-name-source")

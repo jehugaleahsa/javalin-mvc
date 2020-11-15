@@ -306,7 +306,10 @@ public final class HelperMethodBuilder {
         }
         ConverterBuilder converter = converterLookup.get(converterName);
         if (converter == null) {
-            return false;
+            String message = "No converter named '"
+                + converterName
+                + "' exists.";
+            throw new ProcessingException(message, memberElement);
         }
 
         String memberName = getMemberName(memberElement);
@@ -563,7 +566,10 @@ public final class HelperMethodBuilder {
         }
         ConverterBuilder converter = converterLookup.get(converterName);
         if (converter == null) {
-            return false;
+            String message = "No converter named '"
+                + converterName
+                + "' exists.";
+            throw new ProcessingException(message, memberElement);
         }
 
         String memberName = getMemberName(memberElement);

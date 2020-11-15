@@ -9,39 +9,51 @@ import com.truncon.javalin.mvc.test.models.ConversionModel;
 
 @Controller
 public final class ConversionController {
-    public static final String GET_CONVERSION_CONTEXT1_QUERY_ROUTE = "/api/bind/models/conversion/context1/query";
-    @HttpGet(route = GET_CONVERSION_CONTEXT1_QUERY_ROUTE)
-    public ActionResult getConversionModelFromContext1Query(@UseConverter("static-model-converter-context") ConversionModel model) {
+    public static final String GET_CONVERSION_CONTEXT_ROUTE = "/api/bind/models/conversion/context";
+    @HttpGet(route = GET_CONVERSION_CONTEXT_ROUTE)
+    public ActionResult getConversionModelFromContext(@UseConverter("static-model-converter-context") ConversionModel model) {
         return new JsonResult(model);
     }
 
-    public static final String GET_CONVERSION_REQUEST1_QUERY_ROUTE = "/api/bind/models/conversion/request1/query";
-    @HttpGet(route = GET_CONVERSION_REQUEST1_QUERY_ROUTE)
-    public ActionResult getConversionModelFromRequest1Query(@UseConverter("static-model-converter-request") ConversionModel model) {
+    public static final String GET_CONVERSION_REQUEST_ROUTE = "/api/bind/models/conversion/request";
+    @HttpGet(route = GET_CONVERSION_REQUEST_ROUTE)
+    public ActionResult getConversionModelFromRequest(@UseConverter("static-model-converter-request") ConversionModel model) {
         return new JsonResult(model);
     }
 
-    public static final String GET_CONVERSION_CONTEXT2_QUERY_ROUTE = "/api/bind/models/conversion/context2/query";
-    @HttpGet(route = GET_CONVERSION_CONTEXT2_QUERY_ROUTE)
-    public ActionResult getConversionModelFromContext2Query(@UseConverter("static-model-converter-context-name") ConversionModel model) {
+    public static final String GET_CONVERSION_CONTEXT_NAME_ROUTE = "/api/bind/models/conversion/context-name";
+    @HttpGet(route = GET_CONVERSION_CONTEXT_NAME_ROUTE)
+    public ActionResult getConversionModelFromContextName(@UseConverter("static-model-converter-context-name") ConversionModel model) {
         return new JsonResult(model);
     }
 
-    public static final String GET_CONVERSION_REQUEST2_QUERY_ROUTE = "/api/bind/models/conversion/request2/query";
-    @HttpGet(route = GET_CONVERSION_REQUEST2_QUERY_ROUTE)
-    public ActionResult getConversionModelFromRequest2Query(@UseConverter("static-model-converter-request-name") ConversionModel model) {
+    public static final String GET_CONVERSION_REQUEST_NAME_ROUTE = "/api/bind/models/conversion/request-name";
+    @HttpGet(route = GET_CONVERSION_REQUEST_NAME_ROUTE)
+    public ActionResult getConversionModelFromRequestName(@UseConverter("static-model-converter-request-name") ConversionModel model) {
         return new JsonResult(model);
     }
 
-    public static final String GET_CONVERSION_CONTEXT3_QUERY_ROUTE = "/api/bind/models/conversion/context3/query";
-    @HttpGet(route = GET_CONVERSION_CONTEXT3_QUERY_ROUTE)
-    public ActionResult getConversionModelFromContext3Query(@UseConverter("static-model-converter-context-name-source") ConversionModel model) {
+    public static final String GET_CONVERSION_CONTEXT_SOURCE_ROUTE = "/api/bind/models/conversion/context-source";
+    @HttpGet(route = GET_CONVERSION_CONTEXT_SOURCE_ROUTE)
+    public ActionResult getConversionModelFromContextSource(@UseConverter("static-model-converter-context-source") ConversionModel model) {
         return new JsonResult(model);
     }
 
-    public static final String GET_CONVERSION_REQUEST3_QUERY_ROUTE = "/api/bind/models/conversion/request3/query";
-    @HttpGet(route = GET_CONVERSION_REQUEST3_QUERY_ROUTE)
-    public ActionResult getConversionModelFromRequest3Query(@UseConverter("static-model-converter-request-name-source") ConversionModel model) {
+    public static final String GET_CONVERSION_REQUEST_SOURCE_ROUTE = "/api/bind/models/conversion/request-source";
+    @HttpGet(route = GET_CONVERSION_REQUEST_SOURCE_ROUTE)
+    public ActionResult getConversionModelFromRequestSource(@UseConverter("static-model-converter-request-source") ConversionModel model) {
+        return new JsonResult(model);
+    }
+
+    public static final String GET_CONVERSION_CONTEXT_NAME_SOURCE_ROUTE = "/api/bind/models/conversion/context-name-source";
+    @HttpGet(route = GET_CONVERSION_CONTEXT_NAME_SOURCE_ROUTE)
+    public ActionResult getConversionModelFromContextNameSource(@UseConverter("static-model-converter-context-name-source") ConversionModel model) {
+        return new JsonResult(model);
+    }
+
+    public static final String GET_CONVERSION_REQUEST_NAME_SOURCE_ROUTE = "/api/bind/models/conversion/request-name-source";
+    @HttpGet(route = GET_CONVERSION_REQUEST_NAME_SOURCE_ROUTE)
+    public ActionResult getConversionModelFromRequestNameSource(@UseConverter("static-model-converter-request-name-source") ConversionModel model) {
         return new JsonResult(model);
     }
 }

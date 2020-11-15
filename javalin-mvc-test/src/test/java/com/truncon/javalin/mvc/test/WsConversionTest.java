@@ -1,6 +1,13 @@
 package com.truncon.javalin.mvc.test;
 
 import com.truncon.javalin.mvc.test.controllers.ws.conversion.WsContextController;
+import com.truncon.javalin.mvc.test.controllers.ws.conversion.WsContextNameController;
+import com.truncon.javalin.mvc.test.controllers.ws.conversion.WsContextNameSourceController;
+import com.truncon.javalin.mvc.test.controllers.ws.conversion.WsContextSourceController;
+import com.truncon.javalin.mvc.test.controllers.ws.conversion.WsRequestController;
+import com.truncon.javalin.mvc.test.controllers.ws.conversion.WsRequestNameController;
+import com.truncon.javalin.mvc.test.controllers.ws.conversion.WsRequestNameSourceController;
+import com.truncon.javalin.mvc.test.controllers.ws.conversion.WsRequestSourceController;
 import com.truncon.javalin.mvc.test.models.ConversionModel;
 import org.junit.Assert;
 import org.junit.Test;
@@ -14,8 +21,54 @@ import static com.truncon.javalin.mvc.test.RouteBuilder.queryParams;
 
 public final class WsConversionTest {
     @Test
-    public void testBindSettersFromQuery() throws IOException {
+    public void testConverter_context_query() throws IOException {
         String baseRoute = WsContextController.ROUTE;
+        testRoute(baseRoute);
+    }
+
+    @Test
+    public void testConverter_contextName_query() throws IOException {
+        String baseRoute = WsContextNameController.ROUTE;
+        testRoute(baseRoute);
+    }
+
+    @Test
+    public void testConverter_contextSource_query() throws IOException {
+        String baseRoute = WsContextSourceController.ROUTE;
+        testRoute(baseRoute);
+    }
+
+    @Test
+    public void testConverter_contextNameSource_query() throws IOException {
+        String baseRoute = WsContextNameSourceController.ROUTE;
+        testRoute(baseRoute);
+    }
+
+    @Test
+    public void testConverter_request_query() throws IOException {
+        String baseRoute = WsRequestController.ROUTE;
+        testRoute(baseRoute);
+    }
+
+    @Test
+    public void testConverter_requestName_query() throws IOException {
+        String baseRoute = WsRequestNameController.ROUTE;
+        testRoute(baseRoute);
+    }
+
+    @Test
+    public void testConverter_requestSource_query() throws IOException {
+        String baseRoute = WsRequestSourceController.ROUTE;
+        testRoute(baseRoute);
+    }
+
+    @Test
+    public void testConverter_requestNameSource_query() throws IOException {
+        String baseRoute = WsRequestNameSourceController.ROUTE;
+        testRoute(baseRoute);
+    }
+
+    private void testRoute(String baseRoute) throws IOException {
         String route = buildWsRouteWithQueryParams(baseRoute, queryParams(
             param("boolean", Boolean.toString(true)),
             param("byte", Byte.toString((byte) 11)),

@@ -63,7 +63,15 @@ final class ParameterGenerator {
 
         String converterName = getConverterName();
         ConverterBuilder converter = converterLookup.get(converterName);
-        if (converter != null) {
+        if (converter == null) {
+            if (converterName != null) {
+                String message = "No converter named '"
+                    + converterName
+                    + converterLookup.size()
+                    + "' exists.";
+                throw new ProcessingException(message, parameter);
+            }
+        } else {
             ContainerSource container = helperBuilder.getContainer();
             if (converter.hasContextOrRequestType(HttpContext.class)) {
                 return converter.getConverterCall(container, wrapper, parameterName, valueSource).toString();
@@ -153,7 +161,14 @@ final class ParameterGenerator {
 
         String converterName = getConverterName();
         ConverterBuilder converter = converterLookup.get(converterName);
-        if (converter != null) {
+        if (converter == null) {
+            if (converterName != null) {
+                String message = "No converter named '"
+                    + converterName
+                    + "' exists.";
+                throw new ProcessingException(message, parameter);
+            }
+        } else {
             ContainerSource container = helperBuilder.getContainer();
             if (converter.hasContextOrRequestType(WsContext.class) || converter.hasContextOrRequestType(wrapperType)) {
                 return converter.getConverterCall(container, wrapper, parameterName, valueSource).toString();

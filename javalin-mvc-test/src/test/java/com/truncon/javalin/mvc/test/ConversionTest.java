@@ -11,38 +11,50 @@ import static com.truncon.javalin.mvc.test.RouteBuilder.queryParams;
 
 public final class ConversionTest {
     @Test
-    public void testConversion_staticConverter_context_oneParameter() {
-        String baseRoute = ConversionController.GET_CONVERSION_CONTEXT1_QUERY_ROUTE;
+    public void testConversion_staticConverter_context() {
+        String baseRoute = ConversionController.GET_CONVERSION_CONTEXT_ROUTE;
         testRoute(baseRoute);
     }
 
     @Test
-    public void testConversion_staticConverter_request_oneParameter() {
-        String baseRoute = ConversionController.GET_CONVERSION_REQUEST1_QUERY_ROUTE;
+    public void testConversion_staticConverter_request() {
+        String baseRoute = ConversionController.GET_CONVERSION_REQUEST_ROUTE;
         testRoute(baseRoute);
     }
 
     @Test
-    public void testConversion_staticConverter_context_twoParameters() {
-        String baseRoute = ConversionController.GET_CONVERSION_CONTEXT2_QUERY_ROUTE;
+    public void testConversion_staticConverter_contextName() {
+        String baseRoute = ConversionController.GET_CONVERSION_CONTEXT_NAME_ROUTE;
         testRoute(baseRoute);
     }
 
     @Test
-    public void testConversion_staticConverter_request_twoParameters() {
-        String baseRoute = ConversionController.GET_CONVERSION_REQUEST2_QUERY_ROUTE;
+    public void testConversion_staticConverter_requestName() {
+        String baseRoute = ConversionController.GET_CONVERSION_REQUEST_NAME_ROUTE;
         testRoute(baseRoute);
     }
 
     @Test
-    public void testConversion_staticConverter_context_threeParameters() {
-        String baseRoute = ConversionController.GET_CONVERSION_CONTEXT3_QUERY_ROUTE;
+    public void testConversion_staticConverter_contextSource() {
+        String baseRoute = ConversionController.GET_CONVERSION_CONTEXT_SOURCE_ROUTE;
         testRoute(baseRoute);
     }
 
     @Test
-    public void testConversion_staticConverter_request_threeParameters() {
-        String baseRoute = ConversionController.GET_CONVERSION_REQUEST3_QUERY_ROUTE;
+    public void testConversion_staticConverter_requestSource() {
+        String baseRoute = ConversionController.GET_CONVERSION_REQUEST_SOURCE_ROUTE;
+        testRoute(baseRoute);
+    }
+
+    @Test
+    public void testConversion_staticConverter_contextNameSource() {
+        String baseRoute = ConversionController.GET_CONVERSION_CONTEXT_NAME_SOURCE_ROUTE;
+        testRoute(baseRoute);
+    }
+
+    @Test
+    public void testConversion_staticConverter_requestNameSource() {
+        String baseRoute = ConversionController.GET_CONVERSION_REQUEST_NAME_SOURCE_ROUTE;
         testRoute(baseRoute);
     }
 
