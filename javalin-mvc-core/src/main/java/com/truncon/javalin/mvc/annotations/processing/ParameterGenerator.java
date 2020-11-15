@@ -70,6 +70,13 @@ final class ParameterGenerator {
                     + "' exists.";
                 throw new ProcessingException(message, parameter);
             }
+        } else if (!converter.isExpectedType(parameterType)) {
+            String message = "The conversion method '"
+                + converterName
+                + "' does not return a type compatible with '"
+                + parameterType.toString()
+                + "'.";
+            throw new ProcessingException(message, parameter);
         } else {
             ContainerSource container = helperBuilder.getContainer();
             if (converter.hasContextOrRequestType(HttpContext.class)) {
@@ -167,6 +174,13 @@ final class ParameterGenerator {
                     + "' exists.";
                 throw new ProcessingException(message, parameter);
             }
+        } else if (!converter.isExpectedType(parameterType)) {
+            String message = "The conversion method '"
+                + converterName
+                + "' does not return a type compatible with '"
+                + parameterType.toString()
+                + "'.";
+            throw new ProcessingException(message, parameter);
         } else {
             ContainerSource container = helperBuilder.getContainer();
             if (converter.hasContextOrRequestType(WsContext.class) || converter.hasContextOrRequestType(wrapperType)) {

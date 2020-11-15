@@ -311,6 +311,15 @@ public final class HelperMethodBuilder {
                 + "' exists.";
             throw new ProcessingException(message, memberElement);
         }
+        TypeMirror parameterType = getParameterType(memberElement);
+        if (!converter.isExpectedType(parameterType)) {
+            String message = "The conversion method '"
+                + converterName
+                + "' does not return a type compatible with '"
+                + parameterType.toString()
+                + "'.";
+            throw new ProcessingException(message, memberElement);
+        }
 
         String memberName = getMemberName(memberElement);
         ValueSource valueSource = getMemberValueSource(memberElement, defaultSource);
@@ -569,6 +578,15 @@ public final class HelperMethodBuilder {
             String message = "No converter named '"
                 + converterName
                 + "' exists.";
+            throw new ProcessingException(message, memberElement);
+        }
+        TypeMirror parameterType = getParameterType(memberElement);
+        if (!converter.isExpectedType(parameterType)) {
+            String message = "The conversion method '"
+                + converterName
+                + "' does not return a type compatible with '"
+                + parameterType.toString()
+                + "'.";
             throw new ProcessingException(message, memberElement);
         }
 

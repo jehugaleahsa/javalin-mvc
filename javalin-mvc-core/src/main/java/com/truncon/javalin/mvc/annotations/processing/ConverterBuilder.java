@@ -25,7 +25,6 @@ import javax.lang.model.type.TypeMirror;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public final class ConverterBuilder {
@@ -245,5 +244,10 @@ public final class ConverterBuilder {
             }
         }
         return -1; // This can happen if the name parameter is not provided.
+    }
+
+    public boolean isExpectedType(TypeMirror parameterType) {
+        TypeMirror returnType = conversionMethod.getReturnType();
+        return typeUtils.isSubtype(returnType, parameterType);
     }
 }
