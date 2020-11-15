@@ -2,14 +2,25 @@
 Build Javalin route handlers at compile time using controllers and action methods.
 
 ## Javalin
-This MVC library utilizes [Javalin](http://javalin.io). It is a very lightweight Java/Kotlin REST API framework that avoids the overhead and complexity of more full-blown web frameworks. That makes it more appropriate for small services that run exclusively behind a reverse proxy (e.g., NGinX). It can also be built with Maven, so can exist nicely with other Java projects.
+When I started working in Java, I took a look at the Java ecosystem for popular web libraries and frameworks. To be honest, I was disappointed to see the most popular options are still monolithic frameworks. Coming from a .NET background, I got to watch as ASP.NET MVC evolved from a massive, opinionated framework to the fast and flexible ASP.NET MVC Core it has become. Coming to Java, using a monolithic framework felt like a step backwards, so I started looking at other alternatives.
 
-### Controllers are awesome!
-While Javalin is pretty straight-forward, it does lack some niceties that improve developer productivity. For one, you don't want to have to manually extract values from URL parameters, query strings, headers and the request body (e.g., JSON). You also don't want to manually deal with different responses. You don't want to have a 1,000 line block of code at the top of your app registering all of the routes. You don't want to have to deal with dependency injection, request filtering, error handling, logging, etc. That's why this project exists.
+That's when I found [Javalin](https://javalin.io): it's a light-weight web library similar to Node.js' Express, where you simply provide routes and route handlers (lambdas) to process requests. You literally have running code within 5 minutes of creating your project. A quick scroll through their documentation and you already know almost everything you will even need to know. It's simple: the way it should be.
 
-Basically, it's a compile-time tool (via Java's [annotation processing](https://medium.com/@jintin/annotation-processing-in-java-3621cb05343a)) that converts decorated classes into Javalin route handlers. The annotation processing tool is implemented in the `javalin-mvc-core` project. The `javalin-mvc-api` project provides only interfaces and annotations (and classes implemented in terms of those interfaces). The `javalin-mvc-core` project takes care of implementing those interfaces and including them in the generated code.
+## Why Javalin MVC?
+While Javalin is simple and amazing, you might find yourself wishing it had a couple niceties. For one, you'll probably find yourself doing a lot of conversions from `string` to `int` or writing the same code to deserialize your JSON. If you build anything substantial in size, you might also find having all your route handlers in one file is a bit much to sift through. How can we simplify role-based authentication, logging, etc.?
 
-One of the major benefits to Javalin MVC being a compile time tool is that there's absolutely no runtime overhead for using this library. It's as fast as if you wrote all the Javalin route handlers by hand. Not only that, but it's a compile-time error if you try to register two method/routes multiple times -- with raw Javalin you'd only discover that error at runtime!
+Coincidentally, I was learning about Java's [annotation processing](https://medium.com/@jintin/annotation-processing-in-java-3621cb05343a) around the same time I started playing with Javalin. It occurred to me I could build routes automatically by inspecting annotations and generating the code at compile time. Javalin MVC just translates controller classes and "action methods" into Javalin routes at compile time.
+
+One of the major benefits to Javalin MVC being a compile time tool is that there's absolutely no runtime overhead for using this library. It's as fast as if you wrote all the Javalin route handlers by hand. Not only that, but it's a compile-time error if you try to register two HTTP methods/routes multiple times -- with raw Javalin you'd only discover that error at runtime!
+
+## Recent News (11/15/2020)
+Big improvements are in the works! A few weeks ago, I was staring at this code and I started thinking. In version 1.0.x, I was using a `ModelBinder` class to bind values. This class was pretty optimal so there was little runtime overhead. But my thought was, "Why should there be any runtime overhead at all?". Almost everything I need to perform binding I already know at compile time. Really, the only thing I *don't* know is the actual value. That means I can generate helper methods to perform primitive parsing and avoid any overhead of runtime type casting, auto-boxing, etc.
+
+I also now support binding values into model classes. This means you can pull values from query strings, headers, cookies, etc. and place them inside of a class now, rather than having a bunch of action method parameters.
+
+For the ultimate flexibility, I added support for specifying your own converters. You can now point to a static method or instance method and it will be used to parse your types.
+
+I also greatly increasing my unit test code coverage, so I have addressed several issues in the past few weeks. Along with this, I have improved the compile-time error messages. I am also going to investigate how I can better support incremental builds, but I will probably do a release prior to this.
 
 ## Installation
 The following dependencies are needed in your web project:
@@ -21,7 +32,7 @@ The following dependencies are needed in your web project:
     <artifactId>javalin</artifactId>
     <version>3.6.0</version>
 </dependency>
-<!-- Dependency Injection -->
+<!-- Dependency Injection via Dagger. Optional!!! -->
 <dependency>
     <groupId>com.google.dagger</groupId>
     <artifactId>dagger</artifactId>
@@ -61,7 +72,7 @@ The following dependencies are needed in your web project:
 </dependency>
 ```
 
-Javalin MVC uses annotation processing (more on this later) so must be setup in your web project's `pom.xml` in order to be run at compile time:
+Javalin MVC uses annotation processing (more on this later) so must be setup in your web project's `pom.xml` in order to be run at compile time. If you do not want to use Dagger, you can exclude the dagger-compiler configuration below: 
 
 ```xml
 <build>
@@ -89,8 +100,10 @@ Javalin MVC uses annotation processing (more on this later) so must be setup in 
 </build>
 ```
 
-#### Defining a controller
-A controller is a class decorated with the `@Controller` annotation. Any methods associated with a route will cause a Javalin route configuration to be generated which creates an instance of the controller, then calls the method. Simple!
+I have no idea how to configure Javalin MVC to run with Gradle, although it should mirror closely how how Dagger is configured. Feel free to submit a PR with the steps listed here if you get this working and you're feeling generous. 😁
+
+## Defining a controller
+A controller is a class decorated with the `@Controller` annotation. It can have one or more methods annotated with `@HttpGet`, `@HttpPost`, `@HttpPut`, `@HttpPatch`, `@HttpDelete`, `@HttpHead`, or `@HttpOptions`. Each method is associated with a route and will cause a Javalin route handler to be generated. The route handler simply creates an instance of the controller, then calls the method. Simple!
 
 So this:
 
@@ -116,10 +129,10 @@ app.get("/", ctx -> {
 app.start(5000);
 ```
 
-#### Controller Actions
-If a controller method is found that's decorated with `@HttpGet`, `@HttpPost`, etc., the processor will add a Javalin route that instantiates the controller and calls the method automatically. The route handler generation happens at compile time, so there's no runtime overhead. It's as if you wrote it all by hand.
+The route handler generation happens at compile time, so there's no runtime overhead. It's as if you wrote it all by hand.
 
-Action method parameters can be bound to values coming from your request headers, route parameters, query strings, form fields (url encoded) or the request body (JSON, etc.). By default, the method parameter and the request parameter are matched by name, but the `@Named` annotation can used to override this behavior. Furthermore, you can say explicitly where to bind a parameter from using the `@FromForm`, `@FromHeader`, `@FromPath` or `@FromQuery` annotations.
+## Action methods
+Action method parameters can be bound to values coming from your request headers, route parameters, query strings, form fields (url encoded) or the request body (JSON, etc.). By default, the method parameter and the request parameter are matched by name, but the `@Named` annotation can used to override this behavior. Furthermore, you can say explicitly where to bind a parameter from using the `@FromPath`, `@FromQuery`, `@FromHeader` or `@FromCookie`, or `@FromForm` annotations.
 
 Consider this example:
 
@@ -130,95 +143,16 @@ public ActionResult getGreeting(String name, Integer age) {
  }
 ```
 
-In the example above, the first route parameter, query string parameter, etc. matching the name `name` or `age` will be passed to the `getGreeting` method. In the case of `age`, the value with be automatically converted from a `String` to an `Integer`.  
+In the example above, the first route parameter, query string parameter, etc. matching the name `name` or `age` will be passed to the `getGreeting` method. In the case of `age`, the value with be automatically converted from a `String` to an `Integer`.
 
 You can also inject the `HttpContext`, the `HttpRequest` and/or the `HttpResponse` objects into action methods, as well. This is useful for grabbing other information about the request or manually specifying the response. 
 
-Your action methods should return instances of `ActionResult`. An `ActionResult` exists for each type of response (JSON, plain text, status codes, redirects, etc.). You can also return `void`, in which case you must provide a response via `HttpResponse`.
+Your action methods should return instances of `ActionResult`. An `ActionResult` exists for each type of response (JSON, plain text, status codes, redirects, etc.). You can also return `void`, in which case you must provide a response via `HttpResponse`. If you return a primitive or object, it will be serialized as JSON with a 200 OK response.
 
-#### Supported Features
-Here is a list of supported and/or desired features. An `x` means it is already supported. Feel free to submit an issue for feature requests!!!
-
-* [x] Specify controllers via `@Controller`
-* [x] Specify routes via `@HttpGet`, `@HttpPost`, etc.
-* [x] Bind parameters from headers, cookies, URL parameters, query strings, and form data by name.
-    * [x] Strings
-    * [x] Integer (reference type only)
-    * [x] Boolean (reference type only)
-    * [x] Long (reference type only)
-    * [x] Short (reference type only)
-    * [x] Byte (reference type only)
-    * [x] Double (reference type only)
-    * [x] Float (reference type only)
-    * [x] BigInteger
-    * [x] BigDecimal
-    * [x] Dates
-        * [x] Date
-        * [x] Instant
-        * [x] OffsetDateTime
-        * [x] ZonedDateTime
-        * [x] LocalDateTime
-        * [x] LocalDate
-        * [x] YearMonth
-        * [x] Year
-    * [x] UUID
-    * [x] Arrays
-    * [ ] Collection types (List<T>, Set<T>, Map<K, V>, etc.) 
-    * [x] File uploads
-* [x] Bind Java object from request body (JSON)
-* [x] Bind Java object from other sources
-    * [x] Support `Named` annotation on fields and setter methods
-    * [x] Support setting int, short, byte, char, String, Date, etc.
-    * [x] Support setting arrays of int, short, byte, char, String, Date, etc.
-    * [x] Support binding values from headers, cookies, URL parameters, query strings, and form data
-    * [x] Support overriding binding source using `From*` annotations on a specific member.
-* [x] Override where parameters are bound from.
-* [x] Support returning `ActionResult` implementations
-    * [x] ContentResult - return plain strings
-    * [x] JsonResult - return Object as JSON
-    * [x] StatusCodeResult - return HTTP status code (no body)
-    * [x] RedirectResult - indicate client to redirect
-    * [x] FileStreamResult - send file contents
-* [x] Support returning non-`ActionResult` values
-    * [x] void
-    * [x] Primitives, Strings, Dates, UUIDs, etc.
-    * [x] Objects using JsonResult
-* [x] Support parameter naming flexibility
-* [x] Support custom/alternative parameter name bindings
-* [x] Support pre-execution interceptor
-* [x] Support post-execution interceptor
-* [x] Support async operations
-* [x] Support dependency injection
-    * [x] Inject controller dependencies
-    * [x] Inject injector (self-injection)
-    * [x] Inject context/request/response objects
-* [x] Open API/Swagger Annotations
-    * [x] Now uses built-in Javalin OpenAPI annotations
-* [ ] WebSockets
-    * [x] Specify routes via WsController
-    * [x] Support WsConnect, WsDisconnect, WsError, WsMessage and WsBinaryMessage annotations
-    * [x] Support for data binding
-    * [ ] Support for @Before and @After handlers
-
-## Dagger
-Dependency injection is at the core of modern software projects. It supports switching between implementations at runtime and promotes testability. Historically, dependency injection has utilized runtime reflection to instantiate objects and inject them. However, waiting to perform injection until runtime comes with the risk of missing bindings that will lead to system failure. There's also the overhead of constructing objects using reflection. However, the [Dagger](https://google.github.io/dagger/) project uses annotation processing to provide compile-time dependency injection. This provides all the benefits of using an inversion of control (IoC) container without the risk of missing bindings causing runtime failures. There's also minimal overhead because there's no reflection involved.
-
-Dagger is integrated into `javalin-mvc-core`, making Dagger the default DI; however, your code will still compile if you choose not to use it. Dagger, being a compile-time DI library, has a somewhat different API than other DI libraries. Instead of having a global `injector.get(Class<?> clz)` method that can be used to retrieve every type of object, there are specific methods for each dependency. Ideally, a generic DI interface could be provided so `javalin-mvc-core` could work against *any* DI library, but this dramatic difference in API makes that infeasible. It was a tough decision, but I ended up choosing Dagger. Technically, you can wire in your own choice of DI library on top of Dagger.
-
-The `javalin-mvc-core` project needs to know how to instantiate objects with Dagger; to do this, you must mark your Dagger container with the `ControllerComponent` annotation. Your Dagger container will, minimally, look like this:
-
-```java
-@Component
-@ControllerComponent
-public interface WebContainer {
-}
-
-```
-
-This allows Javalin MVC to instantiate objects as needed. If any of this is missing, Javalin MVC will assume your controllers have default constructors.
+### ❗ Performance/Security Note
+For the best performance and for added security, you should *always* explicitly specify where your values are coming from, using one of the `@From*` annotations. Otherwise, the route handle must look for values at runtime. Furthermore, you wouldn't want someone accidentally/maliciously overwriting an authentication header with a query string! 😬
 
 ## An example main
-
 An example `main` method might look like this:
 
 ```java
@@ -226,7 +160,7 @@ public static void main(String[] args) throws IOException {
     Javalin app = Javalin.create(config -> {
         // Remove the following line to disable Open API annotation processing
         config.registerPlugin(new OpenApiPlugin(getOpenApiOptions()));
-        // This example is using the new SPA feature
+        // This example is using the SPA feature
         config.addStaticFiles("./public", Location.EXTERNAL);
         config.addSinglePageRoot("/", "./public/index.html", Location.EXTERNAL);
     });
@@ -257,7 +191,100 @@ private static OpenApiOptions getOpenApiOptions() {
 }
 ```
 
-If you have access to the generated sources, you can inspect the generated `ControllerRegistry.java` file. If you do, you will see most of the file is comprised of calls to `app.get(...)`, `app.post(...)`, etc.
+If you have access to the generated sources, you can inspect the generated `JavalinControllerRegistry.java` file. If you do, you will see most of the file is comprised of calls to `app.get(...)`, `app.post(...)`, etc.
+
+## Supported Features
+Here is a list of supported and/or desired features. An `x` means it is already supported. Feel free to submit an issue for feature requests!!!
+
+* [x] Specify controllers via `@Controller`
+    * [ ] Allow specifying common route prefix for all action methods.
+* [x] Specify routes via `@HttpGet`, `@HttpPost`, etc.
+* [x] Bind parameters from headers, cookies, URL parameters, query strings, and form data by name.
+    * [x] Strings
+    * [x] Integer (reference type only)
+    * [x] Boolean (reference type only)
+    * [x] Long (reference type only)
+    * [x] Short (reference type only)
+    * [x] Byte (reference type only)
+    * [x] Double (reference type only)
+    * [x] Float (reference type only)
+    * [x] BigInteger
+    * [x] BigDecimal
+    * [x] Dates
+        * [x] Date
+        * [x] Instant
+        * [x] OffsetDateTime
+        * [x] ZonedDateTime
+        * [x] LocalDateTime
+        * [x] LocalDate
+        * [x] YearMonth
+        * [x] Year
+    * [x] UUID
+    * [x] Arrays
+    * [ ] Collection types (`List<T>`, `Set<T>`, `Map<K, V>`, etc.) 
+    * [x] File uploads
+* [x] Bind Java object from request body (JSON)
+* [x] Bind Java object from other sources
+    * [x] Support `@Named` annotation on fields and setter methods
+    * [x] Support setting int, short, byte, char, String, Date, etc.
+    * [x] Support setting arrays of int, short, byte, char, String, Date, etc.
+    * [x] Support binding values from headers, cookies, URL parameters, query strings, and form data
+    * [x] Support overriding binding source using `@From*` annotations on a specific member.
+* [x] Override where parameters are bound from using `@From*` annotations.
+* [x] Support returning `ActionResult` implementations
+    * [x] `ContentResult` - return plain strings
+    * [x] `JsonResult` - return Object as JSON
+    * [x] `StatusCodeResult` - return HTTP status code (no body)
+    * [x] `RedirectResult` - tell the browser to redirect to another URL
+    * [x] `StreamResult` - respond with a stream of bytes (think images, movies, etc.)
+    * [x] `DownloadResult` - respond so the browser prompts to download the response
+* [x] Support returning non-`ActionResult` values
+    * [x] void (a response must be provided via `HttpResponse` manually)
+    * [x] Primitives, Strings, Dates, UUIDs, etc.
+    * [x] Objects using JsonResult
+* [x] Support parameter naming flexibility via `@Named` annotation
+* [x] Support custom/alternative parameter name bindings via `@Named`
+* [x] Support pre-execution interceptor via `@Before`
+* [x] Support post-execution interceptor via `@After`
+* [x] Support async operations (by returning `CompletableFuture<T>`)
+* [x] Support Dagger dependency injection
+    * [x] Inject controller dependencies
+    * [x] Inject injector (self-injection)
+    * [x] Inject context/request/response objects
+* [x] Open API/Swagger Annotations
+    * [x] Now uses built-in Javalin OpenAPI annotations
+* [ ] WebSockets
+    * [x] Specify routes via `@WsController`
+    * [x] Support `@WsConnect`, `@WsDisconnect`, `@WsError`, `@WsMessage` and WsBinaryMessage annotations
+    * [x] Support for data binding
+    * [ ] Support for @Before and @After handlers
+* [x] Custom conversion methods
+    * [x] Support `@Converter` on static methods
+    * [x] Support `@Converter` on instance methods
+    * [x] Support `@UseConverter` annotations on types
+    * [x] Support `@UseConverter` annotations on parameters
+    * [x] Support `@UseConverter` annotations on fields/setters
+    * [x] Support `@UseConverter` annotations on setter parameters.
+    * [x] Support HTTP and WebSocket conversions
+
+## Dagger (Optional)
+Dependency injection is at the core of modern software projects. It supports switching between implementations at runtime and promotes testability. Historically, dependency injection has utilized runtime reflection to instantiate objects and inject them. However, waiting to perform injection until runtime comes with the risk of missing bindings that will lead to system failure. There's also the overhead of constructing objects using reflection. However, the [Dagger](https://google.github.io/dagger/) project uses annotation processing to provide compile-time dependency injection. This provides all the benefits of using an inversion of control (IoC) container without the risk of missing bindings causing runtime failures. There's also minimal overhead because there's no reflection involved.
+
+Dagger is integrated into `javalin-mvc-core`, making Dagger the default DI; however, your code will still compile if you choose not to use it. Dagger, being a compile-time DI library, has a somewhat different API than other DI libraries. Instead of having a global `injector.get(Class<?> clz)` method that can be used to retrieve every type of object, there are specific methods for each dependency. Ideally, a generic DI interface could be provided so `javalin-mvc-core` could work against *any* DI library, but this dramatic difference in API makes that infeasible. It was a tough decision, but I ended up choosing Dagger. Technically, you can wire in your own choice of DI library on top of Dagger.
+
+The `javalin-mvc-core` project needs to know how to instantiate objects with Dagger; to do this, you must mark your Dagger container with the `ControllerComponent` annotation. Your Dagger container will, minimally, look like this:
+
+```java
+@Component
+@ControllerComponent
+public interface WebContainer {
+}
+
+```
+
+This allows Javalin MVC to instantiate objects as needed. If any of this is missing, Javalin MVC will assume your controllers have default constructors.
+
+One final note about dependency injection with Dagger: by default, the lifetime (a.k.a., the scope) of the dependencies is managed at the request level. This means `@Singleton`s only live for the life of a request. You can easily support longer lifetimes using `@Provides` and returning pre-constructed objects. 
 
 ## Before and After Handlers
 One or more `@Before` annotations can be put on an action method. You pass it a `Class<?>` to specify which class will be used. The class must implement the `BeforeActionHandler` interface, overriding a method with the following signature:
@@ -387,7 +414,17 @@ public final class WsPickleController {
 }
 ```
 
-# License
+## Known Limitations
+At the time of this writing, Javalin MVC does not support incremental compilation. This means that all of your classes must be compiled in the same `javac` command in order for the full `JavalinControllerRegistry.java` file to be generated. This is the default behavior using Maven (e.g., `mvn compile`) but if you are working in an IDE, such as IntelliJ, you might need to use the "Rebuild" command or run Maven as a separate step.
+
+A common alternative workflow is to temporarily enable annotation processing and run `mvn compile` from the command line. Then simply copy the generated `/target/generated-sources/annotations/com/truncon/javalin/mvc/JavalinControllerRegistry.java` file into your codebase and disable the annotation processor again until you make another change. This is a bit of a pain but is useful for people who only intend to use this project to save themselves typing route handlers by hand.
+
+Also, note some IDEs incorrectly run the Dagger and Javalin MVC annotation processors out of order or at random. Dagger should always run first - otherwise Javalin MVC can't see that a dependency is provided. This often manifests itself as Javalin MVC trying to default-construct a class without a default constructor. 😬 
+
+## Submitting Issues/Feature Requests
+Please let me know if you encounter any issues using Javalin MVC by submitting an issue. Also feel free to create issues for new feature requests. Also feel free to submit PRs for bug fixes and feature requests. Any help will be appreciated!
+
+## License
 The MIT License
 
 Copyright (c) 2020 Travis Wayne Parks. http://www.truncon.com
