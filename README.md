@@ -197,29 +197,38 @@ If you have access to the generated sources, you can inspect the generated `Java
 Here is a list of supported and/or desired features. An `x` means it is already supported. Feel free to submit an issue for feature requests!!!
 
 * [x] Specify controllers via `@Controller`
-    * [ ] Allow specifying common route prefix for all action methods.
-* [x] Specify routes via `@HttpGet`, `@HttpPost`, etc.
+    * [x] Allow specifying common route prefix for all action methods.
+* [x] Specify routes for action methods
+    * [x] `@HttpGet` 
+    * [x] `@HttpPost`
+    * [x] `@HttpPut`
+    * [x] `@HttpPatch`
+    * [x] `@HttpDelete`
+    * [x] `@HttpHead`
+    * [x] `@HttpOptions`
+    * [x] `@HttpConnect` (No supported by Javalin)
+    * [ ] `@HttpTrace` (Not supported by Javalin)
 * [x] Bind parameters from headers, cookies, URL parameters, query strings, and form data by name.
-    * [x] String
-    * [x] Integer/int
-    * [x] Boolean/boolean
-    * [x] Long/long
-    * [x] Short/short
-    * [x] Byte/byte
-    * [x] Double/double
-    * [x] Float/float
-    * [x] BigInteger
-    * [x] BigDecimal
+    * [x] `String`
+    * [x] `Integer`/`int`
+    * [x] `Boolean`/`boolean`
+    * [x] `Long`/`long`
+    * [x] `Short`/`short`
+    * [x] `Byte`/`byte`
+    * [x] `Double`/`double`
+    * [x] `Float`/`float`
+    * [x] `BigInteger`
+    * [x] `BigDecimal`
     * [x] Dates
-        * [x] Date
-        * [x] Instant
-        * [x] OffsetDateTime
-        * [x] ZonedDateTime
-        * [x] LocalDateTime
-        * [x] LocalDate
-        * [x] YearMonth
-        * [x] Year
-    * [x] UUID
+        * [x] `Date`
+        * [x] `Instant`
+        * [x] `OffsetDateTime`
+        * [x] `ZonedDateTime`
+        * [x] `LocalDateTime`
+        * [x] `LocalDate`
+        * [x] `YearMonth`
+        * [x] `Year`
+    * [x] `UUID`
     * [x] Arrays
     * [ ] Collection types (`List<T>`, `Set<T>`, `Map<K, V>`, etc.) 
     * [x] File uploads
