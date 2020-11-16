@@ -62,6 +62,26 @@ public final class QueryUtils {
         return new DownloadDetails(content.asBytes(), content.getType().getMimeType());
     }
 
+    public static int getStatusCodeForGet(String route) throws IOException {
+        return getStatusCodeForMethod(() -> Request.Get(route));
+    }
+
+    public static int getStatusCodeForPost(String route) throws IOException {
+        return getStatusCodeForMethod(() -> Request.Post(route));
+    }
+
+    public static int getStatusCodeForPut(String route) throws IOException {
+        return getStatusCodeForMethod(() -> Request.Put(route));
+    }
+
+    private static int getStatusCodeForMethod(Supplier<Request> supplier) throws IOException {
+        return supplier.get()
+            .execute()
+            .returnResponse()
+            .getStatusLine()
+            .getStatusCode();
+    }
+
     // region URL
 
     public static String getStringForGet(String route) throws IOException {

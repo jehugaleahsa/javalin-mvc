@@ -11,4 +11,9 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface Controller {
+    /**
+     * Gets the common prefix of all the action methods in the controller class.
+     * @return The common prefix of all the action methods in the controller class.
+     */
+    String prefix() default "";
 }

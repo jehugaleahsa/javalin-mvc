@@ -14,11 +14,14 @@ import com.truncon.javalin.mvc.api.HttpPut;
 import com.truncon.javalin.mvc.api.JsonResult;
 import io.javalin.http.Handler;
 import com.truncon.javalin.mvc.JavalinHttpContext;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Name;
 import java.lang.annotation.Annotation;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -38,7 +41,23 @@ final class RouteGenerator {
         this.typeUtils = controller.getTypeUtils();
         this.method = method;
         this.methodType = methodType;
-        this.route = route;
+        this.route = getFullRoute(controller, route);
+    }
+
+    private static String getFullRoute(ControllerSource controller, String route) {
+        // We want to handle users including trailing slashes (/) in the prefix
+        // and leading slashes in the action method route. We also need to handle
+        // the possibility that only one or the other is provided.
+        String prefix = controller.getPrefix();
+        if (StringUtils.isBlank(prefix)) {
+            return route;
+        }
+        if (StringUtils.isBlank(route)) {
+            return prefix;
+        }
+        String trimmedPrefix = StringUtils.removeEnd(prefix, "/");
+        String trimmedRoute = StringUtils.removeStart(route, "/");
+        return trimmedPrefix + "/" + trimmedRoute;
     }
 
     public String getQualifiedMethodName() {

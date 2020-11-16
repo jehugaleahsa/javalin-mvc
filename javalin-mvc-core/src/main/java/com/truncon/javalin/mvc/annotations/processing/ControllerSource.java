@@ -15,10 +15,12 @@ import java.util.stream.Collectors;
 final class ControllerSource {
     private final TypeUtils typeUtils;
     private final TypeElement controllerElement;
+    private final String prefix;
 
-    private ControllerSource(TypeUtils typeUtils, TypeElement controllerElement) {
+    private ControllerSource(TypeUtils typeUtils, TypeElement controllerElement, String prefix) {
         this.typeUtils = typeUtils;
         this.controllerElement = controllerElement;
+        this.prefix = prefix;
     }
 
     public static List<ControllerSource> getControllers(TypeUtils typeUtils, RoundEnvironment environment) throws ProcessingException {
@@ -26,7 +28,7 @@ final class ControllerSource {
         checkControllerElements(controllerElements);
         return controllerElements.stream()
             .map(e -> (TypeElement) e)
-            .map(e -> new ControllerSource(typeUtils, e))
+            .map(e -> new ControllerSource(typeUtils, e, getPrefix(e)))
             .collect(Collectors.toList());
     }
 
@@ -39,6 +41,11 @@ final class ControllerSource {
         }
     }
 
+    private static String getPrefix(TypeElement element) {
+        Controller annotation = element.getAnnotation(Controller.class);
+        return annotation == null ? null : annotation.prefix();
+    }
+
     public TypeElement getType() {
         return controllerElement;
     }
@@ -49,6 +56,10 @@ final class ControllerSource {
 
     public String getControllerClassName() {
         return controllerElement.getSimpleName().toString();
+    }
+
+    public String getPrefix() {
+        return prefix;
     }
 
     public List<RouteGenerator> getRouteGenerators() {
