@@ -4,7 +4,7 @@ Build Javalin route handlers at compile time using controllers and action method
 ## Javalin
 When I started working in Java, I took a look at the Java ecosystem for popular web libraries and frameworks. To be honest, I was disappointed to see the most popular options are still monolithic frameworks. Coming from a .NET background, I got to watch as ASP.NET MVC evolved from a massive, opinionated framework to the fast and flexible ASP.NET MVC Core it has become. Coming to Java, using a monolithic framework felt like a step backwards, so I started looking at other alternatives.
 
-That's when I found [Javalin](https://javalin.io): it's a light-weight web library similar to Node.js' Express, where you simply provide routes and route handlers (lambdas) to process requests. You literally have running code within 5 minutes of creating your project. A quick scroll through their documentation and you already know almost everything you will even need to know. It's simple: the way it should be.
+That's when I found [Javalin](https://javalin.io): it's a light-weight web library similar to Node.js' Express, where you simply provide routes and route handlers (lambdas) to process requests. You literally have running code within 5 minutes of creating your project. A quick scroll through their documentation and you already know almost everything you will ever need to know. It's simple: the way it should be.
 
 ## Why Javalin MVC?
 While Javalin is simple and amazing, you might find yourself wishing it had a couple niceties. For one, you'll probably find yourself doing a lot of conversions from `string` to `int` or writing the same code to deserialize your JSON. If you build anything substantial in size, you might also find having all your route handlers in one file is a bit much to sift through. How can we simplify role-based authentication, logging, etc.?
@@ -100,7 +100,7 @@ Javalin MVC uses annotation processing (more on this later) so must be setup in 
 </build>
 ```
 
-I have no idea how to configure Javalin MVC to run with Gradle, although it should mirror closely how how Dagger is configured. Feel free to submit a PR with the steps listed here if you get this working and you're feeling generous. 😁
+I have no idea how to configure Javalin MVC to run with Gradle, although it should mirror closely how Dagger is configured. Feel free to submit a PR with the steps listed here if you get this working and you're feeling generous. 😁
 
 ## Defining a controller
 A controller is a class decorated with the `@Controller` annotation. It can have one or more methods annotated with `@HttpGet`, `@HttpPost`, `@HttpPut`, `@HttpPatch`, `@HttpDelete`, `@HttpHead`, or `@HttpOptions`. Each method is associated with a route and will cause a Javalin route handler to be generated. The route handler simply creates an instance of the controller, then calls the method. Simple!
@@ -200,14 +200,14 @@ Here is a list of supported and/or desired features. An `x` means it is already 
     * [ ] Allow specifying common route prefix for all action methods.
 * [x] Specify routes via `@HttpGet`, `@HttpPost`, etc.
 * [x] Bind parameters from headers, cookies, URL parameters, query strings, and form data by name.
-    * [x] Strings
-    * [x] Integer (reference type only)
-    * [x] Boolean (reference type only)
-    * [x] Long (reference type only)
-    * [x] Short (reference type only)
-    * [x] Byte (reference type only)
-    * [x] Double (reference type only)
-    * [x] Float (reference type only)
+    * [x] String
+    * [x] Integer/int
+    * [x] Boolean/boolean
+    * [x] Long/long
+    * [x] Short/short
+    * [x] Byte/byte
+    * [x] Double/double
+    * [x] Float/float
     * [x] BigInteger
     * [x] BigDecimal
     * [x] Dates
