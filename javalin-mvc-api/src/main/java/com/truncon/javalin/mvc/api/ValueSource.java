@@ -27,5 +27,9 @@ public enum ValueSource {
     /**
      * The value must be retrieved from URL encoded form data.
      */
-    FormData
+    FormData,
+    /**
+     * The value must be retrieved from the request body that is formatted JSON.
+     */
+    Json
 }

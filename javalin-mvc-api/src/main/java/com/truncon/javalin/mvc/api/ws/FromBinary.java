@@ -6,9 +6,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Indicates that the parameter should come from the WebSocket message contents.
+ * Indicates that a value should be bound from the binary message body.
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.PARAMETER)
-public @interface FromMessage {
+@Target({ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
+public @interface FromBinary {
 }

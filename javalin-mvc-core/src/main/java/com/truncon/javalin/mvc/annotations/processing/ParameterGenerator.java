@@ -94,6 +94,11 @@ final class ParameterGenerator {
             }
         }
 
+        if (valueSource == ValueSource.Json) {
+            String jsonMethod = helperBuilder.addJsonMethod();
+            return CodeBlock.of("$N($N, $T.class)", jsonMethod, wrapper, parameterType).toString();
+        }
+
         Class<?> parameterClass = helperBuilder.getParameterClass(parameterType);
         if (parameterClass != null) {
             Class<?> actualClass = parameterClass.isArray()
@@ -206,6 +211,18 @@ final class ParameterGenerator {
             }
         }
 
+        if (valueSource == WsValueSource.Message) {
+            if (wrapperType != WsMessageContext.class) {
+                // Ignore requests to bind unrecognized types to the other WebSocket methods.
+                // Provide explicit cast to prevent overloads from generating ambiguity errors.
+                return CodeBlock.of("($T) null", parameterType).toString();
+            }
+
+            // Lastly, assume the type should be converted using JSON.
+            String jsonMethod = helperBuilder.addWsJsonMethod(wrapperType);
+            return CodeBlock.of("$N($N, $T.class)", jsonMethod, wrapper, parameterType).toString();
+        }
+
         Class<?> parameterClass = helperBuilder.getParameterClass(parameterType);
         if (parameterClass != null) {
             Class<?> actualClass = parameterClass.isArray()
@@ -313,11 +330,14 @@ final class ParameterGenerator {
         if (parameter.getAnnotation(FromForm.class) != null) {
             return ValueSource.FormData;
         }
+        if (parameter.getAnnotation(FromJson.class) != null) {
+            return ValueSource.Json;
+        }
         return ValueSource.Any;
     }
 
     private static WsValueSource getWsValueSource(VariableElement parameter) {
-        if (parameter.getAnnotation(FromMessage.class) != null) {
+        if (parameter.getAnnotation(FromJson.class) != null) {
             return WsValueSource.Message;
         }
         if (parameter.getAnnotation(FromHeader.class) != null) {

@@ -3,6 +3,7 @@ package com.truncon.javalin.mvc;
 import com.truncon.javalin.mvc.api.FromCookie;
 import com.truncon.javalin.mvc.api.FromForm;
 import com.truncon.javalin.mvc.api.FromHeader;
+import com.truncon.javalin.mvc.api.FromJson;
 import com.truncon.javalin.mvc.api.FromPath;
 import com.truncon.javalin.mvc.api.FromQuery;
 import com.truncon.javalin.mvc.api.Named;
@@ -50,6 +51,7 @@ public final class ParameterLookup {
         map.put(FromPath.class, ValueSource.Path);
         map.put(FromQuery.class, ValueSource.QueryString);
         map.put(FromForm.class, ValueSource.FormData);
+        map.put(FromJson.class, ValueSource.Json);
         return map;
     }
 

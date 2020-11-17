@@ -391,7 +391,7 @@ One caveat is that you must ensure method names in your controllers are unique; 
 ## WebSockets
 WebSockets are handled by marking classes with the `WsController` annotation. Unlike HTTP controllers, a WebSocket controller only handles a single route. Each WebSocket controller can process client connections, disconnections, errors, and messages (text or binary). The route the controller will handle is passed as a parameter to the `WsController` annotation. The methods within the controller can be marked with the `WsConnect`, `WsDisconnect`, `WsError`, `WsMessage`, or `WsBinaryMessage` annotations. Only one instance of each annotation can appear within a class; however, the same method can have multiple annotations.
 
-Similar to HTTP controllers, method parameters can be bound from query strings, path parameters, headers, and cookies. However, there is no such thing as form data in WebSockets. If you want to explicitly bind a value from a particular source, you can use the same `From*` annotations for HTTP. In addition, you can use the `FromMessage` to binary parameters directly from content of messages. The `FromMessage` annotation works for `String` as well as JSON objects. You can also use `FromMessage` to bind binary messages to `byte[]` or `ByteBuffer` parameters.
+Similar to HTTP controllers, method parameters can be bound from query strings, path parameters, headers, and cookies. Note, there's no support for URL-encoded form data. If you want to explicitly bind a value from a particular source, you can use the same `From*` annotations, just like for HTTP. In addition, you can use the `FromJson` to bind parameters directly from the message. You can also use `FromBinary` to bind binary messages to `byte[]` or `ByteBuffer` parameters.
 
 If a method accepts a `WsContext` object, it will have direct access to the context object. Similarly, you can bind to `WsRequest` and `WsResponse` objects. A method-specific sub-interface exists for each method, so there is a `WsConnectContext`, `WsDisconnectContext`, `WsErrorContext`, `WsMessageContext`, and `WsBinaryMessageContext` that can be used as parameters, as well; however, these will only be initialize if used on the appropriate method.
 
@@ -417,7 +417,7 @@ public final class WsPickleController {
     }
 
     @WsMessage
-    public WsActionResult onMessage(@FromMessage Payload payload) {
+    public WsActionResult onMessage(@FromJson Payload payload) {
         return new WsJsonResult(payload);
     }
 }

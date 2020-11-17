@@ -2,6 +2,7 @@ package com.truncon.javalin.mvc.test;
 
 import com.truncon.javalin.mvc.test.controllers.ws.models.BindFromJsonModelController;
 import com.truncon.javalin.mvc.test.controllers.ws.models.BindSettersFromQueryModelController;
+import com.truncon.javalin.mvc.test.controllers.ws.models.ExplicitBindFromJsonModelController;
 import com.truncon.javalin.mvc.test.models.PrimitiveModel;
 import io.javalin.plugin.json.JavalinJson;
 import org.junit.Assert;
@@ -46,6 +47,30 @@ public final class WsBindModelTest {
     @Test
     public void testBindFromJson() throws IOException {
         String route = buildWsRoute(BindFromJsonModelController.ROUTE);
+        PrimitiveModel model = getPrimitiveModel();
+        AsyncTestUtils.runTestAsync(app -> {
+            String json = JavalinJson.toJson(model);
+            return WsTestUtils.ws(route, session -> session.sendStringAndAwaitResponse(json).thenAccept(response -> {
+                PrimitiveModel actual = parseJson(response, PrimitiveModel.class);
+                assertPrimitiveModel(model, actual);
+            }));
+        });
+    }
+
+    @Test
+    public void testBindFromJson_explicit() throws IOException {
+        String route = buildWsRoute(ExplicitBindFromJsonModelController.ROUTE);
+        PrimitiveModel model = getPrimitiveModel();
+        AsyncTestUtils.runTestAsync(app -> {
+            String json = JavalinJson.toJson(model);
+            return WsTestUtils.ws(route, session -> session.sendStringAndAwaitResponse(json).thenAccept(response -> {
+                PrimitiveModel actual = parseJson(response, PrimitiveModel.class);
+                assertPrimitiveModel(model, actual);
+            }));
+        });
+    }
+
+    private static PrimitiveModel getPrimitiveModel() {
         PrimitiveModel model = new PrimitiveModel();
         model.setByte(Byte.MAX_VALUE);
         model.setShort(Short.MAX_VALUE);
@@ -55,19 +80,18 @@ public final class WsBindModelTest {
         model.setDouble(Double.MAX_VALUE);
         model.setChar('a');
         model.setBoolean(true);
-        AsyncTestUtils.runTestAsync(app -> {
-            String json = JavalinJson.toJson(model);
-            return WsTestUtils.ws(route, session -> session.sendStringAndAwaitResponse(json).thenAccept(response -> {
-                PrimitiveModel actual = parseJson(response, PrimitiveModel.class);
-                Assert.assertEquals(model.getByte(), actual.getByte());
-                Assert.assertEquals(model.getShort(), actual.getShort());
-                Assert.assertEquals(model.getInteger(), actual.getInteger());
-                Assert.assertEquals(model.getLong(), actual.getLong());
-                Assert.assertEquals(model.getFloat(), actual.getFloat(), 0.0);
-                Assert.assertEquals(model.getDouble(), actual.getDouble(), 0.0);
-                Assert.assertEquals(model.getChar(), actual.getChar());
-                Assert.assertEquals(model.getBoolean(), actual.getBoolean());
-            }));
-        });
+        return model;
+    }
+
+    private static void assertPrimitiveModel(PrimitiveModel expected, PrimitiveModel actual) {
+        Assert.assertNotNull(actual);
+        Assert.assertEquals(expected.getByte(), actual.getByte());
+        Assert.assertEquals(expected.getShort(), actual.getShort());
+        Assert.assertEquals(expected.getInteger(), actual.getInteger());
+        Assert.assertEquals(expected.getLong(), actual.getLong());
+        Assert.assertEquals(expected.getFloat(), actual.getFloat(), 0.0);
+        Assert.assertEquals(expected.getDouble(), actual.getDouble(), 0.0);
+        Assert.assertEquals(expected.getChar(), actual.getChar());
+        Assert.assertEquals(expected.getBoolean(), actual.getBoolean());
     }
 }

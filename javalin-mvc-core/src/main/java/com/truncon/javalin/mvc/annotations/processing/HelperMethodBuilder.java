@@ -11,6 +11,7 @@ import com.squareup.javapoet.TypeVariableName;
 import com.truncon.javalin.mvc.api.FromCookie;
 import com.truncon.javalin.mvc.api.FromForm;
 import com.truncon.javalin.mvc.api.FromHeader;
+import com.truncon.javalin.mvc.api.FromJson;
 import com.truncon.javalin.mvc.api.FromPath;
 import com.truncon.javalin.mvc.api.FromQuery;
 import com.truncon.javalin.mvc.api.HttpContext;
@@ -170,7 +171,7 @@ public final class HelperMethodBuilder {
         return getParameterClass(getParameterType(memberElement));
     }
 
-    private TypeMirror getParameterType(Element memberElement) {
+    private static TypeMirror getParameterType(Element memberElement) {
         if (memberElement.getKind() == ElementKind.FIELD) {
             return memberElement.asType();
         } else {
@@ -236,6 +237,9 @@ public final class HelperMethodBuilder {
         ).collect(Collectors.toList());
         for (Element memberElement : memberElements) {
             if (addConverterSetter(memberElement, methodBodyBuilder, defaultSource)) {
+                continue;
+            }
+            if (addJsonSetter(memberElement, methodBodyBuilder)) {
                 continue;
             }
             if (addPrimitiveSetter(memberElement, methodBodyBuilder, defaultSource)) {
@@ -341,7 +345,7 @@ public final class HelperMethodBuilder {
         }
     }
 
-    private String getConverterName(Element memberElement) {
+    private static String getConverterName(Element memberElement) {
         // We look in three places for @UseConverter annotations. In order or precedence:
         // 1) On the setter method parameter
         // 2) On the member declaration
@@ -369,6 +373,32 @@ public final class HelperMethodBuilder {
         }
         UseConverter typeConverter = parameterType.getAnnotation(UseConverter.class);
         return typeConverter == null ? null : typeConverter.value();
+    }
+
+    private boolean addJsonSetter(Element memberElement, CodeBlock.Builder methodBodyBuilder) {
+        if (!hasFromJsonAnnotation(memberElement)) {
+            return false;
+        }
+        String jsonMethod = addJsonMethod();
+        String valueExpression = CodeBlock
+            .of("$N($N, $T.class)", jsonMethod, "context", getParameterType(memberElement))
+            .toString();
+        setMember(memberElement, methodBodyBuilder, valueExpression);
+        return true;
+    }
+
+    private static boolean hasFromJsonAnnotation(Element element) {
+        FromJson annotation = element.getAnnotation(FromJson.class);
+        if (annotation != null) {
+            return true;
+        }
+        if (element.getKind() == ElementKind.METHOD) {
+            ExecutableElement method = (ExecutableElement) element;
+            VariableElement parameter = method.getParameters().get(0); // We already checked there's one parameter
+            FromJson parameterAnnotation = parameter.getAnnotation(FromJson.class);
+            return parameterAnnotation != null;
+        }
+        return false;
     }
 
     private boolean addPrimitiveSetter(
@@ -541,6 +571,9 @@ public final class HelperMethodBuilder {
             if (addConverterSetter(memberElement, methodBodyBuilder, contextType, defaultSource)) {
                 continue;
             }
+            if (addJsonSetter(memberElement, methodBodyBuilder, contextType)) {
+                continue;
+            }
             if (addPrimitiveSetter(memberElement, methodBodyBuilder, defaultSource, contextType)) {
                 continue;
             }
@@ -616,6 +649,21 @@ public final class HelperMethodBuilder {
                 + "' cannot be used with WebSocket action methods.";
             throw new ProcessingException(message, memberElement);
         }
+    }
+
+    private boolean addJsonSetter(Element memberElement, CodeBlock.Builder methodBodyBuilder, Class<? extends WsContext> contextType) {
+        if (!hasFromJsonAnnotation(memberElement)) {
+            return false;
+        }
+        if (contextType != WsMessageContext.class) {
+            return false;
+        }
+        String jsonMethod = addWsJsonMethod(contextType);
+        String valueExpression = CodeBlock
+            .of("$N($N, $T.class)", jsonMethod, "context", getParameterType(memberElement))
+            .toString();
+        setMember(memberElement, methodBodyBuilder, valueExpression);
+        return true;
     }
 
     private Stream<? extends Element> getBoundMemberElements(TypeElement element, boolean isWebSockets, Function<Element, Boolean> hasBinding) {

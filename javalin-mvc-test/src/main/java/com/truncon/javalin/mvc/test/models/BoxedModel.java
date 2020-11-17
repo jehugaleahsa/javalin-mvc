@@ -22,6 +22,8 @@ public final class BoxedModel {
     private OffsetDateTime offsetDateTimeValue;
     private LocalDateTime localDateTimeValue;
     private LocalDate localDateValue;
+    private YearMonth yearMonth;
+    private Year year;
     private BigInteger bigIntegerValue;
     private BigDecimal bigDecimalValue;
     private UUID uuidValue;
@@ -144,6 +146,22 @@ public final class BoxedModel {
 
     public void setLocalDate(LocalDate localDateValue) {
         this.localDateValue = localDateValue;
+    }
+
+    public YearMonth getYearMonth() {
+        return yearMonth;
+    }
+
+    public void setYearMonth(YearMonth value) {
+        this.yearMonth = value;
+    }
+
+    public Year getYear() {
+        return year;
+    }
+
+    public void setYear(Year year) {
+        this.year = year;
     }
 
     public BigInteger getBigInteger() {
