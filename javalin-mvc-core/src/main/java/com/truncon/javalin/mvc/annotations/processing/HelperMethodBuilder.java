@@ -19,6 +19,7 @@ import com.truncon.javalin.mvc.api.HttpRequest;
 import com.truncon.javalin.mvc.api.Named;
 import com.truncon.javalin.mvc.api.UseConverter;
 import com.truncon.javalin.mvc.api.ValueSource;
+import com.truncon.javalin.mvc.api.ws.WsBinaryMessageContext;
 import com.truncon.javalin.mvc.api.ws.WsContext;
 import com.truncon.javalin.mvc.api.ws.WsMessageContext;
 import com.truncon.javalin.mvc.api.ws.WsRequest;
@@ -39,6 +40,7 @@ import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
@@ -67,6 +69,8 @@ public final class HelperMethodBuilder {
     private static final Map<ValueSource, SourceHelper> SOURCE_HELPER_LOOKUP = getSourceHelperLookup();
     private static final Map<WsValueSource, WsSourceHelper> WS_SOURCE_HELPER_LOOKUP = getWsSourceHelperLookup();
     private static final String JSON_METHOD_NAME = "toJson";
+    private static final String BINARY_BYTE_ARRAY_METHOD_NAME = "toBinaryByteArray";
+    private static final String BINARY_BYTE_BUFFER_METHOD_NAME = "toBinaryByteBuffer";
 
     private static Map<Class<?>, ConversionHelper> getConversionHelperLookup() {
         Map<Class<?>, ConversionHelper> lookup = new HashMap<>();
@@ -113,7 +117,7 @@ public final class HelperMethodBuilder {
         return lookup;
     }
 
-    private static Map<WsValueSource,WsSourceHelper> getWsSourceHelperLookup() {
+    private static Map<WsValueSource, WsSourceHelper> getWsSourceHelperLookup() {
         // Order for security reasons
         Map<WsValueSource, WsSourceHelper> lookup = new LinkedHashMap<>();
         lookup.put(WsValueSource.Header, new WsHeaderHelper());
@@ -138,6 +142,7 @@ public final class HelperMethodBuilder {
     private final Map<ImmutableTriple<WsValueSource, String, String>, String> complexWsConversionLookup = new HashMap<>();
     private final Map<String, Integer> complexConversionCounts = new HashMap<>();
     private final Set<Class<?>> jsonMethods = new HashSet<>();
+    private final Set<Class<?>> binaryMethods = new HashSet<>();
 
     public HelperMethodBuilder(
             ContainerSource container,
@@ -594,8 +599,7 @@ public final class HelperMethodBuilder {
         int count = complexConversionCounts.getOrDefault(simpleName, 0);
         methodName = "to" + simpleName + (count + 1);
         MethodSpec method = MethodSpec.methodBuilder(methodName)
-            .addModifiers(Modifier.PRIVATE)
-            .addModifiers(Modifier.STATIC)
+            .addModifiers(Modifier.PRIVATE, Modifier.STATIC)
             .returns(TypeName.get(element.asType()))
             .addParameter(contextType, "context", Modifier.FINAL)
             .addCode(methodBodyBuilder.build())
@@ -658,7 +662,7 @@ public final class HelperMethodBuilder {
         if (contextType != WsMessageContext.class) {
             return false;
         }
-        String jsonMethod = addWsJsonMethod(contextType);
+        String jsonMethod = addWsJsonMethod();
         String valueExpression = CodeBlock
             .of("$N($N, $T.class)", jsonMethod, "context", getParameterType(memberElement))
             .toString();
@@ -778,8 +782,8 @@ public final class HelperMethodBuilder {
         return JSON_METHOD_NAME;
     }
 
-    public String addWsJsonMethod(Class<?> wrapperType) {
-        if (jsonMethods.contains(wrapperType)) {
+    public String addWsJsonMethod() {
+        if (jsonMethods.contains(WsMessageContext.class)) {
             return JSON_METHOD_NAME;
         }
         TypeVariableName typeArgument = TypeVariableName.get("T");
@@ -787,7 +791,7 @@ public final class HelperMethodBuilder {
             .addModifiers(Modifier.PRIVATE, Modifier.STATIC)
             .addTypeVariable(typeArgument)
             .returns(typeArgument)
-            .addParameter(wrapperType, "context", Modifier.FINAL)
+            .addParameter(WsMessageContext.class, "context", Modifier.FINAL)
             .addParameter(ParameterizedTypeName.get(ClassName.get(Class.class), typeArgument), "type", Modifier.FINAL)
             .addCode(CodeBlock.builder()
                 .addStatement("return context.getMessage(type)")
@@ -795,8 +799,62 @@ public final class HelperMethodBuilder {
             )
             .build();
         typeBuilder.addMethod(method);
-        jsonMethods.add(wrapperType);
+        jsonMethods.add(WsMessageContext.class);
         return JSON_METHOD_NAME;
+    }
+
+    public String addWsBinaryMethod(TypeMirror parameterType) {
+        if (container.getTypeUtils().isType(parameterType, byte[].class)) {
+            return addWsByteArrayBinaryMethod();
+        } else if (container.getTypeUtils().isType(parameterType, ByteBuffer.class)) {
+            return addWsByteBufferBinaryMethod();
+        } else {
+            return null;
+        }
+    }
+
+    private String addWsByteArrayBinaryMethod() {
+        if (binaryMethods.contains(byte[].class)) {
+            return BINARY_BYTE_ARRAY_METHOD_NAME;
+        }
+        MethodSpec method = MethodSpec.methodBuilder(BINARY_BYTE_ARRAY_METHOD_NAME)
+            .addModifiers(Modifier.PRIVATE, Modifier.STATIC)
+            .returns(byte[].class)
+            .addParameter(WsBinaryMessageContext.class, "context", Modifier.FINAL)
+            .addCode(CodeBlock.builder()
+                .addStatement("$T data = context.getData()", byte[].class)
+                .addStatement("$T offset = context.getOffset()", int.class)
+                .addStatement("$T length = context.getLength()", int.class)
+                .beginControlFlow("if (offset == 0 && length == data.length)")
+                .addStatement("return data")
+                .endControlFlow()
+                .addStatement("$T[] result = new $T[length]", byte.class, byte.class)
+                .addStatement("$T.arraycopy(data, offset, result, 0, length)", System.class)
+                .addStatement("return result")
+                .build()
+            )
+            .build();
+        typeBuilder.addMethod(method);
+        binaryMethods.add(byte[].class);
+        return BINARY_BYTE_ARRAY_METHOD_NAME;
+    }
+
+    private String addWsByteBufferBinaryMethod() {
+        if (binaryMethods.contains(ByteBuffer.class)) {
+            return BINARY_BYTE_BUFFER_METHOD_NAME;
+        }
+        MethodSpec method = MethodSpec.methodBuilder(BINARY_BYTE_BUFFER_METHOD_NAME)
+            .addModifiers(Modifier.PRIVATE, Modifier.STATIC)
+            .returns(ByteBuffer.class)
+            .addParameter(WsBinaryMessageContext.class, "context", Modifier.FINAL)
+            .addCode(CodeBlock.builder()
+                .addStatement("return $T.wrap(context.getData(), context.getOffset(), context.getLength())", ByteBuffer.class)
+                .build()
+            )
+            .build();
+        typeBuilder.addMethod(method);
+        binaryMethods.add(ByteBuffer.class);
+        return BINARY_BYTE_BUFFER_METHOD_NAME;
     }
 
     // region ConversionHelper
@@ -2619,7 +2677,7 @@ public final class HelperMethodBuilder {
             String context,
             String key);
 
-        public abstract CodeBlock getPresenceCheck(String context, String key);
+        public abstract CodeBlock getPresenceCheck(String request, String key);
     }
 
     private static final class WsPathHelper extends WsSourceHelper {
@@ -2863,7 +2921,7 @@ public final class HelperMethodBuilder {
         }
 
         @Override
-        public CodeBlock getPresenceCheck(String context, String key) {
+        public CodeBlock getPresenceCheck(String request, String key) {
             return null;
         }
     }
@@ -2939,7 +2997,7 @@ public final class HelperMethodBuilder {
                 WsValueSource source = entry.getKey();
                 if (source != WsValueSource.Any) {
                     WsSourceHelper helper = entry.getValue();
-                    CodeBlock check = helper.getPresenceCheck(wrapper, key);
+                    CodeBlock check = helper.getPresenceCheck("request", key);
                     if (check != null) {
                         codeBuilder.beginControlFlow("if (" + check.toString() + ")");
                         codeBuilder.addStatement("return $N($N, $N)", helper.getArrayName(), wrapper, key);
@@ -2948,12 +3006,12 @@ public final class HelperMethodBuilder {
                 }
             }
             WsSourceHelper messageHelper = WS_SOURCE_HELPER_LOOKUP.get(WsValueSource.Message);
-            codeBuilder.addStatement("$N($N, $N)", messageHelper.getArrayName(), wrapper, key);
+            codeBuilder.addStatement("return $N($N, $N)", messageHelper.getArrayName(), wrapper, key);
             return codeBuilder.build();
         }
 
         @Override
-        public CodeBlock getPresenceCheck(String context, String key) {
+        public CodeBlock getPresenceCheck(String request, String key) {
             return null;
         }
     }

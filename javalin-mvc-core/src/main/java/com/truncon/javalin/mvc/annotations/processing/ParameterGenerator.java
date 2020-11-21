@@ -212,17 +212,34 @@ final class ParameterGenerator {
         }
 
         if (valueSource == WsValueSource.Message) {
-            if (wrapperType != WsMessageContext.class) {
+            if (wrapperType == WsMessageContext.class) {
+                // Lastly, assume the type should be converted using JSON.
+                String jsonMethod = helperBuilder.addWsJsonMethod();
+                return CodeBlock.of("$N($N, $T.class)", jsonMethod, wrapper, parameterType).toString();
+            } else if (wrapperType == WsBinaryMessageContext.class) {
+                String binaryMethod = helperBuilder.addWsBinaryMethod(parameterType);
+                if (binaryMethod != null) {
+                    return CodeBlock.of("$N($N)", binaryMethod, wrapper).toString();
+                }
+            } else {
                 // Ignore requests to bind unrecognized types to the other WebSocket methods.
                 // Provide explicit cast to prevent overloads from generating ambiguity errors.
                 return CodeBlock.of("($T) null", parameterType).toString();
             }
-
-            // Lastly, assume the type should be converted using JSON.
-            String jsonMethod = helperBuilder.addWsJsonMethod(wrapperType);
-            return CodeBlock.of("$N($N, $T.class)", jsonMethod, wrapper, parameterType).toString();
         }
 
+        // For binary messages, if FromBinary isn't explicitly specified, byte[] would otherwise get picked up
+        // as a supported built-in conversion type. We want to do an upfront check to see if we can
+        // bind from the binary message first.
+        if (wrapperType == WsBinaryMessageContext.class) {
+            String binaryMethod = helperBuilder.addWsBinaryMethod(parameterType);
+            if (binaryMethod != null) {
+                return CodeBlock.of("$N($N)", binaryMethod, wrapper).toString();
+            }
+        }
+
+        // The getParameterClass method will only return a non-null value if the
+        // parameter type is one of the types with built-in converters.
         Class<?> parameterClass = helperBuilder.getParameterClass(parameterType);
         if (parameterClass != null) {
             Class<?> actualClass = parameterClass.isArray()
@@ -250,15 +267,16 @@ final class ParameterGenerator {
                 .toString();
         }
 
-        if (wrapperType != WsMessageContext.class) {
-            // Ignore requests to bind unrecognized types to the other WebSocket methods.
-            // Provide explicit cast to prevent overloads from generating ambiguity errors.
-            return CodeBlock.of("($T) null", parameterType).toString();
+        // If we get to this point, we know there's no converter, @From annotation or primitive mapping.
+        // If it is an object, it did not have any @From annotations on any members either. We assume,
+        // then, that it is probably meant to be bound from JSON.
+        if (wrapperType == WsMessageContext.class) {
+            String jsonMethod = helperBuilder.addWsJsonMethod();
+            return CodeBlock.of("$N($N, $T.class)", jsonMethod, wrapper, parameterType).toString();
         }
-
-        // Lastly, assume the type should be converted using JSON.
-        String jsonMethod = helperBuilder.addWsJsonMethod(wrapperType);
-        return CodeBlock.of("$N($N, $T.class)", jsonMethod, wrapper, parameterType).toString();
+        // Ignore requests to bind unrecognized types to the other WebSocket methods.
+        // Provide explicit cast to prevent overloads from generating ambiguity errors.
+        return CodeBlock.of("($T) null", parameterType).toString();
     }
 
     private static String getNonBinderWsParameter(
@@ -338,6 +356,9 @@ final class ParameterGenerator {
 
     private static WsValueSource getWsValueSource(VariableElement parameter) {
         if (parameter.getAnnotation(FromJson.class) != null) {
+            return WsValueSource.Message;
+        }
+        if (parameter.getAnnotation(FromBinary.class) != null) {
             return WsValueSource.Message;
         }
         if (parameter.getAnnotation(FromHeader.class) != null) {

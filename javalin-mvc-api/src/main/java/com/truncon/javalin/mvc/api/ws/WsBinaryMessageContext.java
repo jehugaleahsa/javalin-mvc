@@ -15,11 +15,11 @@ public interface WsBinaryMessageContext extends WsContext {
      * Gets the starting offset into the binary data.
      * @return The starting offset.
      */
-    Integer getOffset();
+    int getOffset();
 
     /**
      * Gets the number of bytes to read.
      * @return The number of bytes.
      */
-    Integer getLength();
+    int getLength();
 }

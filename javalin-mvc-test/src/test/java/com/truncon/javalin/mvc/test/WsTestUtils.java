@@ -13,6 +13,7 @@ import org.eclipse.jetty.websocket.client.WebSocketClient;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.URI;
+import java.nio.ByteBuffer;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CountDownLatch;
@@ -24,6 +25,7 @@ public final class WsTestUtils {
     private Consumer<Session> onConnectHandler;
     private BiConsumer<Integer, String> onCloseHandler;
     private Consumer<String> onMessageHandler;
+    private Consumer<ByteBuffer> onBinaryMessageHandler;
     private Consumer<Throwable> onErrorHandler;
 
     private WsTestUtils() {
@@ -79,6 +81,10 @@ public final class WsTestUtils {
         this.onMessageHandler = consumer;
     }
 
+    public void onBinaryMessage(Consumer<ByteBuffer> consumer) {
+        this.onBinaryMessageHandler = consumer;
+    }
+
     public void onError(Consumer<Throwable> consumer) {
         this.onErrorHandler = consumer;
     }
@@ -116,22 +122,42 @@ public final class WsTestUtils {
             }
         }
 
+        public void sendBinary(ByteBuffer buffer) {
+            try {
+                session.getRemote().sendBytes(buffer);
+            } catch (IOException exception) {
+                throw new UncheckedIOException(exception);
+            }
+        }
+
         public CompletableFuture<String> sendStringAndAwaitResponse(String message) {
-            CompletableFuture<String> future = awaitMessage();
+            CompletableFuture<String> future = awaitStringMessage();
             sendString(message);
             return future;
         }
 
-        public CompletableFuture<String> awaitMessage() {
-            return socket.awaitMessage();
+        public CompletableFuture<String> awaitStringMessage() {
+            return socket.awaitStringMessage();
+        }
+
+        public CompletableFuture<ByteBuffer> sendBinaryAndAwaitResponse(ByteBuffer buffer) {
+            CompletableFuture<ByteBuffer> future = awaitBinaryMessage();
+            sendBinary(buffer);
+            return future;
+        }
+
+        private CompletableFuture<ByteBuffer> awaitBinaryMessage() {
+            return socket.awaitBinaryMessage();
         }
     }
 
     @WebSocket
     public static final class Socket {
         private final WsTestUtils utils;
-        private CountDownLatch messageLatch;
+        private CountDownLatch stringMessageLatch;
+        private CountDownLatch binaryMessageLatch;
         private String message;
+        private ByteBuffer binaryMessage;
 
         private Socket(WsTestUtils utils) {
             this.utils = utils;
@@ -153,25 +179,48 @@ public final class WsTestUtils {
 
         @OnWebSocketMessage
         public void onMessage(String message) {
-            if (messageLatch != null) {
-                messageLatch.countDown();
+            if (stringMessageLatch != null) {
                 this.message = message;
+                stringMessageLatch.countDown();
             }
             if (utils.onMessageHandler != null) {
                 utils.onMessageHandler.accept(message);
             }
         }
 
-        public CompletableFuture<String> awaitMessage() {
-            messageLatch = new CountDownLatch(1);
+        public CompletableFuture<String> awaitStringMessage() {
+            stringMessageLatch = new CountDownLatch(1);
             return CompletableFuture.supplyAsync(() -> {
                 try {
-                    messageLatch.await();
+                    stringMessageLatch.await();
                     return message;
                 } catch (InterruptedException exception) {
                     throw new CompletionException(exception);
                 }
 
+            });
+        }
+
+        @OnWebSocketMessage
+        public void onMessage(byte[] data, int offset, int length) {
+            if (binaryMessageLatch != null) {
+                this.binaryMessage = ByteBuffer.wrap(data, offset, length);
+                binaryMessageLatch.countDown();
+            }
+            if (utils.onBinaryMessageHandler != null) {
+                utils.onBinaryMessageHandler.accept(this.binaryMessage);
+            }
+        }
+
+        public CompletableFuture<ByteBuffer> awaitBinaryMessage() {
+            binaryMessageLatch = new CountDownLatch(1);
+            return CompletableFuture.supplyAsync(() -> {
+                try {
+                    binaryMessageLatch.await();
+                    return binaryMessage;
+                } catch (InterruptedException exception) {
+                    throw new CompletionException(exception);
+                }
             });
         }
 

@@ -16,12 +16,12 @@ public final class JavalinWsBinaryMessageContext extends JavalinWsContext implem
     }
 
     @Override
-    public Integer getOffset() {
+    public int getOffset() {
         return context.offset();
     }
 
     @Override
-    public Integer getLength() {
+    public int getLength() {
         return context.length();
     }
 }
