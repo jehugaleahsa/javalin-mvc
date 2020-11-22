@@ -2,6 +2,8 @@ package com.truncon.javalin.mvc.test;
 
 import com.truncon.javalin.mvc.test.controllers.BindModelController;
 import com.truncon.javalin.mvc.test.models.ContainerModel;
+import com.truncon.javalin.mvc.test.models.NestedJsonModel;
+import com.truncon.javalin.mvc.test.models.PrimitiveModel;
 import com.truncon.javalin.mvc.test.models.PrimitiveParamFieldModel;
 import com.truncon.javalin.mvc.test.models.PrimitiveParamFieldNamedModel;
 import com.truncon.javalin.mvc.test.models.PrimitiveParamMethodModel;
@@ -14,6 +16,8 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import static com.truncon.javalin.mvc.test.QueryUtils.getJsonResponseForGet;
+import static com.truncon.javalin.mvc.test.QueryUtils.getJsonResponseForPost;
+import static com.truncon.javalin.mvc.test.RouteBuilder.buildRoute;
 import static com.truncon.javalin.mvc.test.RouteBuilder.buildRouteWithQueryParams;
 import static com.truncon.javalin.mvc.test.RouteBuilder.param;
 import static com.truncon.javalin.mvc.test.RouteBuilder.queryParams;
@@ -243,5 +247,38 @@ public final class BindModelTest {
             Assert.assertNotNull(model.getSetter());
             Assert.assertEquals("setter", model.getSetter().setter);
         });
+    }
+
+    @Test
+    public void testGet_nestedJsonModel() {
+        PrimitiveModel model = new PrimitiveModel();
+        model.setBoolean(true);
+        model.setByte(Byte.MAX_VALUE);
+        model.setChar('a');
+        model.setDouble(Double.MAX_VALUE);
+        model.setFloat(Float.MAX_VALUE);
+        model.setInteger(Integer.MAX_VALUE);
+        model.setLong(Long.MAX_VALUE);
+        model.setShort(Short.MAX_VALUE);
+        AsyncTestUtils.runTest(app -> {
+            String route = buildRoute(BindModelController.POST_NESTED_JSON_MODEL_ROUTE);
+            NestedJsonModel actual = getJsonResponseForPost(route, model, NestedJsonModel.class);
+            Assert.assertNotNull(model);
+            assertModel(model, actual.field);
+            assertModel(model, actual.getSetter());
+            assertModel(model, actual.getParameter());
+        });
+    }
+
+    private static void assertModel(PrimitiveModel expected, PrimitiveModel actual) {
+        Assert.assertNotNull(actual);
+        Assert.assertEquals(expected.getBoolean(), actual.getBoolean());
+        Assert.assertEquals(expected.getByte(), actual.getByte());
+        Assert.assertEquals(expected.getChar(), actual.getChar());
+        Assert.assertEquals(expected.getDouble(), actual.getDouble(), 0.0);
+        Assert.assertEquals(expected.getFloat(), actual.getFloat(), 0.0f);
+        Assert.assertEquals(expected.getInteger(), actual.getInteger());
+        Assert.assertEquals(expected.getLong(), actual.getLong());
+        Assert.assertEquals(expected.getShort(), actual.getShort());
     }
 }

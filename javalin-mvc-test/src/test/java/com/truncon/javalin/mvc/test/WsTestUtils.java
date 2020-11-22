@@ -146,6 +146,12 @@ public final class WsTestUtils {
             return future;
         }
 
+        public CompletableFuture<String> sendBinaryAndAwaitStringResponse(ByteBuffer buffer) {
+            CompletableFuture<String> future = awaitStringMessage();
+            sendBinary(buffer);
+            return future;
+        }
+
         private CompletableFuture<ByteBuffer> awaitBinaryMessage() {
             return socket.awaitBinaryMessage();
         }

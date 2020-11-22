@@ -1,6 +1,7 @@
 package com.truncon.javalin.mvc.test;
 
 import io.javalin.plugin.json.JavalinJackson;
+import io.javalin.plugin.json.JavalinJson;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
@@ -35,7 +36,7 @@ public final class QueryUtils {
     }
 
     public static <T> T parseJson(String json, Class<T> clz) {
-        return JavalinJackson.INSTANCE.fromJson(json, clz);
+        return JavalinJson.fromJson(json, clz);
     }
 
     public static <T> T getJsonResponseForGet(String route, Class<T> clz) throws Exception {

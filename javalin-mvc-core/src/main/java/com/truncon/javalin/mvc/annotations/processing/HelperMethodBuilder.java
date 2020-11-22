@@ -19,6 +19,7 @@ import com.truncon.javalin.mvc.api.HttpRequest;
 import com.truncon.javalin.mvc.api.Named;
 import com.truncon.javalin.mvc.api.UseConverter;
 import com.truncon.javalin.mvc.api.ValueSource;
+import com.truncon.javalin.mvc.api.ws.FromBinary;
 import com.truncon.javalin.mvc.api.ws.WsBinaryMessageContext;
 import com.truncon.javalin.mvc.api.ws.WsContext;
 import com.truncon.javalin.mvc.api.ws.WsMessageContext;
@@ -38,6 +39,7 @@ import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
+import java.lang.annotation.Annotation;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
@@ -237,7 +239,6 @@ public final class HelperMethodBuilder {
         }
         Collection<Element> memberElements = getBoundMemberElements(
             element,
-            false,
             e -> defaultSource != ValueSource.Any || hasFromAnnotation(e) || hasMemberBinding(e)
         ).collect(Collectors.toList());
         for (Element memberElement : memberElements) {
@@ -279,26 +280,13 @@ public final class HelperMethodBuilder {
         return methodName;
     }
 
-    private boolean isValidBindTarget(Element memberElement, boolean isWebSockets) {
+    private boolean isValidBindTarget(Element memberElement) {
         if (memberElement.getKind() == ElementKind.FIELD) {
-            if (memberElement.getModifiers().contains(Modifier.PUBLIC)) {
-                return true;
-            }
-            if ((!isWebSockets && hasFromAnnotation(memberElement))
-                    || (isWebSockets && hasWsFromAnnotation(memberElement))) {
-                // TODO - if there is an explicit @From* annotation on a private field, raise an error
-            }
-            return false;
+            return memberElement.getModifiers().contains(Modifier.PUBLIC);
         } else if (memberElement.getKind() == ElementKind.METHOD) {
             if (memberElement.getModifiers().contains(Modifier.PUBLIC)) {
                 ExecutableElement method = (ExecutableElement) memberElement;
-                if (!method.getModifiers().contains(Modifier.STATIC) && method.getParameters().size() == 1) {
-                    return true;
-                }
-            }
-            if ((!isWebSockets && hasFromAnnotation(memberElement))
-                    || (isWebSockets && hasWsFromAnnotation(memberElement))) {
-                // TODO - if there is an explicit @From* annotation on a private field, raise an error
+                return !method.getModifiers().contains(Modifier.STATIC) && method.getParameters().size() == 1;
             }
             return false;
         } else {
@@ -427,7 +415,7 @@ public final class HelperMethodBuilder {
         }
         ValueSource valueSource = getMemberValueSource(memberElement, defaultSource);
         String sourceMethod = addSourceMethod(valueSource, parameterClass.isArray());
-        String valueExpression = getValueExpression(conversionMethod, sourceMethod, "context", memberName);
+        String valueExpression = getValueExpression(conversionMethod, sourceMethod, memberName);
         return setMember(memberElement, methodBodyBuilder, valueExpression);
     }
 
@@ -443,9 +431,9 @@ public final class HelperMethodBuilder {
         }
     }
 
-    private String getValueExpression(String conversionMethod, String sourceMethod, String context, String key) {
+    private String getValueExpression(String conversionMethod, String sourceMethod, String key) {
         return CodeBlock.builder()
-            .add("$N($N($N, $S))", conversionMethod, sourceMethod, context, key)
+            .add("$N($N($N, $S))", conversionMethod, sourceMethod, "context", key)
             .build()
             .toString();
     }
@@ -485,7 +473,7 @@ public final class HelperMethodBuilder {
     }
 
     public boolean hasMemberBinding(Element element) {
-        return hasMemberBinding(element, HelperMethodBuilder::hasFromAnnotation);
+        return hasMemberBinding(element, this::hasFromAnnotation);
     }
 
     private boolean hasMemberBinding(Element element, Function<Element, Boolean> hasAnnotation) {
@@ -524,12 +512,13 @@ public final class HelperMethodBuilder {
         return hasMemberBinding(superTypeElement, hasAnnotation);
     }
 
-    public static boolean hasFromAnnotation(Element element) {
-        return element.getAnnotation(FromPath.class) != null
-            || element.getAnnotation(FromQuery.class) != null
-            || element.getAnnotation(FromHeader.class) != null
-            || element.getAnnotation(FromCookie.class) != null
-            || element.getAnnotation(FromForm.class) != null;
+    public boolean hasFromAnnotation(Element element) {
+        return hasAnnotation(element, FromPath.class)
+            || hasAnnotation(element, FromQuery.class)
+            || hasAnnotation(element, FromHeader.class)
+            || hasAnnotation(element, FromCookie.class)
+            || hasAnnotation(element, FromForm.class)
+            || hasAnnotation(element, FromJson.class);
     }
 
     public static WsValueSource getDefaultWsFromBinding(Element element) {
@@ -569,14 +558,16 @@ public final class HelperMethodBuilder {
         }
         Collection<Element> memberElements = getBoundMemberElements(
             element,
-            true,
-            e -> defaultSource != WsValueSource.Any || hasWsFromAnnotation(e) || hasMemberBinding(e)
+            e -> defaultSource != WsValueSource.Any || hasWsFromAnnotation(e) || hasWsMemberBinding(e)
         ).collect(Collectors.toList());
         for (Element memberElement : memberElements) {
             if (addConverterSetter(memberElement, methodBodyBuilder, contextType, defaultSource)) {
                 continue;
             }
             if (addJsonSetter(memberElement, methodBodyBuilder, contextType)) {
+                continue;
+            }
+            if (addBinarySetter(memberElement, methodBodyBuilder, contextType, defaultSource)) {
                 continue;
             }
             if (addPrimitiveSetter(memberElement, methodBodyBuilder, defaultSource, contextType)) {
@@ -670,25 +661,73 @@ public final class HelperMethodBuilder {
         return true;
     }
 
-    private Stream<? extends Element> getBoundMemberElements(TypeElement element, boolean isWebSockets, Function<Element, Boolean> hasBinding) {
+    private boolean addBinarySetter(
+            Element memberElement,
+            CodeBlock.Builder methodBodyBuilder,
+            Class<? extends WsContext> contextType,
+            WsValueSource defaultSource) {
+        // Binary messages only
+        if (contextType != WsBinaryMessageContext.class) {
+            return false;
+        }
+        // The parameter type must be byte[] or ByteBuffer
+        TypeUtils typeUtils = container.getTypeUtils();
+        TypeMirror parameterType = getParameterType(memberElement);
+        if (!typeUtils.isType(parameterType, byte[].class) && !typeUtils.isType(parameterType, ByteBuffer.class)) {
+            return false;
+        }
+        // We only bind from the binary message if there's an explicit FromBinary annotation or
+        // there's no other default/explicit source specified.
+        boolean hasBinaryAnnotation = hasAnnotation(memberElement, FromBinary.class);
+        if (defaultSource != WsValueSource.Any || !hasBinaryAnnotation) {
+            return false;
+        }
+        // At this point, we know we're dealing with a binary message handler, the parameter type is a byte[] or
+        // ByteBuffer, and there's either an explicit FromBinary annotation or there's no alternative binding.
+        String binaryMethod = addWsBinaryMethod(parameterType);
+        if (binaryMethod != null) {
+            String valueExpression = CodeBlock.of("$N(context)", binaryMethod).toString();
+            setMember(memberElement, methodBodyBuilder, valueExpression);
+            return true;
+        }
+        return false;
+    }
+
+    private static boolean hasAnnotation(Element element, Class<? extends Annotation> annotationClass) {
+        if (element.getAnnotation(annotationClass) != null) {
+            return true;
+        }
+        if (element.getKind() == ElementKind.METHOD) {
+            ExecutableElement method = (ExecutableElement) element;
+            if (!method.getModifiers().contains(Modifier.STATIC) && method.getParameters().size() == 1) {
+                VariableElement parameterElement = method.getParameters().get(0);
+                return parameterElement.getAnnotation(annotationClass) != null;
+            }
+        }
+        return false;
+    }
+
+    private Stream<? extends Element> getBoundMemberElements(TypeElement element, Function<Element, Boolean> hasBinding) {
         Stream<? extends Element> currentMembers = element.getEnclosedElements().stream()
             .filter(e -> e.getKind() == ElementKind.FIELD || e.getKind() == ElementKind.METHOD)
             .filter(hasBinding::apply)
-            .filter(e -> isValidBindTarget(e, isWebSockets));
+            .filter(this::isValidBindTarget);
         TypeMirror superType = element.getSuperclass();
         if (superType.getKind() == TypeKind.NONE || container.getTypeUtils().isType(superType, Object.class)) {
             return currentMembers;
         }
         TypeElement superTypeElement = container.getTypeUtils().getTypeElement(superType);
-        Stream<? extends Element> baseMembers = getBoundMemberElements(superTypeElement, isWebSockets, hasBinding);
+        Stream<? extends Element> baseMembers = getBoundMemberElements(superTypeElement, hasBinding);
         return Stream.concat(currentMembers, baseMembers);
     }
 
-    public static boolean hasWsFromAnnotation(Element element) {
-        return element.getAnnotation(FromPath.class) != null
-            || element.getAnnotation(FromQuery.class) != null
-            || element.getAnnotation(FromHeader.class) != null
-            || element.getAnnotation(FromCookie.class) != null;
+    public boolean hasWsFromAnnotation(Element element) {
+        return hasAnnotation(element, FromPath.class)
+            || hasAnnotation(element, FromQuery.class)
+            || hasAnnotation(element, FromHeader.class)
+            || hasAnnotation(element, FromCookie.class)
+            || hasAnnotation(element, FromJson.class)
+            || hasAnnotation(element, FromBinary.class);
     }
 
     private boolean addPrimitiveSetter(
@@ -713,7 +752,7 @@ public final class HelperMethodBuilder {
         }
         WsValueSource valueSource = getMemberValueSource(memberElement, defaultSource);
         String sourceMethod = addSourceMethod(valueSource, contextType, parameterClass.isArray());
-        String valueExpression = getValueExpression(conversionMethod, sourceMethod, "context", memberName);
+        String valueExpression = getValueExpression(conversionMethod, sourceMethod, memberName);
         return setMember(memberElement, methodBodyBuilder, valueExpression);
     }
 
@@ -734,7 +773,7 @@ public final class HelperMethodBuilder {
     }
 
     public boolean hasWsMemberBinding(Element element) {
-        return hasMemberBinding(element, HelperMethodBuilder::hasWsFromAnnotation);
+        return hasMemberBinding(element, this::hasWsFromAnnotation);
     }
 
     public String addSourceMethod(ValueSource valueSource, boolean isArray) {
