@@ -55,6 +55,9 @@ final class ParameterGenerator {
             HelperMethodBuilder helperBuilder,
             Map<String, ConverterBuilder> converterLookup) {
         TypeMirror parameterType = parameter.asType();
+        if (isNotBound()) {
+            return CodeBlock.of("($T) null", parameterType).toString();
+        }
         TypeUtils typeUtils = helperBuilder.getContainer().getTypeUtils();
         String nonBinderParameter = getNonBinderParameter(context, wrapper, typeUtils, parameterType);
         if (!StringUtils.isBlank(nonBinderParameter)) {
@@ -128,6 +131,11 @@ final class ParameterGenerator {
         return CodeBlock.of("$N($N, $T.class)", jsonMethod, wrapper, parameterType).toString();
     }
 
+    private boolean isNotBound() {
+        NoBinding noBinding = parameter.getAnnotation(NoBinding.class);
+        return noBinding != null;
+    }
+
     private String getConverterName() {
         // Always prefer a action method parameter annotation over a type annotation.
         UseConverter parameterUsage = parameter.getAnnotation(UseConverter.class);
@@ -171,6 +179,9 @@ final class ParameterGenerator {
             HelperMethodBuilder helperBuilder,
             Map<String, ConverterBuilder> converterLookup) {
         TypeMirror parameterType = parameter.asType();
+        if (isNotBound()) {
+            return CodeBlock.of("($T) null", parameterType).toString();
+        }
         TypeUtils typeUtils = helperBuilder.getContainer().getTypeUtils();
         String nonBinderParameter = getNonBinderWsParameter(typeUtils, context, wrapperType, wrapper, parameterType);
         if (!StringUtils.isBlank(nonBinderParameter)) {

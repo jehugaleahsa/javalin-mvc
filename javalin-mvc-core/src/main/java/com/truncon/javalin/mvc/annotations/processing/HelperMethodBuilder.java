@@ -17,6 +17,7 @@ import com.truncon.javalin.mvc.api.FromQuery;
 import com.truncon.javalin.mvc.api.HttpContext;
 import com.truncon.javalin.mvc.api.HttpRequest;
 import com.truncon.javalin.mvc.api.Named;
+import com.truncon.javalin.mvc.api.NoBinding;
 import com.truncon.javalin.mvc.api.UseConverter;
 import com.truncon.javalin.mvc.api.ValueSource;
 import com.truncon.javalin.mvc.api.ws.FromBinary;
@@ -183,7 +184,7 @@ public final class HelperMethodBuilder {
             return memberElement.asType();
         } else {
             ExecutableElement method = (ExecutableElement) memberElement;
-            VariableElement parameter = method.getParameters().get(0);
+            VariableElement parameter = method.getParameters().get(0); // We already checked it's a setter
             return parameter.asType();
         }
     }
@@ -242,6 +243,9 @@ public final class HelperMethodBuilder {
             e -> defaultSource != ValueSource.Any || hasFromAnnotation(e) || hasMemberBinding(e)
         ).collect(Collectors.toList());
         for (Element memberElement : memberElements) {
+            if (hasAnnotation(memberElement, NoBinding.class)) {
+                continue;
+            }
             if (addConverterSetter(memberElement, methodBodyBuilder, defaultSource)) {
                 continue;
             }
@@ -286,7 +290,7 @@ public final class HelperMethodBuilder {
         } else if (memberElement.getKind() == ElementKind.METHOD) {
             if (memberElement.getModifiers().contains(Modifier.PUBLIC)) {
                 ExecutableElement method = (ExecutableElement) memberElement;
-                return !method.getModifiers().contains(Modifier.STATIC) && method.getParameters().size() == 1;
+                return isSetter(method);
             }
             return false;
         } else {
@@ -477,6 +481,9 @@ public final class HelperMethodBuilder {
     }
 
     private boolean hasMemberBinding(Element element, Function<Element, Boolean> hasAnnotation) {
+        if (hasAnnotation(element, NoBinding.class)) {
+            return false;
+        }
         if (element.getKind() == ElementKind.PARAMETER) {
             TypeElement typeElement = container.getTypeUtils().getTypeElement(element.asType());
             return hasMemberBinding(typeElement, hasAnnotation);
@@ -485,7 +492,7 @@ public final class HelperMethodBuilder {
             return hasMemberBinding(typeElement, hasAnnotation);
         } else if (element.getKind() == ElementKind.METHOD) {
             ExecutableElement method = (ExecutableElement) element;
-            if (!method.getModifiers().contains(Modifier.STATIC) && method.getParameters().size() == 1) {
+            if (isSetter(method)) {
                 VariableElement parameterElement = method.getParameters().get(0);
                 TypeElement typeElement = container.getTypeUtils().getTypeElement(parameterElement.asType());
                 return hasMemberBinding(typeElement, hasAnnotation);
@@ -513,6 +520,9 @@ public final class HelperMethodBuilder {
     }
 
     public boolean hasFromAnnotation(Element element) {
+        if (hasAnnotation(element, NoBinding.class)) {
+            return false;
+        }
         return hasAnnotation(element, FromPath.class)
             || hasAnnotation(element, FromQuery.class)
             || hasAnnotation(element, FromHeader.class)
@@ -561,6 +571,9 @@ public final class HelperMethodBuilder {
             e -> defaultSource != WsValueSource.Any || hasWsFromAnnotation(e) || hasWsMemberBinding(e)
         ).collect(Collectors.toList());
         for (Element memberElement : memberElements) {
+            if (hasAnnotation(memberElement, NoBinding.class)) {
+                continue;
+            }
             if (addConverterSetter(memberElement, methodBodyBuilder, contextType, defaultSource)) {
                 continue;
             }
@@ -699,7 +712,7 @@ public final class HelperMethodBuilder {
         }
         if (element.getKind() == ElementKind.METHOD) {
             ExecutableElement method = (ExecutableElement) element;
-            if (!method.getModifiers().contains(Modifier.STATIC) && method.getParameters().size() == 1) {
+            if (isSetter(method)) {
                 VariableElement parameterElement = method.getParameters().get(0);
                 return parameterElement.getAnnotation(annotationClass) != null;
             }
@@ -722,6 +735,9 @@ public final class HelperMethodBuilder {
     }
 
     public boolean hasWsFromAnnotation(Element element) {
+        if (hasAnnotation(element, NoBinding.class)) {
+            return false;
+        }
         return hasAnnotation(element, FromPath.class)
             || hasAnnotation(element, FromQuery.class)
             || hasAnnotation(element, FromHeader.class)
@@ -894,6 +910,12 @@ public final class HelperMethodBuilder {
         typeBuilder.addMethod(method);
         binaryMethods.add(ByteBuffer.class);
         return BINARY_BYTE_BUFFER_METHOD_NAME;
+    }
+
+    private static boolean isSetter(ExecutableElement method) {
+        return !method.getModifiers().contains(Modifier.STATIC)
+            && method.getParameters().size() == 1
+            && StringUtils.startsWith(method.getSimpleName(), "set");
     }
 
     // region ConversionHelper
