@@ -29,6 +29,7 @@ import com.truncon.javalin.mvc.api.ws.WsValueSource;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.ImmutableTriple;
+import org.jetbrains.annotations.NotNull;
 
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
@@ -226,6 +227,17 @@ public final class HelperMethodBuilder {
     }
 
     public String addConversionMethod(TypeElement element, ValueSource defaultSource) {
+        // We prevent infinite recursion by making sure we don't try to recursively
+        // bind sub-members of the same type.
+        Set<String> visitedTypes = new HashSet<>();
+        visitedTypes.add(element.getQualifiedName().toString());
+        return addConversionMethodInternal(element, defaultSource, visitedTypes);
+    }
+
+    private String addConversionMethodInternal(
+            TypeElement element,
+            ValueSource defaultSource,
+            Set<String> visitedTypes) {
         ImmutablePair<ValueSource, String> key = ImmutablePair.of(defaultSource, element.getQualifiedName().toString());
         String methodName = complexConversionLookup.get(key);
         if (methodName != null) {
@@ -258,12 +270,15 @@ public final class HelperMethodBuilder {
             ValueSource defaultSubSource = getDefaultFromBinding(memberElement);
             if (defaultSubSource != ValueSource.Any || hasMemberBinding(memberElement)) {
                 TypeElement subElement = container.getTypeUtils().getTypeElement(getParameterType(memberElement));
-                String conversionMethod = addConversionMethod(subElement, defaultSource);
-                String valueExpression = CodeBlock.builder()
-                    .add("$N($N)", conversionMethod, "context")
-                    .build()
-                    .toString();
-                setMember(memberElement, methodBodyBuilder, valueExpression);
+                if (!visitedTypes.contains(subElement.getQualifiedName().toString())) {
+                    visitedTypes.add(subElement.getQualifiedName().toString());
+                    String conversionMethod = addConversionMethodInternal(subElement, defaultSource, visitedTypes);
+                    String valueExpression = CodeBlock.builder()
+                        .add("$N($N)", conversionMethod, "context")
+                        .build()
+                        .toString();
+                    setMember(memberElement, methodBodyBuilder, valueExpression);
+                }
             }
         }
         methodBodyBuilder.addStatement("return model");
@@ -551,6 +566,19 @@ public final class HelperMethodBuilder {
             TypeElement element,
             WsValueSource defaultSource,
             Class<? extends WsContext> contextType) {
+        // We prevent infinite recursion by making sure we don't try to recursively
+        // bind sub-members of the same type.
+        Set<String> visitedTypes = new HashSet<>();
+        visitedTypes.add(element.getQualifiedName().toString());
+        return addConversionMethodInternal(element, defaultSource, contextType, visitedTypes);
+    }
+
+    @NotNull
+    private String addConversionMethodInternal(
+            TypeElement element,
+            WsValueSource defaultSource,
+            Class<? extends WsContext> contextType,
+            Set<String> visitedTypes) {
         ImmutableTriple<WsValueSource, String, String> key = ImmutableTriple.of(
             defaultSource,
             element.getQualifiedName().toString(),
@@ -589,12 +617,15 @@ public final class HelperMethodBuilder {
             WsValueSource defaultSubSource = getDefaultWsFromBinding(memberElement);
             if (defaultSubSource != WsValueSource.Any || hasWsMemberBinding(memberElement)) {
                 TypeElement subElement = container.getTypeUtils().getTypeElement(getParameterType(memberElement));
-                String conversionMethod = addConversionMethod(subElement, defaultSource, contextType);
-                String valueExpression = CodeBlock.builder()
-                    .add("$N($N)", conversionMethod, "context")
-                    .build()
-                    .toString();
-                setMember(memberElement, methodBodyBuilder, valueExpression);
+                if (!visitedTypes.contains(subElement.getQualifiedName().toString())) {
+                    visitedTypes.add(subElement.getQualifiedName().toString());
+                    String conversionMethod = addConversionMethodInternal(subElement, defaultSource, contextType, visitedTypes);
+                    String valueExpression = CodeBlock.builder()
+                        .add("$N($N)", conversionMethod, "context")
+                        .build()
+                        .toString();
+                    setMember(memberElement, methodBodyBuilder, valueExpression);
+                }
             }
         }
         methodBodyBuilder.addStatement("return model");
