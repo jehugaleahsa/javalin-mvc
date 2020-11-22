@@ -34,20 +34,22 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 final class WsControllerSource {
+    private final ContainerSource container;
     private final TypeUtils typeUtils;
     private final TypeElement controllerElement;
 
-    private WsControllerSource(TypeUtils typeUtils, TypeElement controllerElement) {
-        this.typeUtils = typeUtils;
+    private WsControllerSource(ContainerSource container, TypeElement controllerElement) {
+        this.container = container;
+        this.typeUtils = container.getTypeUtils();
         this.controllerElement = controllerElement;
     }
 
-    public static List<WsControllerSource> getWsControllers(TypeUtils typeUtils, RoundEnvironment environment) throws ProcessingException {
+    public static List<WsControllerSource> getWsControllers(ContainerSource container, RoundEnvironment environment) throws ProcessingException {
         Set<? extends Element> controllerElements = environment.getElementsAnnotatedWith(WsController.class);
         checkControllerElements(controllerElements);
         return controllerElements.stream()
             .map(e -> (TypeElement) e)
-            .map(e -> new WsControllerSource(typeUtils, e))
+            .map(e -> new WsControllerSource(container, e))
             .collect(Collectors.toList());
     }
 
@@ -81,10 +83,10 @@ final class WsControllerSource {
         ExecutableElement messageMethod = getAnnotatedMethod(WsMessage.class);
         ExecutableElement binaryMessageMethod = getAnnotatedMethod(WsBinaryMessage.class);
         if (connectMethod == null
-            && disconnectMethod == null
-            && errorMethod == null
-            && messageMethod == null
-            && binaryMessageMethod == null) {
+                && disconnectMethod == null
+                && errorMethod == null
+                && messageMethod == null
+                && binaryMessageMethod == null) {
             return null;
         }
 
@@ -219,6 +221,15 @@ final class WsControllerSource {
         final String wrapper = "context";
         handlerBuilder.addStatement("$T $N = new $T($N)", contextInterface, wrapper, contextImpl, context);
         addController(helperBuilder.getContainer(), handlerBuilder);
+
+        List<WsBeforeGenerator> beforeGenerators = WsBeforeGenerator.getBeforeGenerators(container, method);
+        List<WsAfterGenerator> afterGenerators = WsAfterGenerator.getAfterGenerators(container, method);
+        generateBeforeHandlers(handlerBuilder, wrapper, beforeGenerators, container.isFound() ? "injector" : null);
+        if (!afterGenerators.isEmpty()) {
+            handlerBuilder.addStatement("Exception caughtException = null;");
+            handlerBuilder.beginControlFlow("try");
+        }
+
         String parameters = ParameterGenerator.bindWsParameters(
                 method,
                 context,
@@ -253,6 +264,14 @@ final class WsControllerSource {
                 method.getSimpleName());
             handlerBuilder.addStatement("new $T(result).execute($N)", WsJsonResult.class, wrapper);
         }
+
+        if (!afterGenerators.isEmpty()) {
+            handlerBuilder.nextControlFlow("catch (Exception exception)");
+            handlerBuilder.addStatement("caughtException = exception");
+            handlerBuilder.endControlFlow();
+            generateAfterHandlers(handlerBuilder, wrapper, "caughtException", afterGenerators, container.isFound() ? "injector" : null);
+        }
+
         handlerBuilder.endControlFlow(")");
     }
 
@@ -264,5 +283,20 @@ final class WsControllerSource {
         } else {
             handlerBuilder.addStatement("$T controller = new $T()", controllerElement, controllerElement);
         }
+    }
+
+    private void generateBeforeHandlers(CodeBlock.Builder handlerBuilder, String contextName, List<WsBeforeGenerator> generators, String injectorName) {
+        for (WsBeforeGenerator generator : generators) {
+            generator.generateBefore(handlerBuilder, injectorName, contextName);
+        }
+    }
+
+    private void generateAfterHandlers(CodeBlock.Builder handlerBuilder, String contextName, String exceptionName, List<WsAfterGenerator> generators, String injectorName) {
+        for (WsAfterGenerator generator : generators) {
+            generator.generateAfter(handlerBuilder, injectorName, contextName, exceptionName);
+        }
+        handlerBuilder.beginControlFlow("if (caughtException != null)")
+            .addStatement("throw caughtException")
+            .endControlFlow();
     }
 }

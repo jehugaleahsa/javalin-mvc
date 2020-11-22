@@ -1,9 +1,10 @@
 package com.truncon.javalin.mvc.annotations.processing;
 
 import com.squareup.javapoet.CodeBlock;
-import com.truncon.javalin.mvc.api.After;
-import com.truncon.javalin.mvc.api.AfterContainer;
+import com.truncon.javalin.mvc.api.ws.WsBefore;
+import com.truncon.javalin.mvc.api.ws.WsBeforeContainer;
 
+import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.MirroredTypeException;
@@ -13,52 +14,51 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-final class AfterGenerator {
+final class WsBeforeGenerator {
     private final ContainerSource container;
-    private final After annotation;
+    private final WsBefore annotation;
 
-    private AfterGenerator(ContainerSource container, After annotation) {
+    private WsBeforeGenerator(ContainerSource container, WsBefore annotation) {
         this.container = container;
         this.annotation = annotation;
     }
 
-    public static List<AfterGenerator> getAfterGenerators(ContainerSource container, RouteGenerator route) {
-        List<After> handlers = new ArrayList<>();
-        After single = route.findAnnotation(After.class);
+    public static List<WsBeforeGenerator> getBeforeGenerators(ContainerSource container, ExecutableElement method) {
+        List<WsBefore> handlers = new ArrayList<>();
+        WsBefore single = method.getAnnotation(WsBefore.class);
         if (single != null) {
             handlers.add(single);
         }
-        AfterContainer multiple = route.findAnnotation(AfterContainer.class);
+        WsBeforeContainer multiple = method.getAnnotation(WsBeforeContainer.class);
         if (multiple != null) {
             handlers.addAll(Arrays.asList(multiple.value()));
         }
-        return handlers.stream().map(h -> new AfterGenerator(container, h)).collect(Collectors.toList());
+        return handlers.stream().map(h -> new WsBeforeGenerator(container, h)).collect(Collectors.toList());
     }
 
-    public void generateAfter(
+    public void generateBefore(
             CodeBlock.Builder routeBuilder,
             String injectorName,
-            String contextName,
-            String exceptionName) {
+            String contextName) {
         Name handlerGetter = injectorName == null ? null : getHandlerGetter();
         String arguments = getArguments();
         if (handlerGetter == null) {
-            routeBuilder.addStatement(
-                    "$L = new $T().executeAfter($L, $L, $L)",
-                    exceptionName,
+            routeBuilder.beginControlFlow(
+                    "if (!new $T().executeBefore($L, $L))",
                     getTypeMirror(),
                     contextName,
-                    arguments,
-                    exceptionName);
+                    arguments)
+                    .addStatement("return")
+                    .endControlFlow();
         } else {
-            routeBuilder.addStatement(
-                    "$L = $L.$L().executeAfter($L, $L, $L)",
-                    exceptionName,
+            routeBuilder.beginControlFlow(
+                    "if (!$L.$L().executeBefore($L, $L))",
                     injectorName,
                     handlerGetter,
                     contextName,
-                    arguments,
-                    exceptionName);
+                    arguments)
+                    .addStatement("return")
+                    .endControlFlow();
         }
     }
 
@@ -74,7 +74,7 @@ final class AfterGenerator {
         } catch (MirroredTypeException exception) {
             return exception.getTypeMirror();
         }
-        return null;
+        return  null;
     }
 
     private String getArguments() {

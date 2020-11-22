@@ -1,9 +1,10 @@
 package com.truncon.javalin.mvc.annotations.processing;
 
 import com.squareup.javapoet.CodeBlock;
-import com.truncon.javalin.mvc.api.After;
-import com.truncon.javalin.mvc.api.AfterContainer;
+import com.truncon.javalin.mvc.api.ws.WsAfter;
+import com.truncon.javalin.mvc.api.ws.WsAfterContainer;
 
+import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.MirroredTypeException;
@@ -13,26 +14,26 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-final class AfterGenerator {
+final class WsAfterGenerator {
     private final ContainerSource container;
-    private final After annotation;
+    private final WsAfter annotation;
 
-    private AfterGenerator(ContainerSource container, After annotation) {
+    private WsAfterGenerator(ContainerSource container, WsAfter annotation) {
         this.container = container;
         this.annotation = annotation;
     }
 
-    public static List<AfterGenerator> getAfterGenerators(ContainerSource container, RouteGenerator route) {
-        List<After> handlers = new ArrayList<>();
-        After single = route.findAnnotation(After.class);
+    public static List<WsAfterGenerator> getAfterGenerators(ContainerSource container, ExecutableElement method) {
+        List<WsAfter> handlers = new ArrayList<>();
+        WsAfter single = method.getAnnotation(WsAfter.class);
         if (single != null) {
             handlers.add(single);
         }
-        AfterContainer multiple = route.findAnnotation(AfterContainer.class);
+        WsAfterContainer multiple = method.getAnnotation(WsAfterContainer.class);
         if (multiple != null) {
             handlers.addAll(Arrays.asList(multiple.value()));
         }
-        return handlers.stream().map(h -> new AfterGenerator(container, h)).collect(Collectors.toList());
+        return handlers.stream().map(h -> new WsAfterGenerator(container, h)).collect(Collectors.toList());
     }
 
     public void generateAfter(

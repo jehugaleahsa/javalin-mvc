@@ -37,12 +37,12 @@ public final class ControllerProcessor extends AbstractProcessor {
 	@Override
 	public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment env) {
         try {
+            ContainerSource container = ContainerSource.getContainerSource(typeUtils, env);
             List<ControllerSource> controllers = ControllerSource.getControllers(typeUtils, env);
-            List<WsControllerSource> wsControllers = WsControllerSource.getWsControllers(typeUtils, env);
+            List<WsControllerSource> wsControllers = WsControllerSource.getWsControllers(container, env);
             if (controllers.isEmpty() && wsControllers.isEmpty()) {
                 return true;
             }
-            ContainerSource container = ContainerSource.getContainerSource(typeUtils, env);
             List<ConverterBuilder> converters = ConverterBuilder.getConverterBuilders(typeUtils, env);
             ControllerRegistryGenerator generator = new ControllerRegistryGenerator(
                 container,

@@ -30,9 +30,7 @@ final class BeforeGenerator {
         }
         BeforeContainer multiple = route.findAnnotation(BeforeContainer.class);
         if (multiple != null) {
-            for (Before before : multiple.value()) {
-                handlers.add(before);
-            }
+            handlers.addAll(Arrays.asList(multiple.value()));
         }
         return handlers.stream().map(h -> new BeforeGenerator(container, h)).collect(Collectors.toList());
     }
