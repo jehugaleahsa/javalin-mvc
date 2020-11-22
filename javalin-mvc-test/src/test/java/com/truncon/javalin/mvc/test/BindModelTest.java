@@ -250,7 +250,7 @@ public final class BindModelTest {
     }
 
     @Test
-    public void testGet_nestedJsonModel() {
+    public void testPost_nestedJsonModel() {
         PrimitiveModel model = new PrimitiveModel();
         model.setBoolean(true);
         model.setByte(Byte.MAX_VALUE);
@@ -263,7 +263,7 @@ public final class BindModelTest {
         AsyncTestUtils.runTest(app -> {
             String route = buildRoute(BindModelController.POST_NESTED_JSON_MODEL_ROUTE);
             NestedJsonModel actual = getJsonResponseForPost(route, model, NestedJsonModel.class);
-            Assert.assertNotNull(model);
+            Assert.assertNotNull(actual);
             assertModel(model, actual.field);
             assertModel(model, actual.getSetter());
             assertModel(model, actual.getParameter());
@@ -280,5 +280,23 @@ public final class BindModelTest {
         Assert.assertEquals(expected.getInteger(), actual.getInteger());
         Assert.assertEquals(expected.getLong(), actual.getLong());
         Assert.assertEquals(expected.getShort(), actual.getShort());
+    }
+
+    @Test
+    public void testPost_noBinding() {
+        PrimitiveModel model = new PrimitiveModel();
+        model.setBoolean(true);
+        model.setByte(Byte.MAX_VALUE);
+        model.setChar('a');
+        model.setDouble(Double.MAX_VALUE);
+        model.setFloat(Float.MAX_VALUE);
+        model.setInteger(Integer.MAX_VALUE);
+        model.setLong(Long.MAX_VALUE);
+        model.setShort(Short.MAX_VALUE);
+        AsyncTestUtils.runTest(app -> {
+            String route = buildRoute(BindModelController.POST_NO_BINDING_ROUTE);
+            PrimitiveModel actual = getJsonResponseForPost(route, model, PrimitiveModel.class);
+            Assert.assertNull(actual);
+        });
     }
 }

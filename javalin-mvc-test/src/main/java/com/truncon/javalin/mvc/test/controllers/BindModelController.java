@@ -2,13 +2,18 @@ package com.truncon.javalin.mvc.test.controllers;
 
 import com.truncon.javalin.mvc.api.ActionResult;
 import com.truncon.javalin.mvc.api.Controller;
+import com.truncon.javalin.mvc.api.FromJson;
 import com.truncon.javalin.mvc.api.FromQuery;
+import com.truncon.javalin.mvc.api.HttpContext;
 import com.truncon.javalin.mvc.api.HttpGet;
 import com.truncon.javalin.mvc.api.HttpPost;
 import com.truncon.javalin.mvc.api.JsonResult;
+import com.truncon.javalin.mvc.api.NoBinding;
+import com.truncon.javalin.mvc.api.StatusCodeResult;
 import com.truncon.javalin.mvc.test.models.ContainerModel;
 import com.truncon.javalin.mvc.test.models.DerivedModel;
 import com.truncon.javalin.mvc.test.models.NestedJsonModel;
+import com.truncon.javalin.mvc.test.models.PrimitiveModel;
 import com.truncon.javalin.mvc.test.models.PrimitiveParamFieldModel;
 import com.truncon.javalin.mvc.test.models.PrimitiveParamFieldNamedModel;
 import com.truncon.javalin.mvc.test.models.PrimitiveParamMethodModel;
@@ -82,7 +87,16 @@ public final class BindModelController {
 
     public static final String POST_NESTED_JSON_MODEL_ROUTE = "/api/bind/models/nested/json";
     @HttpPost(route = POST_NESTED_JSON_MODEL_ROUTE)
-    public ActionResult getNestedJsonModel(NestedJsonModel model) {
+    public ActionResult postNestedJsonModel(NestedJsonModel model) {
+        return new JsonResult(model);
+    }
+
+    public static final String POST_NO_BINDING_ROUTE = "/api/bind/models/no-binding";
+    @HttpPost(route = POST_NO_BINDING_ROUTE)
+    public ActionResult postNoBindingModel(@NoBinding HttpContext context, @NoBinding @FromJson PrimitiveModel model) {
+        if (context != null) {
+            return new StatusCodeResult(500);
+        }
         return new JsonResult(model);
     }
 }
