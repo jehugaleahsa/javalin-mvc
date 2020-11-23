@@ -201,7 +201,7 @@ Here is a list of supported and/or desired features. An `x` means it is already 
     * [x] `@HttpDelete`
     * [x] `@HttpHead`
     * [x] `@HttpOptions`
-    * [x] `@HttpConnect` (No supported by Javalin)
+    * [ ] `@HttpConnect` (No supported by Javalin)
     * [ ] `@HttpTrace` (Not supported by Javalin)
 * [x] Bind parameters from headers, cookies, URL parameters, query strings, and form data by name.
     * [x] `String`
