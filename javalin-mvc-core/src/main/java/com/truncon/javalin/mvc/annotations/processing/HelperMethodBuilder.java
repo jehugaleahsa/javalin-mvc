@@ -301,15 +301,10 @@ public final class HelperMethodBuilder {
 
     private boolean isValidBindTarget(Element memberElement) {
         if (memberElement.getKind() == ElementKind.FIELD) {
-            return memberElement.getModifiers().contains(Modifier.PUBLIC);
-        } else if (memberElement.getKind() == ElementKind.METHOD) {
-            if (memberElement.getModifiers().contains(Modifier.PUBLIC)) {
-                ExecutableElement method = (ExecutableElement) memberElement;
-                return isSetter(method);
-            }
-            return false;
+            return memberElement.getModifiers().contains(Modifier.PUBLIC)
+                && !memberElement.getModifiers().contains(Modifier.STATIC);
         } else {
-            return false;
+            return isSetter(memberElement);
         }
     }
 
@@ -505,13 +500,11 @@ public final class HelperMethodBuilder {
         } else if (element.getKind() == ElementKind.FIELD) {
             TypeElement typeElement = container.getTypeUtils().getTypeElement(element.asType());
             return hasMemberBinding(typeElement, hasAnnotation);
-        } else if (element.getKind() == ElementKind.METHOD) {
+        } else if (isSetter(element)) {
             ExecutableElement method = (ExecutableElement) element;
-            if (isSetter(method)) {
-                VariableElement parameterElement = method.getParameters().get(0);
-                TypeElement typeElement = container.getTypeUtils().getTypeElement(parameterElement.asType());
-                return hasMemberBinding(typeElement, hasAnnotation);
-            }
+            VariableElement parameterElement = method.getParameters().get(0);
+            TypeElement typeElement = container.getTypeUtils().getTypeElement(parameterElement.asType());
+            return hasMemberBinding(typeElement, hasAnnotation);
         }
         return false;
     }
@@ -521,7 +514,9 @@ public final class HelperMethodBuilder {
             return false;
         }
         boolean hasBinding = element.getEnclosedElements().stream()
-            .filter(e -> e.getKind() == ElementKind.FIELD || e.getKind() == ElementKind.METHOD)
+            .filter(e -> e.getKind() == ElementKind.FIELD || isSetter(e))
+            .filter(e -> e.getModifiers().contains(Modifier.PUBLIC))
+            .filter(e -> !e.getModifiers().contains(Modifier.STATIC))
             .anyMatch(hasAnnotation::apply);
         if (hasBinding) {
             return true;
@@ -741,12 +736,10 @@ public final class HelperMethodBuilder {
         if (element.getAnnotation(annotationClass) != null) {
             return true;
         }
-        if (element.getKind() == ElementKind.METHOD) {
+        if (isSetter(element)) {
             ExecutableElement method = (ExecutableElement) element;
-            if (isSetter(method)) {
-                VariableElement parameterElement = method.getParameters().get(0);
-                return parameterElement.getAnnotation(annotationClass) != null;
-            }
+            VariableElement parameterElement = method.getParameters().get(0);
+            return parameterElement.getAnnotation(annotationClass) != null;
         }
         return false;
     }
@@ -949,6 +942,11 @@ public final class HelperMethodBuilder {
         typeBuilder.addMethod(method);
         binaryMethods.add(ByteBuffer.class);
         return BINARY_BYTE_BUFFER_METHOD_NAME;
+    }
+
+    private static boolean isSetter(Element element) {
+        return element.getKind() == ElementKind.METHOD
+            && isSetter((ExecutableElement) element);
     }
 
     private static boolean isSetter(ExecutableElement method) {
@@ -2457,9 +2455,10 @@ public final class HelperMethodBuilder {
 
         @Override
         protected CodeBlock getSingletonMethodBody(HelperMethodBuilder builder, String wrapper, String key) {
+            HttpRequest request;
             return CodeBlock.builder()
                 .addStatement("$T request = $N.getRequest()", HttpRequest.class, wrapper)
-                .addStatement("return request.getPathParameter($N)", key)
+                .addStatement("return request.hasPathParameter($N) ? request.getPathParameter($N) : null", key, key)
                 .build();
         }
 
@@ -2804,7 +2803,7 @@ public final class HelperMethodBuilder {
                 String key) {
             return CodeBlock.builder()
                 .addStatement("$T request = $N.getRequest()", WsRequest.class, wrapper)
-                .addStatement("return request.getPathParameter($N)", key)
+                .addStatement("return request.hasPathParameter($N) ? request.getPathParameter($N) : null", key, key)
                 .build();
         }
 

@@ -1,7 +1,7 @@
 package com.truncon.javalin.mvc.annotations.processing;
 
 import dagger.Component;
-import com.truncon.javalin.mvc.api.ControllerComponent;
+import com.truncon.javalin.mvc.api.MvcComponent;
 
 import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.element.Element;
@@ -33,7 +33,7 @@ final class ContainerSource {
     public static ContainerSource getContainerSource(TypeUtils typeUtils, RoundEnvironment environment) throws ProcessingException {
         List<? extends TypeElement> elements = environment.getElementsAnnotatedWith(Component.class).stream()
                 .filter(e -> e.getKind() == ElementKind.INTERFACE)
-                .filter(e -> e.getAnnotation(ControllerComponent.class) != null)
+                .filter(e -> e.getAnnotation(MvcComponent.class) != null)
                 .map(e -> (TypeElement) e)
                 .collect(Collectors.toList());
         if (elements.size() > 1) {

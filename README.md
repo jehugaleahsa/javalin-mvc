@@ -13,15 +13,6 @@ Coincidentally, I was learning about Java's [annotation processing](https://medi
 
 One of the major benefits to Javalin MVC being a compile time tool is that there's absolutely no runtime overhead for using this library. It's as fast as if you wrote all the Javalin route handlers by hand. Not only that, but it's a compile-time error if you try to register two HTTP methods/routes multiple times -- with raw Javalin you'd only discover that error at runtime!
 
-## Recent News (11/15/2020)
-Big improvements are in the works! A few weeks ago, I was staring at this code and I started thinking. In version 1.0.x, I was using a `ModelBinder` class to bind values. This class was pretty optimal so there was little runtime overhead. But my thought was, "Why should there be any runtime overhead at all?". Almost everything I need to perform binding I already know at compile time. Really, the only thing I *don't* know is the actual value. That means I can generate helper methods to perform primitive parsing and avoid any overhead of runtime type casting, auto-boxing, etc.
-
-I also now support binding values into model classes. This means you can pull values from query strings, headers, cookies, etc. and place them inside of a class now, rather than having a bunch of action method parameters.
-
-For the ultimate flexibility, I added support for specifying your own converters. You can now point to a static method or instance method and it will be used to parse your types.
-
-I also greatly increasing my unit test code coverage, so I have addressed several issues in the past few weeks. Along with this, I have improved the compile-time error messages. I am also going to investigate how I can better support incremental builds, but I will probably do a release prior to this.
-
 ## Installation
 The following dependencies are needed in your web project:
 
@@ -42,12 +33,12 @@ The following dependencies are needed in your web project:
 <dependency>
     <groupId>com.truncon</groupId>
     <artifactId>javalin-mvc-api</artifact>
-    <version>1.0.2</version>
+    <version>2.0.0</version>
 </dependency>
 <dependency>
     <groupId>com.truncon</groupId>
     <artifactId>javalin-mvc-core</artifact>
-    <version>1.0.2</version>
+    <version>2.0.0</version>
 </dependency>
 <!-- The rest of these dependencies are for OpenAPI support. Optional!!! -->
 <dependency>
@@ -91,7 +82,7 @@ Javalin MVC uses annotation processing (more on this later) so must be setup in 
                     <path>
                         <groupId>com.truncon</groupId>
                         <artifactId>javalin-mvc-core</artifactId>
-                        <version>1.0.2</version>
+                        <version>2.0.0</version>
                     </path>
                 </annotationProcessorPaths>
             </configuration>
@@ -156,6 +147,10 @@ For the best performance and for added security, you should *always* explicitly 
 An example `main` method might look like this:
 
 ```java
+import com.truncon.javalin.mvc.ControllerRegistry;
+import com.truncon.javalin.mvc.JavalinControllerRegistry;
+// etc...
+
 public static void main(String[] args) throws IOException {
     Javalin app = Javalin.create(config -> {
         // Remove the following line to disable Open API annotation processing
@@ -252,7 +247,6 @@ Here is a list of supported and/or desired features. An `x` means it is already 
     * [x] Primitives, Strings, Dates, UUIDs, etc.
     * [x] Objects using JsonResult
 * [x] Support parameter naming flexibility via `@Named` annotation
-* [x] Support custom/alternative parameter name bindings via `@Named`
 * [x] Support pre-execution interceptor via `@Before`
 * [x] Support post-execution interceptor via `@After`
 * [x] Support async operations (by returning `CompletableFuture<T>`)
@@ -262,11 +256,11 @@ Here is a list of supported and/or desired features. An `x` means it is already 
     * [x] Inject context/request/response objects
 * [x] Open API/Swagger Annotations
     * [x] Now uses built-in Javalin OpenAPI annotations
-* [ ] WebSockets
+* [x] WebSockets
     * [x] Specify routes via `@WsController`
     * [x] Support `@WsConnect`, `@WsDisconnect`, `@WsError`, `@WsMessage` and WsBinaryMessage annotations
     * [x] Support for data binding
-    * [ ] Support for @Before and @After handlers
+    * [x] Support for @Before and @After handlers
 * [x] Custom conversion methods
     * [x] Support `@Converter` on static methods
     * [x] Support `@Converter` on instance methods
@@ -281,11 +275,11 @@ Dependency injection is at the core of modern software projects. It supports swi
 
 Dagger is integrated into `javalin-mvc-core`, making Dagger the default DI; however, your code will still compile if you choose not to use it. Dagger, being a compile-time DI library, has a somewhat different API than other DI libraries. Instead of having a global `injector.get(Class<?> clz)` method that can be used to retrieve every type of object, there are specific methods for each dependency. Ideally, a generic DI interface could be provided so `javalin-mvc-core` could work against *any* DI library, but this dramatic difference in API makes that infeasible. It was a tough decision, but I ended up choosing Dagger. Technically, you can wire in your own choice of DI library on top of Dagger.
 
-The `javalin-mvc-core` project needs to know how to instantiate objects with Dagger; to do this, you must mark your Dagger container with the `ControllerComponent` annotation. Your Dagger container will, minimally, look like this:
+The `javalin-mvc-core` project needs to know how to instantiate objects with Dagger; to do this, you must mark your Dagger container with the `MvcComponent` annotation. Your Dagger container will, minimally, look like this:
 
 ```java
 @Component
-@ControllerComponent
+@MvcComponent
 public interface WebContainer {
 }
 
@@ -422,6 +416,261 @@ public final class WsPickleController {
     }
 }
 ```
+
+## Model Binding
+Data can come from a lot of places: the route (e.g., `/users/:userId`), query strings (e.g., `/users?name=John%20Smith`), headers, cookies, form fields (URL encoded form data), body JSON, etc. In Javalin MVC 1.0.x, you could bind this data to your action method parameters and that was about it. In 2.x, Javalin MVC allows you to bind your data to objects, as well. Consider a page that listed all your users with a server-side paging and searching. You might have a model that looks like this:
+
+```java
+public final class UserSearch {
+    private Integer userId;
+    private String searchValue;
+    private int offset;
+    private int pageSize;
+    private String[] orderByFields;
+    
+    public Integer getUserId() {
+        return userId;
+    }
+
+    @FromPath
+    public void setUserId(Integer userId) {
+        this.userId = userId;
+    }
+
+    public String getSearchValue() {
+        return searchValue;
+    }
+
+    @FromQuery
+    @Named("search-value")
+    public void setSearchValue(String value) {
+        this.searchValue = value;
+    }
+
+    public int getOffset() {
+        return offset;
+    }
+
+    @FromQuery
+    public void setOffset(int offset) {
+        this.offset = offset;
+    }
+
+    public int getPageSize() {
+        return pageSize;
+    }
+
+    @FromQuery
+    @Named("page-size")
+    public void setPageSize(int size) {
+        this.pageSize = size;
+    }
+
+    public String[] getOrderByFields() {
+        return orderByFields;
+    }
+
+    @FromQuery
+    @Named("order-by")
+    public void setOrderByFields(String[] fields) {
+        this.orderByFields = fields;
+    }
+}
+```
+
+And your controller might look like this:
+
+```java
+@Controller
+public final class UserController {
+    public static final String GET_USER_ROUTE  = "/api/users/:userId";
+    @HttpGet(route = GET_USER_ROUTE)
+    public ActionResult getUser(UserSearch search) {
+        // Write code to do search here
+        return new JsonResult(result);
+    }
+
+    public static final String GET_USERS_ROUTE = "/api/users";
+    @HttpGet(route = GET_USERS_ROUTE)
+    public ActionResult getUsers(UserSearch search) {
+        // Write code to do search here
+        return new JsonResult(results);
+    }
+}
+```
+
+Because the `UserSearch` model has `@From*` annotations, Javalin MVC automatically determines that the `search` parameter should be constructed and populated with values.
+
+### Valid Binding Targets
+At this time, only public fields and setters can be bound. Private, protected and package-level access is not supported. You also cannot place the annotations on the getters, since the logic to for looking up the corresponding setter can be a bit ambiguous in some cases. Furthermore, setters must begin with "set" and have exactly one argument.
+
+In the future, I might add support for binding getters or package-level members. I may also generate compile errors if you place `@From*` annotations on non-publics fields and setters, but right now Javalin MVC just ignores them.
+
+### Naming
+Notice that Javalin MVC respects the `@Named` annotations so your class fields/setters don't have to match your path/query string/etc. names exactly.
+
+### Default @From Bindings
+If you place a `@From*` annotation on the controller parameter, by default, Javalin MVC will try to bind from that source by default. You can use this to avoid annotating models with Javalin MVC if you want to keep those concerns separate. For example, placing `@FromQuery` before the parameter below would cause Javalin MVC to try to populate all the `UserSearch` setters from the query string, even if we removed the `@FromQuery` annotations from the `UserSearch` class members:
+
+```java
+    public static final String GET_USERS_ROUTE = "/api/users";
+    @HttpGet(route = GET_USERS_ROUTE)
+    public ActionResult getUsers(@FromQuery UserSearch search) {
+        // Write code to do search here
+        return new JsonResult(results);
+    }
+```
+
+This says, by default, all public fields and setters should get their values from the query string parameters. Only if another `@From*` annotation is explicitly set will the value be searched for elsewhere.
+
+### NoBinding
+The challenge with using default bindings is that Javalin MVC will then try to bind any public field/setter. If there are fields/setters you don't want to be bound, you should mark that field/setter with the `NoBinding` annotation. This is especially important for fields that might enforce security (although, these probably shouldn't be in your models anyway).
+
+### Nesting and inheritance
+If your application supports many paged searches, you might want to move the paging information into a base class or a nested model class. For example, you could have a `PaginationModel` class:
+
+```java
+public class PaginationModel {
+    private String searchValue;
+    private int offset;
+    private int pageSize;
+    private String[] orderByFields;
+
+    public String getSearchValue() {
+        return searchValue;
+    }
+
+    @FromQuery
+    @Named("search-value")
+    public void setSearchValue(String value) {
+        this.searchValue = value;
+    }
+
+    public int getOffset() {
+        return offset;
+    }
+
+    @FromQuery
+    public void setOffset(int offset) {
+        this.offset = offset;
+    }
+
+    public int getPageSize() {
+        return pageSize;
+    }
+
+    @FromQuery
+    @Named("page-size")
+    public void setPageSize(int size) {
+        this.pageSize = size;
+    }
+
+    public String[] getOrderByFields() {
+        return orderByFields;
+    }
+
+    @FromQuery
+    @Named("order-by")
+    public void setOrderByFields(String[] fields) {
+        this.orderByFields = fields;
+    }
+}
+```
+
+And then you could implement `UserSearch` in a couple ways, via inheritance:
+
+```java
+public final class UserSearch extends PaginationModel {
+    private Integer userId;
+
+    public Integer getUserId() {
+        return userId;
+    }
+
+    @FromPath
+    public void setUserId(Integer userId) {
+        this.userId = userId;
+    }
+}
+```
+
+Or via composition:
+
+```java
+public final class UserSearch {
+    private Integer userId;
+    private PaginationModel pagination;
+
+    public Integer getUserId() {
+        return userId;
+    }
+
+    @FromPath
+    public void setUserId(Integer userId) {
+        this.userId = userId;
+    }
+
+    public PaginationModel getPagination() {
+        return pagination;
+    }
+
+    public void setPagination(PaginationModel model) {
+        this.pagination = model;
+    }
+}
+```
+
+Javalin MVC is smart enough to look at inherited members as well as search recursively within class model members for `@From*` annotations. This allows you to nest your models however you see fit. Note: in the second example above, you can mark the `setPagination` method with a `@From*` annotation to overwrite the default binding source, similar to the `@From*` annotation on the action method parameter.
+
+### Dependency Injection
+By default, Javalin MVC will try to initialize your models using the default constructor; however, if you registered your model with Dagger, Javalin MVC will use it to initialize your model.
+
+### JSON and binary binding
+Javalin MVC also allows you to use the `@FromJson` and `@FromBinary` annotations on model members. Just be aware that binding the same binary data multiple times can result in unexpected behavior.
+
+## Custom Conversion
+One of the big enhancements with Javalin MVC 2.x is the introduction of custom converters. Custom conversions are performed using a pair of new annotations: `@Converter` and `@UseConverter`. Static and instance methods can be annotated with `@Converter`, so long as they use the correct signature. For example:
+
+```java
+@Converter("pair")
+public static Pair parse(HttpRequest request, String name, ValueSource valueSource) {
+    Map<String, Collection<String>> lookup = request.getSourceLookup(valueSource);
+    Collection<String> values = lookup.get(name);
+    return values.size() == 1 ? Pair.parse(values.iterator().next()) : null;
+}
+```
+
+Minimally, a converter method must accept either an `HttpContext` or a `HttpRequest` for HTTP, or a `WsContext` or `WsRequest` for WebSockets. Additionally, a `String name` parameter can be included that captures the name of the parameter or model field/setter where the converter is being used, respecting the `@Named` annotation if present. Also, a `ValueSource` or `WsValueSource` parameter can be included to specify where the values should be sourced from, which is controlled by whatever `@From*` annotation is present on the parameter or model field/setter. These parameters can appear in whatever order you see fit.
+
+Once a converter is defined, you can use it using the `@UseConverter` annotation. The `@UseConverter` annotation can be placed on action method parameters, on model fields/setters or on the type itself. For example:
+
+```java
+@UseConverter("pair")
+public final class Pair {
+    private final int first;
+    private final int second;
+
+    public Pair(int first, int second) {
+        this.first = first;
+        this.second = second;
+    }
+
+    public int getFirst() {
+        return first;
+    }
+
+    public int getSecond() {
+        return second;
+    }
+
+    // etc.
+}
+```
+
+Javalin MVC always checks for `@UseConverter` first before trying to perform any other built-in conversion.
+
+### Dependency Injection
+For instance method converters, Javalin MVC will try to create the converter objects using the default constructor, by default. However, if you register your class with Dagger, Javalin MVC will use Dagger to instantiate the converter.
 
 ## Known Limitations
 At the time of this writing, Javalin MVC does not support incremental compilation. This means that all of your classes must be compiled in the same `javac` command in order for the full `JavalinControllerRegistry.java` file to be generated. This is the default behavior using Maven (e.g., `mvn compile`) but if you are working in an IDE, such as IntelliJ, you might need to use the "Rebuild" command or run Maven as a separate step.

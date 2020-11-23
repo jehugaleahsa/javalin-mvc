@@ -11,7 +11,7 @@ import javax.lang.model.element.TypeElement;
 import javax.tools.Diagnostic;
 
 import com.truncon.javalin.mvc.api.Controller;
-import com.truncon.javalin.mvc.api.ControllerComponent;
+import com.truncon.javalin.mvc.api.MvcComponent;
 import com.truncon.javalin.mvc.api.Converter;
 import com.truncon.javalin.mvc.api.UseConverter;
 import com.truncon.javalin.mvc.api.ws.WsController;
@@ -75,7 +75,7 @@ public final class ControllerProcessor extends AbstractProcessor {
 		types.add(UseConverter.class.getCanonicalName());
 		types.add(Controller.class.getCanonicalName());
 		types.add(WsController.class.getCanonicalName());
-		types.add(ControllerComponent.class.getCanonicalName());
+		types.add(MvcComponent.class.getCanonicalName());
 		return types;
     }
 
