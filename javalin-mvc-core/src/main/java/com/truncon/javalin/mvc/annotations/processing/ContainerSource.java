@@ -32,13 +32,18 @@ final class ContainerSource {
 
     public static ContainerSource getContainerSource(TypeUtils typeUtils, RoundEnvironment environment) throws ProcessingException {
         List<? extends TypeElement> elements = environment.getElementsAnnotatedWith(Component.class).stream()
-                .filter(e -> e.getKind() == ElementKind.INTERFACE)
-                .filter(e -> e.getAnnotation(MvcComponent.class) != null)
-                .map(e -> (TypeElement) e)
-                .collect(Collectors.toList());
+            .filter(e -> e.getKind() == ElementKind.INTERFACE)
+            .filter(e -> e.getAnnotation(MvcComponent.class) != null)
+            .map(e -> (TypeElement) e)
+            .collect(Collectors.toList());
         if (elements.size() > 1) {
             Element[] badElements = elements.toArray(new Element[0]);
-            throw new ProcessingException("Multiple Dagger Components annotated with ControllerComponent were found.", badElements);
+            String message = "More than one "
+                + Component.class.getSimpleName()
+                + " classes annotated with "
+                + MvcComponent.class.getSimpleName()
+                + " were found.";
+            throw new ProcessingException(message, badElements);
         }
         if (elements.size() == 0) {
             return new ContainerSource(typeUtils, null, new ArrayList<>());
