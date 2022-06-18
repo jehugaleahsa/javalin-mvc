@@ -14,7 +14,7 @@ import com.truncon.javalin.mvc.api.ws.WsMessageContext;
 
 @WsController(route = BoxedByteParameterController.ROUTE)
 public final class BoxedByteParameterController {
-    public static final String ROUTE = "/ws/params/boxed/byte/:value";
+    public static final String ROUTE = "/ws/params/boxed/byte/{value}";
 
     @WsConnect
     public void connect(WsConnectContext context, Byte value) {

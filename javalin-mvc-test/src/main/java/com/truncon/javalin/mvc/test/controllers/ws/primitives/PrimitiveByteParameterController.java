@@ -14,7 +14,7 @@ import com.truncon.javalin.mvc.api.ws.WsMessageContext;
 
 @WsController(route = PrimitiveByteParameterController.ROUTE)
 public final class PrimitiveByteParameterController {
-    public static final String ROUTE = "/ws/params/primitives/byte/:value";
+    public static final String ROUTE = "/ws/params/primitives/byte/{value}";
 
     @WsConnect
     public void connect(WsConnectContext context, byte value) {

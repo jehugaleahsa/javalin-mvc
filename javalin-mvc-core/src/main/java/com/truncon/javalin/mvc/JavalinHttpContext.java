@@ -6,13 +6,16 @@ import com.truncon.javalin.mvc.api.HttpContext;
 import com.truncon.javalin.mvc.api.HttpRequest;
 import com.truncon.javalin.mvc.api.HttpResponse;
 import io.javalin.http.Context;
-import io.javalin.plugin.json.JavalinJson;
+import io.javalin.plugin.json.JsonMapper;
 
 public final class JavalinHttpContext implements HttpContext {
+    private final JsonMapper jsonMapper;
     private final Context context;
 
-    public JavalinHttpContext(Context context) {
+    public JavalinHttpContext(JsonMapper jsonMapper, Context context) {
+        Objects.requireNonNull(jsonMapper);
         Objects.requireNonNull(context);
+        this.jsonMapper = jsonMapper;
         this.context = context;
     }
 
@@ -28,12 +31,12 @@ public final class JavalinHttpContext implements HttpContext {
 
     @Override
     public String toJson(Object data) {
-        return JavalinJson.toJson(data);
+        return jsonMapper.toJsonString(data);
     }
 
     @Override
     public <T> T fromJson(String json, Class<T> dataClass) {
-        return JavalinJson.fromJson(json, dataClass);
+        return jsonMapper.fromJsonString(json, dataClass);
     }
 
     @Override

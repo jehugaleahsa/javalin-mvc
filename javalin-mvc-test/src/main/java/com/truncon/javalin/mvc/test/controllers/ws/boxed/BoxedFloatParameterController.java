@@ -14,7 +14,7 @@ import com.truncon.javalin.mvc.api.ws.WsMessageContext;
 
 @WsController(route = BoxedFloatParameterController.ROUTE)
 public final class BoxedFloatParameterController {
-    public static final String ROUTE = "/ws/params/boxed/float/:value";
+    public static final String ROUTE = "/ws/params/boxed/float/{value}";
 
     @WsConnect
     public void connect(WsConnectContext context, Float value) {

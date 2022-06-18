@@ -8,6 +8,7 @@ import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
 import com.truncon.javalin.mvc.ControllerRegistry;
 import com.truncon.javalin.mvc.JavalinControllerRegistry;
 import io.javalin.plugin.json.JavalinJackson;
+import io.javalin.plugin.json.JsonMapper;
 import io.javalin.plugin.openapi.OpenApiOptions;
 import io.javalin.plugin.openapi.OpenApiPlugin;
 import io.javalin.plugin.openapi.ui.SwaggerOptions;
@@ -20,7 +21,13 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
 public final class App {
-    private static final Logger logger = Logger.getLogger(App.class);
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
+        .registerModule(new ParameterNamesModule())
+        .registerModule(new Jdk8Module())
+        .registerModule(new JavaTimeModule())
+        .configure(SerializationFeature.WRITE_DATES_WITH_ZONE_ID, true);
+    private static final JsonMapper JSON_MAPPER = new JavalinJackson(OBJECT_MAPPER);
+    private static final Logger LOGGER = Logger.getLogger(App.class);
     private final Javalin app;
 
     public static void main(String[] args) {
@@ -29,14 +36,9 @@ public final class App {
     }
 
     public static App newInstance() {
-        ObjectMapper mapper = new ObjectMapper()
-            .registerModule(new ParameterNamesModule())
-            .registerModule(new Jdk8Module())
-            .registerModule(new JavaTimeModule())
-            .configure(SerializationFeature.WRITE_DATES_WITH_ZONE_ID, true);
-        JavalinJackson.configure(mapper);
         Javalin app = Javalin.create(config -> {
             config.showJavalinBanner = false;
+            config.jsonMapper(JSON_MAPPER);
             config.registerPlugin(new OpenApiPlugin(getOpenApiOptions()));
             config.addStaticFiles("./public", Location.EXTERNAL);
             config.addSinglePageRoot("/", "./public/index.html", Location.EXTERNAL);
@@ -44,12 +46,12 @@ public final class App {
 
         // Provide method of constructing a new DI container
         Supplier<WebContainer> scopeFactory = () -> DaggerWebContainer.builder().build();
-        ControllerRegistry registry = new JavalinControllerRegistry(scopeFactory);
+        ControllerRegistry registry = new JavalinControllerRegistry(JSON_MAPPER, scopeFactory);
         registry.register(app);
 
         // Prevent unhandled exceptions from taking down the web server
         app.exception(Exception.class, (e, ctx) -> {
-            logger.error("Encountered an unhandled exception.", e);
+            LOGGER.error("Encountered an unhandled exception.", e);
             ctx.status(500);
         });
         return new App(app);
@@ -59,18 +61,12 @@ public final class App {
         this.app = app;
     }
 
-    public CompletableFuture<Void> start(int port) {
-        CompletableFuture<Void> future = new CompletableFuture<>();
-        app.events(events -> events.serverStarted(() -> future.complete(null)));
+    public void start(int port) {
         app.start(port);
-        return future;
     }
 
-    public CompletableFuture<Void> stop() {
-        CompletableFuture<Void> future = new CompletableFuture<>();
-        app.events(events -> events.serverStopped(() -> future.complete(null)));
+    public void stop() {
         app.stop();
-        return future;
     }
 
     private static OpenApiOptions getOpenApiOptions() {

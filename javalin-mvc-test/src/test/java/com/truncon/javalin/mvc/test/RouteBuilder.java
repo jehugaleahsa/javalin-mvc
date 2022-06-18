@@ -55,7 +55,7 @@ public final class RouteBuilder {
         for (String pathKey : pathReplacements.keySet()) {
             String replacement = pathReplacements.get(pathKey);
             replacement = URLEncoder.encode(replacement, StandardCharsets.UTF_8.name());
-            String placeholder = StringUtils.prependIfMissing(pathKey, ":");
+            String placeholder = "\\{" + pathKey + "\\}";
             path = path.replaceAll(placeholder, replacement);
         }
         String queryString = query.stream().map(pair -> {

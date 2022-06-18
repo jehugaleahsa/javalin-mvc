@@ -14,7 +14,7 @@ import com.truncon.javalin.mvc.api.ws.WsMessageContext;
 
 @WsController(route = BoxedBooleanParameterController.ROUTE)
 public final class BoxedBooleanParameterController {
-    public static final String ROUTE = "/ws/params/boxed/boolean/:value";
+    public static final String ROUTE = "/ws/params/boxed/boolean/{value}";
 
     @WsConnect
     public void connect(WsConnectContext context, Boolean value) {

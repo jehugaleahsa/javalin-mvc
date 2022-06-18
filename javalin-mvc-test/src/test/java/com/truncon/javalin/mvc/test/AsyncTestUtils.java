@@ -7,13 +7,13 @@ import java.util.function.Supplier;
 
 public class AsyncTestUtils {
     private static final int RETRY_COUNT = 200;
-    private static final int TIMEOUT_MS = 25;
+    private static final int TIMEOUT_MS = 250;
 
     public static void runTestAsync(AsyncTestRunner runner) {
-        AppHost.startNew().thenCompose(a -> {
+        AppHost.startNewAsync().thenCompose(a -> {
             CompletableFuture<Void> future = retry(() -> runner.runAsync(a), RETRY_COUNT);
             return future.handle((r, error) ->
-                a.stop().handle((r2, closeError) -> {
+                a.stopAsync().handle((r2, closeError) -> {
                     if (error != null) {
                         throw new CompletionException(error);
                     } else if (closeError != null) {
@@ -22,7 +22,7 @@ public class AsyncTestUtils {
                         return r2;
                     }
                 })
-            ).thenCompose(v -> v);
+            );
         }).join();
     }
 
@@ -52,8 +52,8 @@ public class AsyncTestUtils {
         runTestAsync(a -> CompletableFuture.runAsync(() -> {
             try {
                 runner.run(a);
-            } catch (Exception exception) {
-                throw new CompletionException(exception);
+            } catch (Throwable throwable) {
+                throw new CompletionException(throwable);
             }
         }));
     }

@@ -9,7 +9,7 @@ import com.truncon.javalin.mvc.test.models.Pair;
 
 @Controller
 public final class PairController {
-    public static final String ROUTE = "/api/convert/pair/:value";
+    public static final String ROUTE = "/api/convert/pair/{value}";
     @HttpGet(route = ROUTE)
     public ActionResult getPair(@FromPath Pair value) {
         return new ContentResult(value.toString());

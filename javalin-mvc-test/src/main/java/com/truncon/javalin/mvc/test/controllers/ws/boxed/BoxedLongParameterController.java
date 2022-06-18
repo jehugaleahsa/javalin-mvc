@@ -14,7 +14,7 @@ import com.truncon.javalin.mvc.api.ws.WsMessageContext;
 
 @WsController(route = BoxedLongParameterController.ROUTE)
 public final class BoxedLongParameterController {
-    public static final String ROUTE = "/ws/params/boxed/long/:value";
+    public static final String ROUTE = "/ws/params/boxed/long/{value}";
 
     @WsConnect
     public void connect(WsConnectContext context, Long value) {

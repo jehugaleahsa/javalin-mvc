@@ -14,7 +14,7 @@ import com.truncon.javalin.mvc.api.ws.WsMessageContext;
 
 @WsController(route = PrimitiveFloatParameterController.ROUTE)
 public final class PrimitiveFloatParameterController {
-    public static final String ROUTE = "/ws/params/primitives/float/:value";
+    public static final String ROUTE = "/ws/params/primitives/float/{value}";
 
     @WsConnect
     public void connect(WsConnectContext context, float value) {

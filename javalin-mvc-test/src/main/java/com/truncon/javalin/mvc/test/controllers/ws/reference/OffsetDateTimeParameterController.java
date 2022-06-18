@@ -17,7 +17,7 @@ import java.time.format.DateTimeFormatter;
 
 @WsController(route = OffsetDateTimeParameterController.ROUTE)
 public final class OffsetDateTimeParameterController {
-    public static final String ROUTE = "/ws/params/reference/offset-date-time/:value";
+    public static final String ROUTE = "/ws/params/reference/offset-date-time/{value}";
 
     @WsConnect
     public void connect(WsConnectContext context, OffsetDateTime value) {

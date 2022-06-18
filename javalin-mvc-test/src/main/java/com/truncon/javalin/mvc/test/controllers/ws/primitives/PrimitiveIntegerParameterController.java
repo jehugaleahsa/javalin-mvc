@@ -14,7 +14,7 @@ import com.truncon.javalin.mvc.api.ws.WsMessageContext;
 
 @WsController(route = PrimitiveIntegerParameterController.ROUTE)
 public final class PrimitiveIntegerParameterController {
-    public static final String ROUTE = "/ws/params/primitives/integer/:value";
+    public static final String ROUTE = "/ws/params/primitives/integer/{value}";
 
     @WsConnect
     public void connect(WsConnectContext context, int value) {

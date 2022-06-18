@@ -14,7 +14,7 @@ import com.truncon.javalin.mvc.api.ws.WsMessageContext;
 
 @WsController(route = PrimitiveBooleanParameterController.ROUTE)
 public final class PrimitiveBooleanParameterController {
-    public static final String ROUTE = "/ws/params/primitives/boolean/:value";
+    public static final String ROUTE = "/ws/params/primitives/boolean/{value}";
 
     @WsConnect
     public void connect(WsConnectContext context, boolean value) {

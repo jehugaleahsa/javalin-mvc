@@ -1,7 +1,5 @@
 package com.truncon.javalin.mvc.api;
 
-import org.apache.commons.lang3.StringUtils;
-
 import java.io.InputStream;
 import java.util.Objects;
 
@@ -47,7 +45,9 @@ public final class StreamResult implements ActionResult {
     }
 
     public void setContentType(String contentType) {
-        this.contentType = StringUtils.isBlank(contentType) ? "application/octet-stream" : contentType;
+        this.contentType = contentType == null || contentType.isEmpty() || contentType.trim().isEmpty()
+            ? "application/octet-stream"
+            : contentType;
     }
 
     /**

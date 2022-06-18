@@ -14,7 +14,7 @@ import com.truncon.javalin.mvc.api.ws.WsMessageContext;
 
 @WsController(route = StringParameterController.ROUTE)
 public final class StringParameterController {
-    public static final String ROUTE = "/ws/params/reference/string/:value";
+    public static final String ROUTE = "/ws/params/reference/string/{value}";
 
     @WsConnect
     public void connect(WsConnectContext context, String value) {

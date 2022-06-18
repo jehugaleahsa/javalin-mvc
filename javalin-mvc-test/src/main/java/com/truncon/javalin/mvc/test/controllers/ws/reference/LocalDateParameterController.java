@@ -17,7 +17,7 @@ import java.time.format.DateTimeFormatter;
 
 @WsController(route = LocalDateParameterController.ROUTE)
 public final class LocalDateParameterController {
-    public static final String ROUTE = "/ws/params/reference/local-date/:value";
+    public static final String ROUTE = "/ws/params/reference/local-date/{value}";
 
     @WsConnect
     public void connect(WsConnectContext context, LocalDate value) {

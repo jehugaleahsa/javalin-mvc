@@ -16,14 +16,14 @@ import com.truncon.javalin.mvc.api.StatusCodeResult;
 
 @Controller
 public class PrimitivePathParamController {
-    public static final String BOOLEAN_ROUTE = "/api/primitives/path/boolean/:value";
-    public static final String INTEGER_ROUTE = "/api/primitives/path/int/:value";
-    public static final String DOUBLE_ROUTE = "/api/primitives/path/double/:value";
-    public static final String BYTE_ROUTE = "/api/primitives/path/byte/:value";
-    public static final String SHORT_ROUTE = "/api/primitives/path/short/:value";
-    public static final String FLOAT_ROUTE = "/api/primitives/path/float/:value";
-    public static final String CHAR_ROUTE = "/api/primitives/path/char/:value";
-    public static final String LONG_ROUTE = "/api/primitives/path/long/:value";
+    public static final String BOOLEAN_ROUTE = "/api/primitives/path/boolean/{value}";
+    public static final String INTEGER_ROUTE = "/api/primitives/path/int/{value}";
+    public static final String DOUBLE_ROUTE = "/api/primitives/path/double/{value}";
+    public static final String BYTE_ROUTE = "/api/primitives/path/byte/{value}";
+    public static final String SHORT_ROUTE = "/api/primitives/path/short/{value}";
+    public static final String FLOAT_ROUTE = "/api/primitives/path/float/{value}";
+    public static final String CHAR_ROUTE = "/api/primitives/path/char/{value}";
+    public static final String LONG_ROUTE = "/api/primitives/path/long/{value}";
 
     // region GET
 

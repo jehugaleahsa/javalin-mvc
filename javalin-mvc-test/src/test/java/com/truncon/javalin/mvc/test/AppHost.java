@@ -10,16 +10,16 @@ public final class AppHost {
         this.app = app;
     }
 
-    public static CompletableFuture<AppHost> startNew() {
+    public static CompletableFuture<AppHost> startNewAsync() {
         AppHost app = new AppHost(App.newInstance());
-        return app.start().thenApply(v -> app);
+        return app.startAsync().thenApply(v -> app);
     }
 
-    private CompletableFuture<Void> start() {
-        return app.start(PORT);
+    private CompletableFuture<Void> startAsync() {
+        return CompletableFuture.runAsync(() -> app.start(PORT));
     }
 
-    public CompletableFuture<Void> stop() {
-        return app.stop();
+    public CompletableFuture<Void> stopAsync() {
+        return CompletableFuture.runAsync(app::stop);
     }
 }

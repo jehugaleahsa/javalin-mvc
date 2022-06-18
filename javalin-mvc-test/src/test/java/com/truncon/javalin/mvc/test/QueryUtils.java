@@ -1,7 +1,10 @@
 package com.truncon.javalin.mvc.test;
 
-import io.javalin.plugin.json.JavalinJackson;
-import io.javalin.plugin.json.JavalinJson;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
@@ -28,15 +31,29 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public final class QueryUtils {
+    private static final ObjectMapper MAPPER = new ObjectMapper()
+        .registerModule(new ParameterNamesModule())
+        .registerModule(new Jdk8Module())
+        .registerModule(new JavaTimeModule())
+        .configure(SerializationFeature.WRITE_DATES_WITH_ZONE_ID, true);
+
     private QueryUtils() {
     }
 
     public static String getJsonString(Object value) {
-        return JavalinJackson.INSTANCE.toJson(value);
+        try {
+            return MAPPER.writeValueAsString(value);
+        } catch (IOException exception) {
+            return null;
+        }
     }
 
     public static <T> T parseJson(String json, Class<T> clz) {
-        return JavalinJson.fromJson(json, clz);
+        try {
+            return MAPPER.readValue(json, clz);
+        } catch (IOException exception) {
+            return null;
+        }
     }
 
     public static <T> T getJsonResponseForGet(String route, Class<T> clz) throws Exception {

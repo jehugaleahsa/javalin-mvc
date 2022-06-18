@@ -16,7 +16,7 @@ import java.math.BigInteger;
 
 @WsController(route = BigIntegerParameterController.ROUTE)
 public final class BigIntegerParameterController {
-    public static final String ROUTE = "/ws/params/reference/big-integer/:value";
+    public static final String ROUTE = "/ws/params/reference/big-integer/{value}";
 
     @WsConnect
     public void connect(WsConnectContext context, BigInteger value) {

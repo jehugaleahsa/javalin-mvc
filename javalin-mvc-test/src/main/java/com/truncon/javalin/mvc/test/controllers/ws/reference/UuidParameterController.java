@@ -16,7 +16,7 @@ import java.util.UUID;
 
 @WsController(route = UuidParameterController.ROUTE)
 public final class UuidParameterController {
-    public static final String ROUTE = "/ws/params/reference/uuid/:value";
+    public static final String ROUTE = "/ws/params/reference/uuid/{value}";
 
     @WsConnect
     public void connect(WsConnectContext context, UUID value) {

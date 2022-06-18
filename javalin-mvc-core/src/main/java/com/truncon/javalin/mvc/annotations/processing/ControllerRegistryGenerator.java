@@ -11,6 +11,7 @@ import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import com.truncon.javalin.mvc.ControllerRegistry;
 import io.javalin.Javalin;
+import io.javalin.plugin.json.JsonMapper;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 
 import javax.annotation.Generated;
@@ -36,6 +37,7 @@ final class ControllerRegistryGenerator {
     public static final String APP_NAME = "app";
     public static final String REGISTRY_PACKAGE_NAME = "com.truncon.javalin.mvc";
     public static final String REGISTRY_CLASS_NAME = "JavalinControllerRegistry";
+    public static final String JSON_MAPPER_NAME = "jsonMapper";
     public static final String SCOPE_FACTORY_NAME = "scopeFactory";
 
     private final ContainerSource container;
@@ -66,9 +68,17 @@ final class ControllerRegistryGenerator {
         registryTypeBuilder.addAnnotation(generatedAnnotation);
 
         if (container.isFound()) {
+            TypeName jsonMapperType = TypeName.get(JsonMapper.class);
             TypeName factoryType = ParameterizedTypeName.get(
                 ClassName.get(Supplier.class),
                 TypeName.get(container.getType()));
+            FieldSpec jsonMapperField = FieldSpec.builder(
+                jsonMapperType,
+                JSON_MAPPER_NAME,
+                Modifier.PRIVATE,
+                Modifier.FINAL
+            ).build();
+            registryTypeBuilder.addField(jsonMapperField);
             FieldSpec scopeFactoryField = FieldSpec.builder(
                 factoryType,
                 SCOPE_FACTORY_NAME,
@@ -79,7 +89,9 @@ final class ControllerRegistryGenerator {
 
             MethodSpec constructor = MethodSpec.constructorBuilder()
                 .addModifiers(Modifier.PUBLIC)
+                .addParameter(jsonMapperType, JSON_MAPPER_NAME)
                 .addParameter(factoryType, SCOPE_FACTORY_NAME)
+                .addStatement("this.$N = $N", JSON_MAPPER_NAME, JSON_MAPPER_NAME)
                 .addStatement("this.$N = $N", SCOPE_FACTORY_NAME, SCOPE_FACTORY_NAME)
                 .build();
             registryTypeBuilder.addMethod(constructor);
@@ -94,7 +106,7 @@ final class ControllerRegistryGenerator {
         MethodSpec register = MethodSpec.methodBuilder("register")
             .addAnnotation(Override.class)
             .addModifiers(Modifier.PUBLIC)
-            .addParameter(Javalin.class, APP_NAME, Modifier.FINAL)
+            .addParameter(Javalin.class, APP_NAME)
             .addCode(createHttpRouteHandlers(helperBuilder))
             .addCode(createWsRouteHandlers(helperBuilder))
             .build();

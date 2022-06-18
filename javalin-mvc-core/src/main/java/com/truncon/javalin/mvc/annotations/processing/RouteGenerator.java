@@ -20,8 +20,6 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Name;
 import java.lang.annotation.Annotation;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -145,7 +143,7 @@ final class RouteGenerator {
         if (container.isFound()) {
             handlerBuilder.addStatement("$T injector = $N.get()", container.getType(), ControllerRegistryGenerator.SCOPE_FACTORY_NAME);
         }
-        handlerBuilder.addStatement("$T wrapper = new $T(ctx)", HttpContext.class, JavalinHttpContext.class);
+        handlerBuilder.addStatement("$T wrapper = new $T(this.jsonMapper, ctx)", HttpContext.class, JavalinHttpContext.class);
         Name controllerName = container.getDependencyName(controller.getType());
         if (controllerName != null) {
             handlerBuilder.addStatement("$T controller = injector.$L()", controller.getType(), controllerName);
@@ -177,14 +175,14 @@ final class RouteGenerator {
                 "$T<?> future = controller.$N(" + parameters + ").thenApply(r -> r.executeAsync(wrapper))",
                 CompletableFuture.class,
                 method.getSimpleName());
-            handlerBuilder.addStatement("ctx.result(future)");
+            handlerBuilder.addStatement("ctx.future(future)");
         } else if (methodUtils.hasFutureSimpleReturnType(method)) {
             handlerBuilder.addStatement(
                 "$T<?> future = controller.$N(" + parameters + ").thenApply(p -> new $T(p).executeAsync(wrapper))",
                 CompletableFuture.class,
                 method.getSimpleName(),
                 JsonResult.class);
-            handlerBuilder.addStatement("ctx.result(future)");
+            handlerBuilder.addStatement("ctx.future(future)");
         } else {
             handlerBuilder.addStatement(
                 "$T result = controller.$N(" + parameters + ")",

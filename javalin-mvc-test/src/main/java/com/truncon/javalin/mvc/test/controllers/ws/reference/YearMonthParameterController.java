@@ -17,7 +17,7 @@ import java.time.format.DateTimeFormatter;
 
 @WsController(route = YearMonthParameterController.ROUTE)
 public final class YearMonthParameterController {
-    public static final String ROUTE = "/ws/params/reference/year-month/:value";
+    public static final String ROUTE = "/ws/params/reference/year-month/{value}";
     public static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM");
 
     @WsConnect

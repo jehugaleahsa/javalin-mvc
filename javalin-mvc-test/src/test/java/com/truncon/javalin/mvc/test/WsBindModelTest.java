@@ -4,7 +4,6 @@ import com.truncon.javalin.mvc.test.controllers.ws.models.BindFromJsonModelContr
 import com.truncon.javalin.mvc.test.controllers.ws.models.BindSettersFromQueryModelController;
 import com.truncon.javalin.mvc.test.controllers.ws.models.ExplicitBindFromJsonModelController;
 import com.truncon.javalin.mvc.test.models.PrimitiveModel;
-import io.javalin.plugin.json.JavalinJson;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -32,6 +31,7 @@ public final class WsBindModelTest {
         AsyncTestUtils.runTestAsync(app ->
             WsTestUtils.ws(route, session -> session.sendStringAndAwaitResponse("").thenAccept(response -> {
                 PrimitiveModel model = parseJson(response, PrimitiveModel.class);
+                Assert.assertNotNull(model);
                 Assert.assertEquals(Integer.MAX_VALUE, model.getInteger());
                 Assert.assertTrue(model.getBoolean());
                 Assert.assertEquals(Double.MAX_VALUE, model.getDouble(), 0.0);
@@ -49,7 +49,7 @@ public final class WsBindModelTest {
         String route = buildWsRoute(BindFromJsonModelController.ROUTE);
         PrimitiveModel model = getPrimitiveModel();
         AsyncTestUtils.runTestAsync(app -> {
-            String json = JavalinJson.toJson(model);
+            String json = QueryUtils.getJsonString(model);
             return WsTestUtils.ws(route, session -> session.sendStringAndAwaitResponse(json).thenAccept(response -> {
                 PrimitiveModel actual = parseJson(response, PrimitiveModel.class);
                 assertPrimitiveModel(model, actual);
@@ -62,7 +62,7 @@ public final class WsBindModelTest {
         String route = buildWsRoute(ExplicitBindFromJsonModelController.ROUTE);
         PrimitiveModel model = getPrimitiveModel();
         AsyncTestUtils.runTestAsync(app -> {
-            String json = JavalinJson.toJson(model);
+            String json = QueryUtils.getJsonString(model);
             return WsTestUtils.ws(route, session -> session.sendStringAndAwaitResponse(json).thenAccept(response -> {
                 PrimitiveModel actual = parseJson(response, PrimitiveModel.class);
                 assertPrimitiveModel(model, actual);

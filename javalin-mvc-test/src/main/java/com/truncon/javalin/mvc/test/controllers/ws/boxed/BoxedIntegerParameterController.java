@@ -14,7 +14,7 @@ import com.truncon.javalin.mvc.api.ws.WsMessageContext;
 
 @WsController(route = BoxedIntegerParameterController.ROUTE)
 public final class BoxedIntegerParameterController {
-    public static final String ROUTE = "/ws/params/boxed/integer/:value";
+    public static final String ROUTE = "/ws/params/boxed/integer/{value}";
 
     @WsConnect
     public void connect(WsConnectContext context, Integer value) {

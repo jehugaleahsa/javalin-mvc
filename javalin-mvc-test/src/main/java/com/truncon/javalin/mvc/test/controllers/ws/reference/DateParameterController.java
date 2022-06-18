@@ -18,7 +18,7 @@ import java.util.TimeZone;
 
 @WsController(route = DateParameterController.ROUTE)
 public final class DateParameterController {
-    public static final String ROUTE = "/ws/params/reference/date/:value";
+    public static final String ROUTE = "/ws/params/reference/date/{value}";
     public static final SimpleDateFormat FORMATTER = getDateFormatter();
 
     private static SimpleDateFormat getDateFormatter() {

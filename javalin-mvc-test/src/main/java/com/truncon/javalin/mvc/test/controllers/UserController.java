@@ -8,7 +8,7 @@ import com.truncon.javalin.mvc.test.models.UserSearch;
 
 @Controller
 public final class UserController {
-    public static final String GET_USER_ROUTE  = "/api/users/:userId";
+    public static final String GET_USER_ROUTE  = "/api/users/{userId}";
     @HttpGet(route = GET_USER_ROUTE)
     public ActionResult getUser(UserSearch search) {
         // Write code to do search here

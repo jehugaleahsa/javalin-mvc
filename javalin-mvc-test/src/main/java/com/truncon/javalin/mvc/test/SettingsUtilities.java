@@ -1,6 +1,5 @@
 package com.truncon.javalin.mvc.test;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -23,7 +22,7 @@ public final class SettingsUtilities {
     private static void loadSettings(Properties settings, String url) throws IOException {
         Path settingsPath = Paths.get(url);
         if (Files.exists(settingsPath)) {
-            try (InputStream settingsStream = new FileInputStream(settingsPath.toFile())) {
+            try (InputStream settingsStream = Files.newInputStream(settingsPath)) {
                 settings.load(settingsStream);
             }
         }

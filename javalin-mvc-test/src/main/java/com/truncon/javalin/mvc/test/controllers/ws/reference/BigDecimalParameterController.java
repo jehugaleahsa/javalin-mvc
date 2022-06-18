@@ -16,7 +16,7 @@ import java.math.BigDecimal;
 
 @WsController(route = BigDecimalParameterController.ROUTE)
 public final class BigDecimalParameterController {
-    public static final String ROUTE = "/ws/params/reference/big-decimal/:value";
+    public static final String ROUTE = "/ws/params/reference/big-decimal/{value}";
 
     @WsConnect
     public void connect(WsConnectContext context, BigDecimal value) {
