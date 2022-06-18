@@ -16,56 +16,83 @@ import javax.lang.model.type.TypeMirror;
 import java.util.Map;
 
 final class ParameterGenerator {
+    private final HelperMethodBuilder helperBuilder;
     private final VariableElement parameter;
+    private String context = "context";
+    private String wrapper = "wrapper";
+    private String injector = "injector";
 
-    private ParameterGenerator(VariableElement parameter) {
+    private ParameterGenerator(HelperMethodBuilder helperBuilder, VariableElement parameter) {
+        this.helperBuilder = helperBuilder;
         this.parameter = parameter;
     }
 
-    public static String bindParameters(
+    public void setContextName(String name) {
+        this.context = name;
+    }
+
+    public void setWrapperName(String name) {
+        this.wrapper = name;
+    }
+
+    public void setInjectorName(String name) {
+        this.injector = name;
+    }
+
+    public static ParameterResult bindParameters(
             ExecutableElement method,
             String context,
             String wrapper,
+            String injector,
             HelperMethodBuilder helperBuilder,
             Map<String, ConverterBuilder> converterLookup) {
-        String[] arguments = method.getParameters().stream()
-            .map(ParameterGenerator::new)
-            .map(g -> g.generateParameter(context, wrapper, helperBuilder, converterLookup))
-            .toArray(String[]::new);
-        return String.join(", ", arguments);
+        ParameterResult result = new ParameterResult();
+        for (VariableElement parameter : method.getParameters()) {
+            ParameterGenerator generator = new ParameterGenerator(helperBuilder, parameter);
+            generator.setContextName(context);
+            generator.setWrapperName(wrapper);
+            generator.setInjectorName(injector);
+            generator.generateParameter(result, converterLookup);
+        }
+        return result;
     }
 
-    public static String bindWsParameters(
+    public static ParameterResult bindWsParameters(
             ExecutableElement method,
             String context,
             Class<? extends WsContext> wrapperType,
             String wrapper,
+            String injector,
             HelperMethodBuilder helperBuilder,
             Map<String, ConverterBuilder> converterLookup) {
-        String[] arguments = method.getParameters().stream()
-                .map(ParameterGenerator::new)
-                .map(g -> g.generateWsParameter(context, wrapperType, wrapper, helperBuilder, converterLookup))
-                .toArray(String[]::new);
-        return String.join(", ", arguments);
+        ParameterResult result = new ParameterResult();
+        for (VariableElement parameter : method.getParameters()) {
+            ParameterGenerator generator = new ParameterGenerator(helperBuilder, parameter);
+            generator.setContextName(context);
+            generator.setWrapperName(wrapper);
+            generator.setInjectorName(injector);
+            generator.generateWsParameter(result, wrapperType, converterLookup);
+        }
+        return result;
     }
 
-    public String generateParameter(
-            String context,
-            String wrapper,
-            HelperMethodBuilder helperBuilder,
-            Map<String, ConverterBuilder> converterLookup) {
+    public void generateParameter(ParameterResult result, Map<String, ConverterBuilder> converterLookup) {
         TypeMirror parameterType = parameter.asType();
         if (isNotBound()) {
-            return CodeBlock.of("($T) null", parameterType).toString();
+            String argument = CodeBlock.of("($T) null", parameterType).toString();
+            result.addArgument(argument);
+            return;
         }
+
         TypeUtils typeUtils = helperBuilder.getContainer().getTypeUtils();
         String nonBinderParameter = getNonBinderParameter(context, wrapper, typeUtils, parameterType);
         if (!StringUtils.isBlank(nonBinderParameter)) {
-            return nonBinderParameter;
+            result.addArgument(nonBinderParameter);
+            return;
         }
+
         String parameterName = getParameterName();
         ValueSource valueSource = getValueSource(parameter);
-
         String converterName = getConverterName();
         ConverterBuilder converter = converterLookup.get(converterName);
         if (converter == null) {
@@ -85,10 +112,16 @@ final class ParameterGenerator {
         } else {
             ContainerSource container = helperBuilder.getContainer();
             if (converter.hasContextOrRequestType(HttpContext.class)) {
-                return converter.getConverterCall(container, wrapper, parameterName, valueSource).toString();
+                ConvertCallResult callResult = converter.getConverterCall(container, wrapper, parameterName, injector, valueSource);
+                result.addArgument(callResult.getCall());
+                result.markInjectorNeeded(callResult.isInjectorNeeded());
+                return;
             } else if (converter.hasContextOrRequestType(HttpRequest.class)) {
                 String requestName = wrapper + ".getRequest()";
-                return converter.getConverterCall(container, requestName, parameterName, valueSource).toString();
+                ConvertCallResult callResult = converter.getConverterCall(container, requestName, parameterName, injector, valueSource);
+                result.addArgument(callResult.getCall());
+                result.markInjectorNeeded(callResult.isInjectorNeeded());
+                return;
             } else {
                 String message = "The conversion method '"
                     + converterName
@@ -99,7 +132,9 @@ final class ParameterGenerator {
 
         if (valueSource == ValueSource.Json) {
             String jsonMethod = helperBuilder.addJsonMethod();
-            return CodeBlock.of("$N($N, $T.class)", jsonMethod, wrapper, parameterType).toString();
+            String argument = CodeBlock.of("$N($N, $T.class)", jsonMethod, wrapper, parameterType).toString();
+            result.addArgument(argument);
+            return;
         }
 
         Class<?> parameterClass = helperBuilder.getParameterClass(parameterType);
@@ -110,25 +145,31 @@ final class ParameterGenerator {
             String conversionMethod = helperBuilder.addConversionMethod(actualClass, parameterClass.isArray());
             if (conversionMethod != null) {
                 String sourceMethod = helperBuilder.addSourceMethod(valueSource, parameterClass.isArray());
-                return CodeBlock.builder()
+                String argument = CodeBlock.builder()
                     .add("$N($N($N, $S))", conversionMethod, sourceMethod, wrapper, parameterName)
                     .build()
                     .toString();
+                result.addArgument(argument);
+                return;
             }
         }
 
         ValueSource defaultBinding = HelperMethodBuilder.getDefaultFromBinding(parameter);
         if (defaultBinding != ValueSource.Any || helperBuilder.hasMemberBinding(parameter)) {
             TypeElement element = typeUtils.getTypeElement(parameterType);
-            String conversionMethod = helperBuilder.addConversionMethod(element, defaultBinding);
-            return CodeBlock.builder()
-                .add("$N($N)", conversionMethod, wrapper)
+            ConversionMethodResult methodResult = helperBuilder.addConversionMethod(element, defaultBinding);
+            String argument = CodeBlock.builder()
+                .add("$N($N)", methodResult.getMethod(), wrapper)
                 .build()
                 .toString();
+            result.addArgument(argument);
+            result.markInjectorNeeded(methodResult.isInjectorNeeded());
+            return;
         }
 
         String jsonMethod = helperBuilder.addJsonMethod();
-        return CodeBlock.of("$N($N, $T.class)", jsonMethod, wrapper, parameterType).toString();
+        String argument = CodeBlock.of("$N($N, $T.class)", jsonMethod, wrapper, parameterType).toString();
+        result.addArgument(argument);
     }
 
     private boolean isNotBound() {
@@ -137,7 +178,7 @@ final class ParameterGenerator {
     }
 
     private String getConverterName() {
-        // Always prefer a action method parameter annotation over a type annotation.
+        // Always prefer an action method parameter annotation over a type annotation.
         UseConverter parameterUsage = parameter.getAnnotation(UseConverter.class);
         if (parameterUsage != null) {
             return parameterUsage.value();
@@ -172,20 +213,21 @@ final class ParameterGenerator {
         }
     }
 
-    public String generateWsParameter(
-            String context,
+    public void generateWsParameter(
+            ParameterResult result,
             Class<? extends WsContext> wrapperType,
-            String wrapper,
-            HelperMethodBuilder helperBuilder,
             Map<String, ConverterBuilder> converterLookup) {
         TypeMirror parameterType = parameter.asType();
         if (isNotBound()) {
-            return CodeBlock.of("($T) null", parameterType).toString();
+            String argument = CodeBlock.of("($T) null", parameterType).toString();
+            result.addArgument(argument);
+            return;
         }
         TypeUtils typeUtils = helperBuilder.getContainer().getTypeUtils();
         String nonBinderParameter = getNonBinderWsParameter(typeUtils, context, wrapperType, wrapper, parameterType);
         if (!StringUtils.isBlank(nonBinderParameter)) {
-            return nonBinderParameter;
+            result.addArgument(nonBinderParameter);
+            return;
         }
 
         String parameterName = getParameterName();
@@ -210,10 +252,16 @@ final class ParameterGenerator {
         } else {
             ContainerSource container = helperBuilder.getContainer();
             if (converter.hasContextOrRequestType(WsContext.class) || converter.hasContextOrRequestType(wrapperType)) {
-                return converter.getConverterCall(container, wrapper, parameterName, valueSource).toString();
+                ConvertCallResult callResult = converter.getConverterCall(container, wrapper, parameterName, injector, valueSource);
+                result.addArgument(callResult.getCall());
+                result.markInjectorNeeded(callResult.isInjectorNeeded());
+                return;
             } else if (converter.hasContextOrRequestType(WsRequest.class)) {
                 String requestName = wrapper + ".getRequest()";
-                return converter.getConverterCall(container, requestName, parameterName, valueSource).toString();
+                ConvertCallResult callResult = converter.getConverterCall(container, requestName, parameterName, injector, valueSource);
+                result.addArgument(callResult.getCall());
+                result.markInjectorNeeded(callResult.isInjectorNeeded());
+                return;
             } else {
                 String message = "The conversion method '"
                     + converterName
@@ -226,16 +274,22 @@ final class ParameterGenerator {
             if (wrapperType == WsMessageContext.class) {
                 // Lastly, assume the type should be converted using JSON.
                 String jsonMethod = helperBuilder.addWsJsonMethod();
-                return CodeBlock.of("$N($N, $T.class)", jsonMethod, wrapper, parameterType).toString();
+                String argument = CodeBlock.of("$N($N, $T.class)", jsonMethod, wrapper, parameterType).toString();
+                result.addArgument(argument);
+                return;
             } else if (wrapperType == WsBinaryMessageContext.class) {
                 String binaryMethod = helperBuilder.addWsBinaryMethod(parameterType);
                 if (binaryMethod != null) {
-                    return CodeBlock.of("$N($N)", binaryMethod, wrapper).toString();
+                    String argument = CodeBlock.of("$N($N)", binaryMethod, wrapper).toString();
+                    result.addArgument(argument);
+                    return;
                 }
             } else {
                 // Ignore requests to bind unrecognized types to the other WebSocket methods.
                 // Provide explicit cast to prevent overloads from generating ambiguity errors.
-                return CodeBlock.of("($T) null", parameterType).toString();
+                String argument = CodeBlock.of("($T) null", parameterType).toString();
+                result.addArgument(argument);
+                return;
             }
         }
 
@@ -245,7 +299,9 @@ final class ParameterGenerator {
         if (wrapperType == WsBinaryMessageContext.class) {
             String binaryMethod = helperBuilder.addWsBinaryMethod(parameterType);
             if (binaryMethod != null) {
-                return CodeBlock.of("$N($N)", binaryMethod, wrapper).toString();
+                String argument = CodeBlock.of("$N($N)", binaryMethod, wrapper).toString();
+                result.addArgument(argument);
+                return;
             }
         }
 
@@ -259,10 +315,12 @@ final class ParameterGenerator {
             String conversionMethod = helperBuilder.addConversionMethod(actualClass, parameterClass.isArray());
             if (conversionMethod != null) {
                 String sourceMethod = helperBuilder.addSourceMethod(valueSource, wrapperType, parameterClass.isArray());
-                return CodeBlock.builder()
+                String argument = CodeBlock.builder()
                     .add("$N($N($N, $S))", conversionMethod, sourceMethod, wrapper, parameterName)
                     .build()
                     .toString();
+                result.addArgument(argument);
+                return;
             }
         }
 
@@ -271,11 +329,14 @@ final class ParameterGenerator {
         WsValueSource defaultBinding = HelperMethodBuilder.getDefaultWsFromBinding(parameter);
         if (defaultBinding != WsValueSource.Any || helperBuilder.hasWsMemberBinding(parameter)) {
             TypeElement element = typeUtils.getTypeElement(parameterType);
-            String conversionMethod = helperBuilder.addConversionMethod(element, defaultBinding, wrapperType);
-            return CodeBlock.builder()
-                .add("$N($N)", conversionMethod, wrapper)
+            ConversionMethodResult methodResult = helperBuilder.addConversionMethod(element, defaultBinding, wrapperType);
+            String argument = CodeBlock.builder()
+                .add("$N($N)", methodResult.getMethod(), wrapper)
                 .build()
                 .toString();
+            result.addArgument(argument);
+            result.markInjectorNeeded(methodResult.isInjectorNeeded());
+            return;
         }
 
         // If we get to this point, we know there's no converter, @From annotation or primitive mapping.
@@ -283,11 +344,14 @@ final class ParameterGenerator {
         // then, that it is probably meant to be bound from JSON.
         if (wrapperType == WsMessageContext.class) {
             String jsonMethod = helperBuilder.addWsJsonMethod();
-            return CodeBlock.of("$N($N, $T.class)", jsonMethod, wrapper, parameterType).toString();
+            String argument = CodeBlock.of("$N($N, $T.class)", jsonMethod, wrapper, parameterType).toString();
+            result.addArgument(argument);
+            return;
         }
         // Ignore requests to bind unrecognized types to the other WebSocket methods.
         // Provide explicit cast to prevent overloads from generating ambiguity errors.
-        return CodeBlock.of("($T) null", parameterType).toString();
+        String argument = CodeBlock.of("($T) null", parameterType).toString();
+        result.addArgument(argument);
     }
 
     private static String getNonBinderWsParameter(

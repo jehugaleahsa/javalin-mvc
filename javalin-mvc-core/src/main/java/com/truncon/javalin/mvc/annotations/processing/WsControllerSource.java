@@ -220,83 +220,126 @@ final class WsControllerSource {
         handlerBuilder.beginControlFlow("ws.$N(($N) ->", javalinHandler, context);
         final String wrapper = "context";
         handlerBuilder.addStatement("$T $N = new $T(this.jsonMapper, $N)", contextInterface, wrapper, contextImpl, context);
-        addController(helperBuilder.getContainer(), handlerBuilder);
+
+        CodeBlock.Builder restBuilder = CodeBlock.builder();
+
+        boolean injectorNeeded = addController(helperBuilder.getContainer(), restBuilder);
 
         List<WsBeforeGenerator> beforeGenerators = WsBeforeGenerator.getBeforeGenerators(container, method);
         List<WsAfterGenerator> afterGenerators = WsAfterGenerator.getAfterGenerators(container, method);
-        generateBeforeHandlers(handlerBuilder, wrapper, beforeGenerators, container.isFound() ? "injector" : null);
+        String injector = "injector";
+        boolean beforeInjectorNeeded = generateBeforeHandlers(
+            restBuilder,
+            wrapper,
+            beforeGenerators,
+            container.isFound() ? injector : null);
+        injectorNeeded |= beforeInjectorNeeded;
         if (!afterGenerators.isEmpty()) {
-            handlerBuilder.addStatement("Exception caughtException = null;");
-            handlerBuilder.beginControlFlow("try");
+            restBuilder.addStatement("Exception caughtException = null;");
+            restBuilder.beginControlFlow("try");
         }
 
-        String parameters = ParameterGenerator.bindWsParameters(
-                method,
-                context,
-                contextInterface,
-                wrapper,
-                helperBuilder,
-                converterLookup);
+        ParameterResult parameterResult = ParameterGenerator.bindWsParameters(
+            method,
+            context,
+            contextInterface,
+            wrapper,
+            injector,
+            helperBuilder,
+            converterLookup);
         MethodUtils methodUtils = new MethodUtils(typeUtils);
         if (methodUtils.hasVoidReturnType(method)) {
-            handlerBuilder.addStatement("controller.$N(" + parameters + ")", method.getSimpleName());
+            restBuilder.addStatement("controller.$N(" + parameterResult.getArgumentList() + ")", method.getSimpleName());
         } else if (methodUtils.hasWsActionResultReturnType(method)) {
-            handlerBuilder.addStatement(
-                "$T result = controller.$N(" + parameters + ")",
+            restBuilder.addStatement(
+                "$T result = controller.$N(" + parameterResult.getArgumentList() + ")",
                 WsActionResult.class,
                 method.getSimpleName());
-            handlerBuilder.addStatement("result.execute($N)", wrapper);
+            restBuilder.addStatement("result.execute($N)", wrapper);
         } else if (methodUtils.hasFutureWsActionResultReturnType(method)) {
-            handlerBuilder.addStatement(
-                "controller.$N(" + parameters + ").thenApply(r -> r.execute($N))",
+            restBuilder.addStatement(
+                "controller.$N(" + parameterResult.getArgumentList() + ").thenApply(r -> r.execute($N))",
                 method.getSimpleName(),
                 wrapper);
         } else if (methodUtils.hasFutureSimpleReturnType(method)) {
-            handlerBuilder.addStatement(
-                "controller.$N(" + parameters + ").thenApply(p -> new $T(p).execute($N))",
+            restBuilder.addStatement(
+                "controller.$N(" + parameterResult.getArgumentList() + ").thenApply(p -> new $T(p).execute($N))",
                 method.getSimpleName(),
                 WsJsonResult.class,
                 wrapper);
         } else {
-            handlerBuilder.addStatement(
-                "$T result = controller.$N(" + parameters + ")",
+            restBuilder.addStatement(
+                "$T result = controller.$N(" + parameterResult.getArgumentList() + ")",
                 method.getReturnType(),
                 method.getSimpleName());
-            handlerBuilder.addStatement("new $T(result).execute($N)", WsJsonResult.class, wrapper);
+            restBuilder.addStatement("new $T(result).execute($N)", WsJsonResult.class, wrapper);
         }
+        injectorNeeded |= parameterResult.isInjectorNeeded();
 
         if (!afterGenerators.isEmpty()) {
-            handlerBuilder.nextControlFlow("catch (Exception exception)");
-            handlerBuilder.addStatement("caughtException = exception");
-            handlerBuilder.endControlFlow();
-            generateAfterHandlers(handlerBuilder, wrapper, "caughtException", afterGenerators, container.isFound() ? "injector" : null);
+            restBuilder.nextControlFlow("catch (Exception exception)");
+            restBuilder.addStatement("caughtException = exception");
+            restBuilder.endControlFlow();
+            boolean afterInjectorNeeded = generateAfterHandlers(
+                restBuilder,
+                wrapper,
+                "caughtException",
+                afterGenerators,
+                container.isFound() ? "injector" : null);
+            injectorNeeded |= afterInjectorNeeded;
         }
+
+        // only create injector if needed
+        if (injectorNeeded) {
+            handlerBuilder.addStatement("$T injector = $N.get()", container.getType(), ControllerRegistryGenerator.SCOPE_FACTORY_NAME);
+        }
+        handlerBuilder.add(restBuilder.build());
 
         handlerBuilder.endControlFlow(")");
     }
 
-    private void addController(ContainerSource container, CodeBlock.Builder handlerBuilder) {
+    private boolean addController(ContainerSource container, CodeBlock.Builder handlerBuilder) {
         Name controllerName = container.getDependencyName(controllerElement);
         if (container.isFound() && controllerName != null) {
-            handlerBuilder.addStatement("$T injector = $N.get()", container.getType(), ControllerRegistryGenerator.SCOPE_FACTORY_NAME);
             handlerBuilder.addStatement("$T controller = injector.$L()", controllerElement, controllerName);
+            return true;
         } else {
             handlerBuilder.addStatement("$T controller = new $T()", controllerElement, controllerElement);
+            return false;
         }
     }
 
-    private void generateBeforeHandlers(CodeBlock.Builder handlerBuilder, String contextName, List<WsBeforeGenerator> generators, String injectorName) {
+    private boolean generateBeforeHandlers(
+            CodeBlock.Builder handlerBuilder,
+            String contextName,
+            List<WsBeforeGenerator> generators,
+            String injectorName) {
+        boolean injectorNeeded = false;
         for (WsBeforeGenerator generator : generators) {
-            generator.generateBefore(handlerBuilder, injectorName, contextName);
+            boolean beforeInjectorNeeded = generator.generateBefore(handlerBuilder, injectorName, contextName);
+            injectorNeeded |= beforeInjectorNeeded;
         }
+        return injectorNeeded;
     }
 
-    private void generateAfterHandlers(CodeBlock.Builder handlerBuilder, String contextName, String exceptionName, List<WsAfterGenerator> generators, String injectorName) {
+    private boolean generateAfterHandlers(
+            CodeBlock.Builder handlerBuilder,
+            String contextName,
+            String exceptionName,
+            List<WsAfterGenerator> generators,
+            String injectorName) {
+        boolean injectorNeeded = false;
         for (WsAfterGenerator generator : generators) {
-            generator.generateAfter(handlerBuilder, injectorName, contextName, exceptionName);
+            boolean afterInjectorNeeded = generator.generateAfter(
+                handlerBuilder,
+                injectorName,
+                contextName,
+                exceptionName);
+            injectorNeeded |= afterInjectorNeeded;
         }
         handlerBuilder.beginControlFlow("if (caughtException != null)")
             .addStatement("throw caughtException")
             .endControlFlow();
+        return injectorNeeded;
     }
 }

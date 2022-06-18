@@ -226,7 +226,7 @@ public final class HelperMethodBuilder {
         return ValueSource.Any;
     }
 
-    public String addConversionMethod(TypeElement element, ValueSource defaultSource) {
+    public ConversionMethodResult addConversionMethod(TypeElement element, ValueSource defaultSource) {
         // We prevent infinite recursion by making sure we don't try to recursively
         // bind sub-members of the same type.
         Set<String> visitedTypes = new HashSet<>();
@@ -234,14 +234,14 @@ public final class HelperMethodBuilder {
         return addConversionMethodInternal(element, defaultSource, visitedTypes);
     }
 
-    private String addConversionMethodInternal(
+    private ConversionMethodResult addConversionMethodInternal(
             TypeElement element,
             ValueSource defaultSource,
             Set<String> visitedTypes) {
         ImmutablePair<ValueSource, String> key = ImmutablePair.of(defaultSource, element.getQualifiedName().toString());
         String methodName = complexConversionLookup.get(key);
         if (methodName != null) {
-            return methodName;
+            return new ConversionMethodResult(methodName, false);
         }
         CodeBlock.Builder methodBodyBuilder = CodeBlock.builder();
         Name modelName = container.isFound() ? container.getDependencyName(element) : null;
@@ -250,6 +250,8 @@ public final class HelperMethodBuilder {
         } else {
             methodBodyBuilder.addStatement("$T model = injector.$L()", element.asType(), modelName);
         }
+
+        boolean injectorNeeded = false;
         Collection<Element> memberElements = getBoundMemberElements(
             element,
             e -> defaultSource != ValueSource.Any || hasFromAnnotation(e) || hasMemberBinding(e)
@@ -258,7 +260,9 @@ public final class HelperMethodBuilder {
             if (hasAnnotation(memberElement, NoBinding.class)) {
                 continue;
             }
-            if (addConverterSetter(memberElement, methodBodyBuilder, defaultSource)) {
+            ConverterSetterResult setterResult = addConverterSetter(memberElement, methodBodyBuilder, defaultSource);
+            if (setterResult.isCalled()) {
+                injectorNeeded |= setterResult.isInjectorNeeded();
                 continue;
             }
             if (addJsonSetter(memberElement, methodBodyBuilder)) {
@@ -267,17 +271,19 @@ public final class HelperMethodBuilder {
             if (addPrimitiveSetter(memberElement, methodBodyBuilder, defaultSource)) {
                 continue;
             }
+
             ValueSource defaultSubSource = getDefaultFromBinding(memberElement);
             if (defaultSubSource != ValueSource.Any || hasMemberBinding(memberElement)) {
                 TypeElement subElement = container.getTypeUtils().getTypeElement(getParameterType(memberElement));
                 if (!visitedTypes.contains(subElement.getQualifiedName().toString())) {
                     visitedTypes.add(subElement.getQualifiedName().toString());
-                    String conversionMethod = addConversionMethodInternal(subElement, defaultSource, visitedTypes);
+                    ConversionMethodResult methodResult = addConversionMethodInternal(subElement, defaultSource, visitedTypes);
                     String valueExpression = CodeBlock.builder()
-                        .add("$N($N)", conversionMethod, "context")
+                        .add("$N($N)", methodResult.getMethod(), "context")
                         .build()
                         .toString();
                     setMember(memberElement, methodBodyBuilder, valueExpression);
+                    injectorNeeded |= methodResult.isInjectorNeeded();
                 }
             }
         }
@@ -296,7 +302,7 @@ public final class HelperMethodBuilder {
         typeBuilder.addMethod(method);
         complexConversionLookup.put(key, methodName);
         complexConversionCounts.put(simpleName, count + 1);
-        return methodName;
+        return new ConversionMethodResult(methodName, injectorNeeded);
     }
 
     private boolean isValidBindTarget(Element memberElement) {
@@ -308,13 +314,13 @@ public final class HelperMethodBuilder {
         }
     }
 
-    private boolean addConverterSetter(
+    private ConverterSetterResult addConverterSetter(
             Element memberElement,
             CodeBlock.Builder methodBodyBuilder,
             ValueSource defaultSource) {
         String converterName = getConverterName(memberElement);
         if (converterName == null) {
-            return false;
+            return new ConverterSetterResult(false, false);
         }
         ConverterBuilder converter = converterLookup.get(converterName);
         if (converter == null) {
@@ -336,14 +342,14 @@ public final class HelperMethodBuilder {
         String memberName = getMemberName(memberElement);
         ValueSource valueSource = getMemberValueSource(memberElement, defaultSource);
         if (converter.hasContextOrRequestType(HttpContext.class)) {
-            String call = converter.getConverterCall(container, "context", memberName, valueSource).toString();
-            setMember(memberElement, methodBodyBuilder, call);
-            return true;
+            ConvertCallResult result = converter.getConverterCall(container, "context", memberName, "injector", valueSource);
+            setMember(memberElement, methodBodyBuilder, result.getCall());
+            return new ConverterSetterResult(true, result.isInjectorNeeded());
         } else if (converter.hasContextOrRequestType(HttpRequest.class)) {
             String requestName = "context.getRequest()";
-            String call = converter.getConverterCall(container, requestName, memberName, valueSource).toString();
-            setMember(memberElement, methodBodyBuilder, call);
-            return true;
+            ConvertCallResult result = converter.getConverterCall(container, requestName, memberName, "injector", valueSource);
+            setMember(memberElement, methodBodyBuilder, result.getCall());
+            return new ConverterSetterResult(true, result.isInjectorNeeded());
         } else {
             String message = "The conversion method '"
                 + converterName
@@ -557,7 +563,7 @@ public final class HelperMethodBuilder {
         return WsValueSource.Any;
     }
 
-    public String addConversionMethod(
+    public ConversionMethodResult addConversionMethod(
             TypeElement element,
             WsValueSource defaultSource,
             Class<? extends WsContext> contextType) {
@@ -569,7 +575,7 @@ public final class HelperMethodBuilder {
     }
 
     @NotNull
-    private String addConversionMethodInternal(
+    private ConversionMethodResult addConversionMethodInternal(
             TypeElement element,
             WsValueSource defaultSource,
             Class<? extends WsContext> contextType,
@@ -580,8 +586,9 @@ public final class HelperMethodBuilder {
             contextType.getSimpleName());
         String methodName = complexWsConversionLookup.get(key);
         if (methodName != null) {
-            return methodName;
+            return new ConversionMethodResult(methodName, false);
         }
+
         CodeBlock.Builder methodBodyBuilder = CodeBlock.builder();
         Name modelName = container.isFound() ? container.getDependencyName(element) : null;
         if (modelName == null) {
@@ -589,6 +596,7 @@ public final class HelperMethodBuilder {
         } else {
             methodBodyBuilder.addStatement("$T model = injector.$L()", element.asType(), modelName);
         }
+        boolean injectorNeeded = false;
         Collection<Element> memberElements = getBoundMemberElements(
             element,
             e -> defaultSource != WsValueSource.Any || hasWsFromAnnotation(e) || hasWsMemberBinding(e)
@@ -597,7 +605,10 @@ public final class HelperMethodBuilder {
             if (hasAnnotation(memberElement, NoBinding.class)) {
                 continue;
             }
-            if (addConverterSetter(memberElement, methodBodyBuilder, contextType, defaultSource)) {
+            ConverterSetterResult setterResult = addConverterSetter(
+                memberElement, methodBodyBuilder, contextType, defaultSource);
+            if (setterResult.isCalled()) {
+                injectorNeeded |= setterResult.isInjectorNeeded();
                 continue;
             }
             if (addJsonSetter(memberElement, methodBodyBuilder, contextType)) {
@@ -609,17 +620,19 @@ public final class HelperMethodBuilder {
             if (addPrimitiveSetter(memberElement, methodBodyBuilder, defaultSource, contextType)) {
                 continue;
             }
+
             WsValueSource defaultSubSource = getDefaultWsFromBinding(memberElement);
             if (defaultSubSource != WsValueSource.Any || hasWsMemberBinding(memberElement)) {
                 TypeElement subElement = container.getTypeUtils().getTypeElement(getParameterType(memberElement));
                 if (!visitedTypes.contains(subElement.getQualifiedName().toString())) {
                     visitedTypes.add(subElement.getQualifiedName().toString());
-                    String conversionMethod = addConversionMethodInternal(subElement, defaultSource, contextType, visitedTypes);
+                    ConversionMethodResult methodResult = addConversionMethodInternal(subElement, defaultSource, contextType, visitedTypes);
                     String valueExpression = CodeBlock.builder()
-                        .add("$N($N)", conversionMethod, "context")
+                        .add("$N($N)", methodResult.getMethod(), "context")
                         .build()
                         .toString();
                     setMember(memberElement, methodBodyBuilder, valueExpression);
+                    injectorNeeded |= methodResult.isInjectorNeeded();
                 }
             }
         }
@@ -637,17 +650,18 @@ public final class HelperMethodBuilder {
         typeBuilder.addMethod(method);
         complexWsConversionLookup.put(key, methodName);
         complexConversionCounts.put(simpleName, count + 1);
-        return methodName;
+
+        return new ConversionMethodResult(methodName, injectorNeeded);
     }
 
-    private boolean addConverterSetter(
+    private ConverterSetterResult addConverterSetter(
             Element memberElement,
             CodeBlock.Builder methodBodyBuilder,
             Class<? extends WsContext> contextType,
             WsValueSource defaultSource) {
         String converterName = getConverterName(memberElement);
         if (converterName == null) {
-            return false;
+            return new ConverterSetterResult(false, false);
         }
         ConverterBuilder converter = converterLookup.get(converterName);
         if (converter == null) {
@@ -669,14 +683,14 @@ public final class HelperMethodBuilder {
         String memberName = getMemberName(memberElement);
         WsValueSource valueSource = getMemberValueSource(memberElement, defaultSource);
         if (converter.hasContextOrRequestType(WsContext.class) || converter.hasContextOrRequestType(contextType)) {
-            String call = converter.getConverterCall(container, "context", memberName, valueSource).toString();
-            setMember(memberElement, methodBodyBuilder, call);
-            return true;
+            ConvertCallResult result = converter.getConverterCall(container, "context", memberName, "injector", valueSource);
+            setMember(memberElement, methodBodyBuilder, result.getCall());
+            return new ConverterSetterResult(true, result.isInjectorNeeded());
         } else if (converter.hasContextOrRequestType(WsRequest.class)) {
             String requestName = "context.getRequest()";
-            String call = converter.getConverterCall(container, requestName, memberName, valueSource).toString();
-            setMember(memberElement, methodBodyBuilder, call);
-            return true;
+            ConvertCallResult result = converter.getConverterCall(container, requestName, memberName, "injector", valueSource);
+            setMember(memberElement, methodBodyBuilder, result.getCall());
+            return new ConverterSetterResult(true, result.isInjectorNeeded());
         } else {
             String message = "The conversion method '"
                 + converterName

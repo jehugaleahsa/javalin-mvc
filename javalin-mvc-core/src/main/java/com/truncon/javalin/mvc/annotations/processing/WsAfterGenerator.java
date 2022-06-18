@@ -36,7 +36,7 @@ final class WsAfterGenerator {
         return handlers.stream().map(h -> new WsAfterGenerator(container, h)).collect(Collectors.toList());
     }
 
-    public void generateAfter(
+    public boolean generateAfter(
             CodeBlock.Builder routeBuilder,
             String injectorName,
             String contextName,
@@ -45,21 +45,23 @@ final class WsAfterGenerator {
         String arguments = getArguments();
         if (handlerGetter == null) {
             routeBuilder.addStatement(
-                    "$L = new $T().executeAfter($L, $L, $L)",
-                    exceptionName,
-                    getTypeMirror(),
-                    contextName,
-                    arguments,
-                    exceptionName);
+                "$L = new $T().executeAfter($L, $L, $L)",
+                exceptionName,
+                getTypeMirror(),
+                contextName,
+                arguments,
+                exceptionName);
+            return false;
         } else {
             routeBuilder.addStatement(
-                    "$L = $L.$L().executeAfter($L, $L, $L)",
-                    exceptionName,
-                    injectorName,
-                    handlerGetter,
-                    contextName,
-                    arguments,
-                    exceptionName);
+                "$L = $L.$L().executeAfter($L, $L, $L)",
+                exceptionName,
+                injectorName,
+                handlerGetter,
+                contextName,
+                arguments,
+                exceptionName);
+            return true;
         }
     }
 

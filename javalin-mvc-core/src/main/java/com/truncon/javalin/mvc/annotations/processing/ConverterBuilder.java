@@ -12,7 +12,6 @@ import com.truncon.javalin.mvc.api.ws.WsErrorContext;
 import com.truncon.javalin.mvc.api.ws.WsMessageContext;
 import com.truncon.javalin.mvc.api.ws.WsRequest;
 import com.truncon.javalin.mvc.api.ws.WsValueSource;
-import org.apache.commons.lang3.tuple.ImmutablePair;
 
 import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.element.Element;
@@ -100,7 +99,7 @@ public final class ConverterBuilder {
         remaining.removeAll(names);
         // At this point, the only remaining parameter should be a value source.
         // We might also not have any additional parameters. If we have more than
-        // one remaining parameter, then there must not have been a name so we have
+        // one remaining parameter, then there must not have been a name, so we have
         // an extra parameter we can't bind.
         if (remaining.isEmpty()) {
             return false;
@@ -160,29 +159,35 @@ public final class ConverterBuilder {
         return typeUtils.isType(conversionMethod.getParameters().get(0).asType(), contextType);
     }
 
-    public CodeBlock getConverterCall(
+    public ConvertCallResult getConverterCall(
             ContainerSource container,
             String contextOrRequestName,
             String parameterName,
+            String injectorName,
             ValueSource valueSource) {
-        return getConverterCallBody(container, contextOrRequestName, parameterName, ValueSource.class, valueSource);
+        return getConverterCallBody(
+            container, contextOrRequestName, parameterName, injectorName, ValueSource.class, valueSource);
     }
 
-    public CodeBlock getConverterCall(
+    public ConvertCallResult getConverterCall(
             ContainerSource container,
             String contextOrRequestName,
             String parameterName,
+            String injectorName,
             WsValueSource valueSource) {
-        return getConverterCallBody(container, contextOrRequestName, parameterName, WsValueSource.class, valueSource);
+        return getConverterCallBody(
+            container, contextOrRequestName, parameterName, injectorName, WsValueSource.class, valueSource);
     }
 
-    private <TValueSource extends Enum<TValueSource>> CodeBlock getConverterCallBody(
+    private <TValueSource extends Enum<TValueSource>> ConvertCallResult getConverterCallBody(
             ContainerSource container,
             String contextOrRequestName,
             String parameterName,
+            String injectorName,
             Class<? extends TValueSource> sourceClass,
             TValueSource valueSource) {
         CodeBlock.Builder callBuilder = CodeBlock.builder();
+        boolean injectorNeeded = false;
         if (conversionMethod.getModifiers().contains(Modifier.STATIC)) {
             callBuilder.add("$T", conversionClass.asType());
         } else {
@@ -190,7 +195,8 @@ public final class ConverterBuilder {
             if (converterName == null) {
                 callBuilder.add("new $T()", conversionClass.asType());
             } else {
-                callBuilder.add("injector.$L()", converterName);
+                callBuilder.add("$N.$L()", injectorName, converterName);
+                injectorNeeded = true;
             }
         }
         callBuilder.add(".$N(", conversionMethod.getSimpleName());
@@ -213,7 +219,8 @@ public final class ConverterBuilder {
         callBuilder.add(CodeBlock.join(Arrays.asList(blocks), ", "));
 
         callBuilder.add(")");
-        return callBuilder.build();
+        String call = callBuilder.build().toString();
+        return new ConvertCallResult(call, injectorNeeded);
     }
 
     private int getContextOrRequestPosition() {

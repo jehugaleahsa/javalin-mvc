@@ -35,7 +35,7 @@ final class BeforeGenerator {
         return handlers.stream().map(h -> new BeforeGenerator(container, h)).collect(Collectors.toList());
     }
 
-    public void generateBefore(
+    public boolean generateBefore(
             CodeBlock.Builder routeBuilder,
             String injectorName,
             String contextName) {
@@ -49,6 +49,7 @@ final class BeforeGenerator {
                     arguments)
                     .addStatement("return")
                     .endControlFlow();
+            return false;
         } else {
             routeBuilder.beginControlFlow(
                     "if (!$L.$L().executeBefore($L, $L))",
@@ -58,6 +59,7 @@ final class BeforeGenerator {
                     arguments)
                     .addStatement("return")
                     .endControlFlow();
+            return true;
         }
     }
 

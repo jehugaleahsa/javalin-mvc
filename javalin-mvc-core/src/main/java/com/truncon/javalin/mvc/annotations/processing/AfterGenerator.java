@@ -35,7 +35,7 @@ final class AfterGenerator {
         return handlers.stream().map(h -> new AfterGenerator(container, h)).collect(Collectors.toList());
     }
 
-    public void generateAfter(
+    public boolean generateAfter(
             CodeBlock.Builder routeBuilder,
             String injectorName,
             String contextName,
@@ -50,6 +50,7 @@ final class AfterGenerator {
                     contextName,
                     arguments,
                     exceptionName);
+            return false;
         } else {
             routeBuilder.addStatement(
                     "$L = $L.$L().executeAfter($L, $L, $L)",
@@ -59,6 +60,7 @@ final class AfterGenerator {
                     contextName,
                     arguments,
                     exceptionName);
+            return true;
         }
     }
 

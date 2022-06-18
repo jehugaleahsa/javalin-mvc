@@ -139,63 +139,82 @@ final class RouteGenerator {
         CodeBlock.Builder handlerBuilder = CodeBlock.builder();
         handlerBuilder.beginControlFlow("$T handler$L = (ctx) ->", Handler.class, index);
 
-        // TODO - Only create an injector if it is actually needed.
-        if (container.isFound()) {
-            handlerBuilder.addStatement("$T injector = $N.get()", container.getType(), ControllerRegistryGenerator.SCOPE_FACTORY_NAME);
-        }
-        handlerBuilder.addStatement("$T wrapper = new $T(this.jsonMapper, ctx)", HttpContext.class, JavalinHttpContext.class);
+        boolean injectorNeeded = false;
+        CodeBlock.Builder restBuilder = CodeBlock.builder();
+        restBuilder.addStatement("$T wrapper = new $T(this.jsonMapper, ctx)", HttpContext.class, JavalinHttpContext.class);
         Name controllerName = container.getDependencyName(controller.getType());
         if (controllerName != null) {
-            handlerBuilder.addStatement("$T controller = injector.$L()", controller.getType(), controllerName);
+            injectorNeeded = true;
+            restBuilder.addStatement("$T controller = injector.$L()", controller.getType(), controllerName);
         } else {
-            handlerBuilder.addStatement("$T controller = new $T()", controller.getType(), controller.getType());
+            restBuilder.addStatement("$T controller = new $T()", controller.getType(), controller.getType());
         }
 
         List<BeforeGenerator> beforeGenerators = BeforeGenerator.getBeforeGenerators(container, this);
-        generateBeforeHandlers(handlerBuilder, "wrapper", beforeGenerators, container.isFound() ? "injector" : null);
+        boolean beforeInjectorNeeded = generateBeforeHandlers(
+            restBuilder,
+            "wrapper",
+            beforeGenerators,
+            container.isFound() ? "injector" : null);
+        injectorNeeded |= beforeInjectorNeeded;
         List<AfterGenerator> afterGenerators = AfterGenerator.getAfterGenerators(container, this);
         if (afterGenerators.size() > 0) {
-            handlerBuilder.addStatement("Exception caughtException = null;");
-            handlerBuilder.beginControlFlow("try");
+            restBuilder.addStatement("Exception caughtException = null;");
+            restBuilder.beginControlFlow("try");
         }
-        String parameters = bindParameters("ctx", "wrapper", helperBuilder, converterLookup);
+        ParameterResult parameterResult = bindParameters("ctx", "wrapper", "injector", helperBuilder, converterLookup);
         MethodUtils methodUtils = new MethodUtils(typeUtils);
         if (methodUtils.hasVoidReturnType(method)) {
-            handlerBuilder.addStatement(
-                "controller.$N(" + parameters + ")",
+            restBuilder.addStatement(
+                "controller.$N(" + parameterResult.getArgumentList() + ")",
                 method.getSimpleName());
         } else if (methodUtils.hasActionResultReturnType(method)) {
-            handlerBuilder.addStatement(
-                "$T result = controller.$N(" + parameters + ")",
+            restBuilder.addStatement(
+                "$T result = controller.$N(" + parameterResult.getArgumentList() + ")",
                 ActionResult.class,
                 method.getSimpleName());
-            handlerBuilder.addStatement("result.execute(wrapper)");
+            restBuilder.addStatement("result.execute(wrapper)");
         } else if (methodUtils.hasFutureActionResultReturnType(method)) {
-            handlerBuilder.addStatement(
-                "$T<?> future = controller.$N(" + parameters + ").thenApply(r -> r.executeAsync(wrapper))",
+            restBuilder.addStatement(
+                "$T<?> future = controller.$N(" + parameterResult.getArgumentList() + ").thenApply(r -> r.executeAsync(wrapper))",
                 CompletableFuture.class,
                 method.getSimpleName());
-            handlerBuilder.addStatement("ctx.future(future)");
+            restBuilder.addStatement("ctx.future(future)");
         } else if (methodUtils.hasFutureSimpleReturnType(method)) {
-            handlerBuilder.addStatement(
-                "$T<?> future = controller.$N(" + parameters + ").thenApply(p -> new $T(p).executeAsync(wrapper))",
+            restBuilder.addStatement(
+                "$T<?> future = controller.$N(" + parameterResult.getArgumentList() + ").thenApply(p -> new $T(p).executeAsync(wrapper))",
                 CompletableFuture.class,
                 method.getSimpleName(),
                 JsonResult.class);
-            handlerBuilder.addStatement("ctx.future(future)");
+            restBuilder.addStatement("ctx.future(future)");
         } else {
-            handlerBuilder.addStatement(
-                "$T result = controller.$N(" + parameters + ")",
+            restBuilder.addStatement(
+                "$T result = controller.$N(" + parameterResult.getArgumentList() + ")",
                 method.getReturnType(),
                 method.getSimpleName());
-            handlerBuilder.addStatement("new $T(result).execute(wrapper)", JsonResult.class);
+            restBuilder.addStatement("new $T(result).execute(wrapper)", JsonResult.class);
         }
+        injectorNeeded |= parameterResult.isInjectorNeeded();
+
         if (afterGenerators.size() > 0) {
-            handlerBuilder.nextControlFlow("catch (Exception exception)");
-            handlerBuilder.addStatement("caughtException = exception");
-            handlerBuilder.endControlFlow();
-            generateAfterHandlers(handlerBuilder, "wrapper", "caughtException", afterGenerators, container.isFound() ? "injector" : null);
+            restBuilder.nextControlFlow("catch (Exception exception)");
+            restBuilder.addStatement("caughtException = exception");
+            restBuilder.endControlFlow();
+            boolean afterInjectorNeeded = generateAfterHandlers(
+                restBuilder,
+                "wrapper",
+                "caughtException",
+                afterGenerators,
+                container.isFound() ? "injector" : null);
+            injectorNeeded |= afterInjectorNeeded;
         }
+
+        // Only create an injector if it is actually needed.
+        if (container.isFound() && injectorNeeded) {
+            handlerBuilder.addStatement("$T injector = $N.get()", container.getType(), ControllerRegistryGenerator.SCOPE_FACTORY_NAME);
+        }
+        handlerBuilder.add(restBuilder.build());
+
         handlerBuilder.endControlFlow();
         handlerBuilder.addStatement("");
 
@@ -213,35 +232,47 @@ final class RouteGenerator {
             .build();
     }
 
-    private static void generateBeforeHandlers(
+    private static boolean generateBeforeHandlers(
             CodeBlock.Builder routeBuilder,
             String contextName,
             List<BeforeGenerator> generators,
             String injectorName) {
+        boolean injectorNeeded = false;
         for (BeforeGenerator generator : generators) {
-            generator.generateBefore(routeBuilder, injectorName, contextName);
+            boolean beforeInjectorNeeded = generator.generateBefore(routeBuilder, injectorName, contextName);
+            injectorNeeded |= beforeInjectorNeeded;
         }
+        return injectorNeeded;
     }
 
-    private String bindParameters(
+    private ParameterResult bindParameters(
             String context,
             String wrapper,
+            String injector,
             HelperMethodBuilder helperBuilder,
             Map<String, ConverterBuilder> converterLookup) {
-        return ParameterGenerator.bindParameters(method, context, wrapper, helperBuilder, converterLookup);
+        return ParameterGenerator.bindParameters(
+            method, context, wrapper, injector, helperBuilder, converterLookup);
     }
 
-    private static void generateAfterHandlers(
+    private static boolean generateAfterHandlers(
             CodeBlock.Builder routeBuilder,
             String contextName,
             String exceptionName,
             List<AfterGenerator> generators,
             String injectorName) {
+        boolean injectorNeeded = false;
         for (AfterGenerator generator : generators) {
-            generator.generateAfter(routeBuilder, injectorName, contextName, exceptionName);
+            boolean afterInjectorNeeded = generator.generateAfter(
+                routeBuilder,
+                injectorName,
+                contextName,
+                exceptionName);
+            injectorNeeded |= afterInjectorNeeded;
         }
         routeBuilder.beginControlFlow("if (caughtException != null)")
                 .addStatement("throw caughtException")
                 .endControlFlow();
+        return injectorNeeded;
     }
 }

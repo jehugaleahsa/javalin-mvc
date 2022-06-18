@@ -36,7 +36,7 @@ final class WsBeforeGenerator {
         return handlers.stream().map(h -> new WsBeforeGenerator(container, h)).collect(Collectors.toList());
     }
 
-    public void generateBefore(
+    public boolean generateBefore(
             CodeBlock.Builder routeBuilder,
             String injectorName,
             String contextName) {
@@ -44,21 +44,21 @@ final class WsBeforeGenerator {
         String arguments = getArguments();
         if (handlerGetter == null) {
             routeBuilder.beginControlFlow(
-                    "if (!new $T().executeBefore($L, $L))",
-                    getTypeMirror(),
-                    contextName,
-                    arguments)
-                    .addStatement("return")
-                    .endControlFlow();
+                "if (!new $T().executeBefore($L, $L))",
+                getTypeMirror(),
+                contextName,
+                arguments
+            ).addStatement("return").endControlFlow();
+            return false;
         } else {
             routeBuilder.beginControlFlow(
-                    "if (!$L.$L().executeBefore($L, $L))",
-                    injectorName,
-                    handlerGetter,
-                    contextName,
-                    arguments)
-                    .addStatement("return")
-                    .endControlFlow();
+                "if (!$L.$L().executeBefore($L, $L))",
+                injectorName,
+                handlerGetter,
+                contextName,
+                arguments
+            ).addStatement("return").endControlFlow();
+            return true;
         }
     }
 
