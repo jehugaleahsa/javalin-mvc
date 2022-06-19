@@ -22,12 +22,12 @@ The following dependencies are needed in your web project:
   <dependency>
     <groupId>com.truncon</groupId>
     <artifactId>javalin-mvc-api</artifactId>
-    <version>2.0.0</version>
+    <version>4.0.0</version>
   </dependency>
   <dependency>
     <groupId>com.truncon</groupId>
     <artifactId>javalin-mvc-core</artifactId>
-    <version>2.0.0</version>
+    <version>4.0.0</version>
   </dependency>
   <!-- Dependency Injection -->
   <dependency>
@@ -88,13 +88,11 @@ public final class HomeController {
 is *essentially* converted to this:
 
 ```java
-Javalin app = Javalin.create();
 app.get("/", ctx -> {
     HomeController controller = new HomeController();
     ActionResult result = controller.index();
     result.execute(ctx);
 });
-app.start(5000);
 ```
 
 The route handler generation happens at compile time, so there's no runtime overhead. It's as if you wrote it all by hand.
@@ -180,7 +178,7 @@ Here is a list of supported and/or desired features. An `x` means it is already 
     * [x] `@HttpDelete`
     * [x] `@HttpHead`
     * [x] `@HttpOptions`
-    * [ ] `@HttpConnect` (No supported by Javalin)
+    * [ ] `@HttpConnect` (Not supported by Javalin)
     * [ ] `@HttpTrace` (Not supported by Javalin)
 * [x] Bind parameters from headers, cookies, URL parameters, query strings, and form data by name.
     * [x] `String`
