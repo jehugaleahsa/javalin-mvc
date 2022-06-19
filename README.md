@@ -119,51 +119,64 @@ Your action methods should return instances of `ActionResult`. An `ActionResult`
 For the best performance and for added security, you should *always* explicitly specify where your values are coming from, using one of the `@From*` annotations. Otherwise, the route handle must look for values at runtime. Furthermore, you wouldn't want someone accidentally/maliciously overwriting an authentication header with a query string! 😬
 
 ## An example main
-An example `main` method might look like this:
+If you're using Dagger, an example `main` method might look like this:
 
 ```java
 import com.truncon.javalin.mvc.ControllerRegistry;
 import com.truncon.javalin.mvc.JavalinControllerRegistry;
 // etc...
 
-public static void main(String[] args) throws IOException {
-    Javalin app = Javalin.create(config -> {
-        // Remove the following line to disable Open API annotation processing
-        config.registerPlugin(new OpenApiPlugin(getOpenApiOptions()));
-        JsonMapper jsonMapper = new JavalinJackson(new ObjectMapper());
-        config.jsonMapper(jsonMapper);
-        // This example is using the SPA feature
-        config.addStaticFiles("./public", Location.EXTERNAL);
-        config.addSinglePageRoot("/", "./public/index.html", Location.EXTERNAL);
-    });
+public final class App {
+    public static void main(String[] args) throws IOException {
+        Javalin app = Javalin.create(config -> {
+            // Remove the following line to disable Open API annotation processing
+            config.registerPlugin(new OpenApiPlugin(getOpenApiOptions()));
+            
+            // Register you JSON mapper with whatever library you want
+            ObjectMapper objectMapper = new ObjectMapper(); // customize as needed
+            JsonMapper jsonMapper = new JavalinJackson(objectMapper);
+            config.jsonMapper(jsonMapper);
+            
+            // This example is using the SPA feature with static files
+            config.addStaticFiles("./public", Location.EXTERNAL);
+            config.addSinglePageRoot("/", "./public/index.html", Location.EXTERNAL);
+        });
 
-    // Provide method of constructing a new DI container
-    // Dagger prepends "Dagger" automatically at compile time
-    Supplier<WebContainer> scopeFactory = () -> DaggerWebContainer.builder().build();
-    // Javalin MVC generates "com.truncon.javalin.mvc.JavalinControllerRegistry" automatically at compile time
-    ControllerRegistry registry = new JavalinControllerRegistry(jsonMapper, scopeFactory);
-    registry.register(app);
+        // Provide method of constructing a new DI container.
+        // Dagger prepends "Dagger" automatically at compile time.
+        // Dagger is optional! -- You don't need a scope factory at all, then. 
+        Supplier<WebContainer> scopeFactory = () -> DaggerWebContainer.builder().build();
+        // Javalin MVC generates "com.truncon.javalin.mvc.JavalinControllerRegistry" automatically at compile time
+        ControllerRegistry registry = new JavalinControllerRegistry(scopeFactory);
+        registry.register(app);
 
-    // Prevent unhandled exceptions from taking down the web server
-    app.exception(Exception.class, (e, ctx) -> {
-        logger.error("Encountered an unhandled exception.", e);
-        ctx.status(500);
-    });
+        // Prevent unhandled exceptions from taking down the web server
+        app.exception(Exception.class, (e, ctx) -> {
+            logger.error("Encountered an unhandled exception.", e);
+            ctx.status(500);
+        });
 
-    app.start(5000);
-}
+        app.start(5000);
+    }
 
-private static OpenApiOptions getOpenApiOptions() {
-    return new OpenApiOptions(new Info()
+    private static OpenApiOptions getOpenApiOptions() {
+        return new OpenApiOptions(new Info()
             .version("1.0")
             .description("My API"))
-        .path("/swagger")
-        .swagger(new SwaggerOptions("/swagger-ui")
-            .title("My API Documentation"));
+            .path("/swagger")
+            .swagger(new SwaggerOptions("/swagger-ui")
+                .title("My API Documentation"));
+    }
 }
 ```
 
 If you have access to the generated sources, you can inspect the generated `JavalinControllerRegistry.java` file. If you do, you will see most of the file consists of calls to `app.get(...)`, `app.post(...)`, etc.
+
+If you're not using Dagger, you can construct the `ControllerRegistry` by simply using the default constructor:
+
+```java
+ControllerRegistry registry = new JavalinControllerRegistry();
+```
 
 ## Supported Features
 Here is a list of supported and/or desired features. An `x` means it is already supported. Feel free to submit an issue for feature requests!!!
