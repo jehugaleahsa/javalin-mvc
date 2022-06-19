@@ -211,7 +211,7 @@ final class RouteGenerator {
 
         // Only create an injector if it is actually needed.
         if (container.isFound() && injectorNeeded) {
-            handlerBuilder.addStatement("$T injector = $N.get()", container.getType(), ControllerRegistryGenerator.SCOPE_FACTORY_NAME);
+            handlerBuilder.addStatement("$T injector = $N.get()", container.getTypeMirror(), ControllerRegistryGenerator.SCOPE_FACTORY_NAME);
         }
         handlerBuilder.add(restBuilder.build());
 

@@ -1,8 +1,8 @@
 package com.truncon.javalin.mvc.api;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -27,7 +27,7 @@ public interface HttpRequest {
      * Gets the key/value pairs for any parameters in the URL.
      * @return the key/value pair lookup of the parameters.
      */
-    Map<String, Collection<String>> getPathLookup();
+    Map<String, List<String>> getPathLookup();
 
     /**
      * Specifies whether a query parameter with the given name exists in the URL.
@@ -47,7 +47,7 @@ public interface HttpRequest {
      * Gets the key/value pairs for any query string parameters in the URL.
      * @return the key/value pair lookup of the parameters.
      */
-    Map<String, Collection<String>> getQueryLookup();
+    Map<String, List<String>> getQueryLookup();
 
     /**
      * Specifies whether a form field (URL encoded) with the given name exists in the URL.
@@ -67,7 +67,7 @@ public interface HttpRequest {
      * Gets the key/value pairs for any form fields.
      * @return the key/value pair lookup of the form fields.
      */
-    Map<String, Collection<String>> getFormLookup();
+    Map<String, List<String>> getFormLookup();
 
     /**
      * Specifies whether a header with the given name exists.
@@ -87,7 +87,7 @@ public interface HttpRequest {
      * Gets the key/value pairs for any headers.
      * @return the key/value pair lookup of the headers.
      */
-    Map<String, Collection<String>> getHeaderLookup();
+    Map<String, List<String>> getHeaderLookup();
 
     /**
      * Gets the length (in bytes) of the request body.
@@ -163,7 +163,7 @@ public interface HttpRequest {
      * Gets the key/value pairs for the cookies.
      * @return the key/value pair lookup.
      */
-    Map<String, Collection<String>> getCookieLookup();
+    Map<String, List<String>> getCookieLookup();
 
     /**
      * Gets whether this is a multi-part form data request.
@@ -183,7 +183,7 @@ public interface HttpRequest {
      * @param valueSource The source of the lookup values to retrieve.
      * @return The lookup associated with the given source.
      */
-    default Map<String, Collection<String>> getSourceLookup(ValueSource valueSource) {
+    default Map<String, List<String>> getSourceLookup(ValueSource valueSource) {
         if (valueSource == null) {
             return Collections.emptyMap();
         }
@@ -200,7 +200,7 @@ public interface HttpRequest {
                 return getFormLookup();
             case Any: {
                 // Ordered for security reasons
-                Map<String, Collection<String>> lookup = new LinkedHashMap<>();
+                Map<String, List<String>> lookup = new LinkedHashMap<>();
                 lookup.putAll(getFormLookup());
                 lookup.putAll(getQueryLookup());
                 lookup.putAll(getPathLookup());

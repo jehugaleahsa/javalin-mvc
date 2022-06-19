@@ -15,6 +15,7 @@ import com.truncon.javalin.mvc.api.ws.WsValueSource;
 
 import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.element.Element;
+import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.Name;
@@ -23,8 +24,10 @@ import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeMirror;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public final class ConverterBuilder {
     private final TypeUtils typeUtils;
@@ -43,12 +46,21 @@ public final class ConverterBuilder {
         this.conversionMethod = conversionMethod;
     }
 
-    public static List<ConverterBuilder> getConverterBuilders(TypeUtils typeUtils, RoundEnvironment environment) throws ProcessingException {
+    public static List<ConverterBuilder> getConverterBuilders(
+            TypeUtils typeUtils,
+            RoundEnvironment environment,
+            Collection<TypeElement> alternativeTypes) throws ProcessingException {
         List<ExecutableElement> elements = environment.getElementsAnnotatedWith(Converter.class).stream()
             .map(ExecutableElement.class::cast)
             .collect(Collectors.toList());
         checkConverterElements(typeUtils, elements);
-        List<ConverterBuilder> converters = elements.stream()
+        Stream<ExecutableElement> alternateMethods = alternativeTypes.stream()
+            .flatMap(t -> t.getEnclosedElements().stream())
+            .filter(ExecutableElement.class::isInstance)
+            .map(ExecutableElement.class::cast)
+            .filter(e -> e.getAnnotation(Converter.class) != null);
+        List<ConverterBuilder> converters = Stream.concat(elements.stream(), alternateMethods)
+            .distinct()
             .map(e -> create(typeUtils, e))
             .collect(Collectors.toList());
         checkConverters(converters);
@@ -133,6 +145,12 @@ public final class ConverterBuilder {
         Converter converter = method.getAnnotation(Converter.class);
         String name = converter.value();
         TypeElement converterType = (TypeElement) method.getEnclosingElement();
+        if (converterType.getKind() == ElementKind.INTERFACE) {
+            throw new ProcessingException("The converter '" + name + "' was defined within an interface, which is invalid.");
+        }
+        if (converterType.getModifiers().contains(Modifier.ABSTRACT)) {
+            throw new ProcessingException("The converter '" + name + "' was defined within an abstract class, which is invalid.");
+        }
         return new ConverterBuilder(typeUtils, name, converterType, method);
     }
 
@@ -149,6 +167,10 @@ public final class ConverterBuilder {
         if (exceptions.length > 0) {
             throw new ProcessingMultiException(exceptions);
         }
+    }
+
+    public TypeElement getConversionClass() {
+        return conversionClass;
     }
 
     public String getName() {

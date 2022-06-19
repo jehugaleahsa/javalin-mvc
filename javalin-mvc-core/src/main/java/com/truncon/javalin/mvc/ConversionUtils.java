@@ -5,14 +5,26 @@ import org.apache.commons.lang3.StringUtils;
 import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.time.*;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.Year;
+import java.time.YearMonth;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.*;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public final class ConversionUtils {
+final class ConversionUtils {
     private static final Map<Class<?>, Function<String, Object>> primitiveConverters = getPrimitiveConverters();
     private static final Map<Class<?>, Class<?>> primitiveToBoxed = getPrimitiveToBoxed();
 
@@ -60,7 +72,8 @@ public final class ConversionUtils {
     }
 
     private static Date toDate(String value) {
-        return StringUtils.isBlank(value) ? null : Date.from(toInstant(value));
+        Instant instant = toInstant(value);
+        return instant == null ? null : Date.from(instant);
     }
 
     private static Instant toInstant(String value) {

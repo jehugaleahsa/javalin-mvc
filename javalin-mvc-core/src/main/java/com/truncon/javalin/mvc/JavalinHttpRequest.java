@@ -8,11 +8,9 @@ import com.truncon.javalin.mvc.api.HttpRequest;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 final class JavalinHttpRequest implements HttpRequest {
     private final Context context;
@@ -33,7 +31,7 @@ final class JavalinHttpRequest implements HttpRequest {
         return context.pathParam(name);
     }
 
-    public Map<String, Collection<String>> getPathLookup() {
+    public Map<String, List<String>> getPathLookup() {
         return explode(context.pathParamMap());
     }
 
@@ -45,7 +43,7 @@ final class JavalinHttpRequest implements HttpRequest {
         return context.queryParam(name);
     }
 
-    public Map<String, Collection<String>> getQueryLookup() {
+    public Map<String, List<String>> getQueryLookup() {
         return copy(context.queryParamMap());
     }
 
@@ -57,7 +55,7 @@ final class JavalinHttpRequest implements HttpRequest {
         return context.formParam(name);
     }
 
-    public Map<String, Collection<String>> getFormLookup() {
+    public Map<String, List<String>> getFormLookup() {
         return copy(context.formParamMap());
     }
 
@@ -69,7 +67,7 @@ final class JavalinHttpRequest implements HttpRequest {
         return context.header(name);
     }
 
-    public Map<String, Collection<String>> getHeaderLookup() {
+    public Map<String, List<String>> getHeaderLookup() {
         return explode(context.headerMap());
     }
 
@@ -117,7 +115,7 @@ final class JavalinHttpRequest implements HttpRequest {
         return context.cookie(name);
     }
 
-    public Map<String, Collection<String>> getCookieLookup() {
+    public Map<String, List<String>> getCookieLookup() {
         return explode(context.cookieMap());
     }
 
@@ -133,9 +131,13 @@ final class JavalinHttpRequest implements HttpRequest {
         return new FileUpload(file.getContent(), file.getContentType(), file.getFilename());
     }
 
-    private static Map<String, Collection<String>> explode(Map<String, String> map) {
-        return map.entrySet().stream()
-            .collect(Collectors.toMap(Map.Entry::getKey, e -> listOf(e.getValue())));
+    private static Map<String, List<String>> explode(Map<String, String> map) {
+        Map<String, List<String>> exploded = new LinkedHashMap<>(map.size());
+        for (Map.Entry<String, String> entry : map.entrySet()) {
+            List<String> values = listOf(entry.getValue());
+            exploded.put(entry.getKey(), values);
+        }
+        return exploded;
     }
 
     private static List<String> listOf(String item) {
@@ -144,10 +146,10 @@ final class JavalinHttpRequest implements HttpRequest {
         return list;
     }
 
-    private static Map<String, Collection<String>> copy(Map<String, List<String>> map) {
-        Map<String, Collection<String>> copy = new LinkedHashMap<>(map.size());
+    private static Map<String, List<String>> copy(Map<String, List<String>> map) {
+        Map<String, List<String>> copy = new LinkedHashMap<>(map.size());
         for (Map.Entry<String, List<String>> entry : map.entrySet()) {
-            Collection<String> values = copy.computeIfAbsent(entry.getKey(), k -> new ArrayList<>(entry.getValue().size()));
+            List<String> values = copy.computeIfAbsent(entry.getKey(), k -> new ArrayList<>(entry.getValue().size()));
             for (String value : entry.getValue()) {
                 values.add(value.isEmpty() ? null : value);
             }

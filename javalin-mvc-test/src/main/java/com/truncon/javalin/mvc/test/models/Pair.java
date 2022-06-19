@@ -8,7 +8,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 
 import java.util.Arrays;
-import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -32,9 +32,9 @@ public final class Pair {
 
     @Converter("pair")
     public static Pair parse(HttpRequest request, String name, ValueSource valueSource) {
-        Map<String, Collection<String>> lookup = request.getSourceLookup(valueSource);
-        Collection<String> values = lookup.get(name);
-        return values.size() == 1 ? Pair.parse(values.iterator().next()) : null;
+        Map<String, List<String>> lookup = request.getSourceLookup(valueSource);
+        List<String> values = lookup.get(name);
+        return values.size() == 1 ? Pair.parse(values.get(0)) : null;
     }
 
     public static Pair parse(String representation) {

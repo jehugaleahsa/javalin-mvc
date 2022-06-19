@@ -9,8 +9,7 @@ import com.truncon.javalin.mvc.api.ws.WsRequest;
 import com.truncon.javalin.mvc.api.ws.WsValueSource;
 import com.truncon.javalin.mvc.test.models.ConversionModel;
 
-import java.util.Collection;
-import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 public final class StaticConverter {
@@ -58,7 +57,7 @@ public final class StaticConverter {
 
     @Converter("static-model-converter-request-name-source")
     public static ConversionModel convert(HttpRequest request, String name, ValueSource valueSource) {
-        Map<String, Collection<String>> lookup = getSourceLookup(request, valueSource);
+        Map<String, List<String>> lookup = request.getSourceLookup(valueSource);
         ConversionModel model = new ConversionModel();
         model.setBoolean(parseBoolean(getString(lookup, "boolean")));
         model.setByte((byte) (parseByte(getString(lookup, "byte")) * 2));
@@ -112,7 +111,7 @@ public final class StaticConverter {
 
     @Converter("static-model-converter-ws-request-name-source")
     public static ConversionModel convert(WsRequest request, String name, WsValueSource valueSource) {
-        Map<String, Collection<String>> lookup = getSourceLookup(request, valueSource);
+        Map<String, List<String>> lookup = request.getSourceLookup(valueSource);
         ConversionModel model = new ConversionModel();
         model.setBoolean(parseBoolean(getString(lookup, "boolean")));
         model.setByte((byte) (parseByte(getString(lookup, "byte")) * 2));
@@ -125,54 +124,9 @@ public final class StaticConverter {
         return model;
     }
 
-    private static Map<String, Collection<String>> getSourceLookup(HttpRequest request, ValueSource valueSource) {
-        switch (valueSource) {
-            case Path:
-                return request.getPathLookup();
-            case QueryString:
-                return request.getQueryLookup();
-            case Header:
-                return request.getHeaderLookup();
-            case Cookie:
-                return request.getCookieLookup();
-            case FormData:
-                return request.getFormLookup();
-            default: {
-                Map<String, Collection<String>> lookup = new LinkedHashMap<>();
-                lookup.putAll(request.getFormLookup());
-                lookup.putAll(request.getQueryLookup());
-                lookup.putAll(request.getPathLookup());
-                lookup.putAll(request.getCookieLookup());
-                lookup.putAll(request.getHeaderLookup());
-                return lookup;
-            }
-        }
-    }
-
-    private static Map<String, Collection<String>> getSourceLookup(WsRequest request, WsValueSource valueSource) {
-        switch (valueSource) {
-            case Path:
-                return request.getPathLookup();
-            case QueryString:
-                return request.getQueryLookup();
-            case Header:
-                return request.getHeaderLookup();
-            case Cookie:
-                return request.getCookieLookup();
-            default: {
-                Map<String, Collection<String>> lookup = new LinkedHashMap<>();
-                lookup.putAll(request.getQueryLookup());
-                lookup.putAll(request.getPathLookup());
-                lookup.putAll(request.getCookieLookup());
-                lookup.putAll(request.getHeaderLookup());
-                return lookup;
-            }
-        }
-    }
-
-    private static String getString(Map<String, Collection<String>> lookup, String name) {
-        Collection<String> values = lookup.get(name);
-        return (values == null || values.isEmpty()) ? null : values.iterator().next();
+    private static String getString(Map<String, List<String>> lookup, String name) {
+        List<String> values = lookup.get(name);
+        return (values == null || values.isEmpty()) ? null : values.get(0);
     }
 
     private static boolean parseBoolean(String value) {

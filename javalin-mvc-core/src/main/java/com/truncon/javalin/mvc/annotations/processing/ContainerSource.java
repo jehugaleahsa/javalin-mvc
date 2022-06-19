@@ -11,6 +11,7 @@ import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -30,8 +31,15 @@ final class ContainerSource {
         return typeUtils;
     }
 
-    public static ContainerSource getContainerSource(TypeUtils typeUtils, RoundEnvironment environment) throws ProcessingException {
-        List<? extends TypeElement> elements = environment.getElementsAnnotatedWith(Component.class).stream()
+    public static ContainerSource getContainerSource(
+            TypeUtils typeUtils,
+            RoundEnvironment environment,
+            Collection<TypeElement> alternatives) throws ProcessingException {
+        List<? extends TypeElement> elements = Stream.concat(
+                environment.getElementsAnnotatedWith(Component.class).stream(),
+                alternatives.stream() // Classes from previous builds, to support incremental
+            )
+            .distinct()
             .filter(e -> e.getKind() == ElementKind.INTERFACE)
             .filter(e -> e.getAnnotation(MvcComponent.class) != null)
             .map(e -> (TypeElement) e)
@@ -65,7 +73,11 @@ final class ContainerSource {
 
     }
 
-    public TypeMirror getType() {
+    public TypeElement getType() {
+        return containerElement;
+    }
+
+    public TypeMirror getTypeMirror() {
         return containerElement == null ? null : containerElement.asType();
     }
 

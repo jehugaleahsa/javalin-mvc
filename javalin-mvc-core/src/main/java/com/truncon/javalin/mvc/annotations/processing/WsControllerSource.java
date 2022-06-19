@@ -28,28 +28,39 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 import java.lang.annotation.Annotation;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 final class WsControllerSource {
-    private final ContainerSource container;
     private final TypeUtils typeUtils;
     private final TypeElement controllerElement;
 
-    private WsControllerSource(ContainerSource container, TypeElement controllerElement) {
-        this.container = container;
-        this.typeUtils = container.getTypeUtils();
+    private WsControllerSource(TypeUtils typeUtils, TypeElement controllerElement) {
+        this.typeUtils = typeUtils;
         this.controllerElement = controllerElement;
     }
 
-    public static List<WsControllerSource> getWsControllers(ContainerSource container, RoundEnvironment environment) throws ProcessingException {
+    public TypeElement getType() {
+        return controllerElement;
+    }
+
+    public static List<WsControllerSource> getWsControllers(
+            TypeUtils typeUtils,
+            RoundEnvironment environment,
+            Collection<TypeElement> alternateTypes) throws ProcessingException {
         Set<? extends Element> controllerElements = environment.getElementsAnnotatedWith(WsController.class);
         checkControllerElements(controllerElements);
-        return controllerElements.stream()
-            .map(e -> (TypeElement) e)
-            .map(e -> new WsControllerSource(container, e))
+        Stream<TypeElement> controllerTypes = controllerElements.stream()
+            .map(TypeElement.class::cast);
+        Stream<TypeElement> oldControllerTypes = alternateTypes.stream()
+            .filter(t -> t.getAnnotation(WsController.class) != null);
+        return Stream.concat(controllerTypes, oldControllerTypes)
+            .distinct()
+            .map(e -> new WsControllerSource(typeUtils, e))
             .collect(Collectors.toList());
     }
 
@@ -223,7 +234,8 @@ final class WsControllerSource {
 
         CodeBlock.Builder restBuilder = CodeBlock.builder();
 
-        boolean injectorNeeded = addController(helperBuilder.getContainer(), restBuilder);
+        ContainerSource container = helperBuilder.getContainer();
+        boolean injectorNeeded = addController(container, restBuilder);
 
         List<WsBeforeGenerator> beforeGenerators = WsBeforeGenerator.getBeforeGenerators(container, method);
         List<WsAfterGenerator> afterGenerators = WsAfterGenerator.getAfterGenerators(container, method);
@@ -291,7 +303,7 @@ final class WsControllerSource {
 
         // only create injector if needed
         if (injectorNeeded) {
-            handlerBuilder.addStatement("$T injector = $N.get()", container.getType(), ControllerRegistryGenerator.SCOPE_FACTORY_NAME);
+            handlerBuilder.addStatement("$T injector = $N.get()", container.getTypeMirror(), ControllerRegistryGenerator.SCOPE_FACTORY_NAME);
         }
         handlerBuilder.add(restBuilder.build());
 

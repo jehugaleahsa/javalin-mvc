@@ -8,7 +8,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Supplier;
 
-public final class ParameterCache {
+final class ParameterCache {
     private final ValueSource valueSource;
     private final Supplier<Map<String, Collection<String>>> getter;
     private Map<String, Collection<String>> lookup;

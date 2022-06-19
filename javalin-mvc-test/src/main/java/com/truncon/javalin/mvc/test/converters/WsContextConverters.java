@@ -2,6 +2,7 @@ package com.truncon.javalin.mvc.test.converters;
 
 import com.truncon.javalin.mvc.api.Converter;
 import com.truncon.javalin.mvc.api.ws.WsConnectContext;
+import com.truncon.javalin.mvc.api.ws.WsContext;
 import com.truncon.javalin.mvc.api.ws.WsDisconnectContext;
 import com.truncon.javalin.mvc.api.ws.WsErrorContext;
 import com.truncon.javalin.mvc.api.ws.WsMessageContext;
@@ -10,6 +11,7 @@ import com.truncon.javalin.mvc.test.models.ConversionModel;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 public final class WsContextConverters {
@@ -37,9 +39,9 @@ public final class WsContextConverters {
     }
 
     @NotNull
-    private ConversionModel getConversionModel(com.truncon.javalin.mvc.api.ws.WsContext context) {
+    private ConversionModel getConversionModel(WsContext context) {
         WsRequest request = context.getRequest();
-        Map<String, Collection<String>> lookup = request.getQueryLookup();
+        Map<String, List<String>> lookup = request.getQueryLookup();
         ConversionModel model = new ConversionModel();
         model.setBoolean(parseBoolean(getString(lookup, "boolean")));
         model.setByte((byte) (parseByte(getString(lookup, "byte")) * 2));
@@ -52,7 +54,7 @@ public final class WsContextConverters {
         return model;
     }
 
-    private static String getString(Map<String, Collection<String>> lookup, String name) {
+    private static String getString(Map<String, List<String>> lookup, String name) {
         Collection<String> values = lookup.get(name);
         return (values == null || values.isEmpty()) ? null : values.iterator().next();
     }

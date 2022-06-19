@@ -18,6 +18,7 @@ import javax.annotation.Generated;
 import javax.annotation.processing.Filer;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.Modifier;
+import javax.lang.model.element.TypeElement;
 import javax.tools.JavaFileObject;
 import java.io.IOException;
 import java.io.Writer;
@@ -32,6 +33,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 final class ControllerRegistryGenerator {
     public static final String APP_NAME = "app";
@@ -71,7 +73,7 @@ final class ControllerRegistryGenerator {
             TypeName jsonMapperType = TypeName.get(JsonMapper.class);
             TypeName factoryType = ParameterizedTypeName.get(
                 ClassName.get(Supplier.class),
-                TypeName.get(container.getType()));
+                TypeName.get(container.getTypeMirror()));
             FieldSpec jsonMapperField = FieldSpec.builder(
                 jsonMapperType,
                 JSON_MAPPER_NAME,
@@ -116,7 +118,11 @@ final class ControllerRegistryGenerator {
         JavaFile registryFile = JavaFile.builder(REGISTRY_PACKAGE_NAME, registryType)
             .indent("    ")
             .build();
-        JavaFileObject file = filer.createSourceFile(REGISTRY_PACKAGE_NAME + "." + REGISTRY_CLASS_NAME);
+        TypeElement[] sources = Stream.concat(
+            controllers.stream().map(ControllerSource::getType),
+            wsControllers.stream().map(WsControllerSource::getType)
+        ).toArray(TypeElement[]::new);
+        JavaFileObject file = filer.createSourceFile(REGISTRY_PACKAGE_NAME + "." + REGISTRY_CLASS_NAME, sources);
         try (Writer writer = file.openWriter()) {
             registryFile.writeTo(writer);
         }

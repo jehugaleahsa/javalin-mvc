@@ -7,10 +7,12 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 final class ControllerSource {
     private final TypeUtils typeUtils;
@@ -23,11 +25,18 @@ final class ControllerSource {
         this.prefix = prefix;
     }
 
-    public static List<ControllerSource> getControllers(TypeUtils typeUtils, RoundEnvironment environment) throws ProcessingException {
+    public static List<ControllerSource> getControllers(
+            TypeUtils typeUtils,
+            RoundEnvironment environment,
+            Collection<TypeElement> alternateTypes) throws ProcessingException {
         Set<? extends Element> controllerElements = environment.getElementsAnnotatedWith(Controller.class);
         checkControllerElements(controllerElements);
-        return controllerElements.stream()
-            .map(e -> (TypeElement) e)
+        Stream<TypeElement> controllerTypes = controllerElements.stream()
+            .map(TypeElement.class::cast);
+        Stream<TypeElement> oldControllerTypes = alternateTypes.stream()
+            .filter(t -> t.getAnnotation(Controller.class) != null);
+        return Stream.concat(controllerTypes, oldControllerTypes)
+            .distinct()
             .map(e -> new ControllerSource(typeUtils, e, getPrefix(e)))
             .collect(Collectors.toList());
     }
