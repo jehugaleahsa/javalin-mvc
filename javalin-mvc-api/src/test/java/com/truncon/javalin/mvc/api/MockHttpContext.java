@@ -1,5 +1,7 @@
 package com.truncon.javalin.mvc.api;
 
+import java.io.InputStream;
+
 public final class MockHttpContext implements HttpContext {
     private final MockHttpResponse response = new MockHttpResponse();
     private boolean toJsonCalled;
@@ -19,13 +21,24 @@ public final class MockHttpContext implements HttpContext {
     }
 
     @Override
-    public String toJson(Object data) {
+    public String toJsonString(Object data) {
         this.toJsonCalled = true;
         return null;
     }
 
     @Override
-    public <T> T fromJson(String json, Class<T> dataClass) {
+    public InputStream toJsonStream(Object data) {
+        this.toJsonCalled = true;
+        return null;
+    }
+
+    @Override
+    public <T> T fromJsonString(String json, Class<T> dataClass) {
+        return null;
+    }
+
+    @Override
+    public <T> T fromJsonStream(InputStream json, Class<T> dataClass) {
         return null;
     }
 

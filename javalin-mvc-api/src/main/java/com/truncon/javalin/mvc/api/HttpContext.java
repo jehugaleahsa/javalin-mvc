@@ -1,5 +1,7 @@
 package com.truncon.javalin.mvc.api;
 
+import java.io.InputStream;
+
 /**
  * Represents the HTTP request being processed by the web application. It provide access to the
  * request information and allows for sending a response. Other utilities for handling requests
@@ -19,20 +21,36 @@ public interface HttpContext {
     HttpResponse getResponse();
 
     /**
-     * Converts the given object to a JSON document.
+     * Converts the given object to a JSON string.
      * @param data The object to serialize into JSON.
      * @return the serialized JSON document.
      */
-    String toJson(Object data);
+    String toJsonString(Object data);
 
     /**
-     * Deserializes the given JSON document as the desired object.
+     * Converts the given object to a JSON stream.
+     * @param data The object to serialize into JSON.
+     * @return The serialized JSON content.
+     */
+    InputStream toJsonStream(Object data);
+
+    /**
+     * Deserializes the given JSON document as the desired type.
      * @param json The JSON document to deserialize.
-     * @param dataClass The {@link Class} of the object to deserialize into.
+     * @param dataClass The {@link Class} of the object to deserialize to.
      * @param <T> The type of the object being deserialized.
      * @return the deserialized object.
      */
-    <T> T fromJson(String json, Class<T>  dataClass);
+    <T> T fromJsonString(String json, Class<T>  dataClass);
+
+    /**
+     * Deserializes the given JSON document as the desired type.
+     * @param json An {@link InputStream} over the JSON document to deserialize.
+     * @param dataClass The {@link Class} of the object to deserialize to.
+     * @param <T> The type of the object being deserialized.
+     * @return The deserialized object.
+     */
+    <T> T fromJsonStream(InputStream json, Class<T> dataClass);
 
     /**
      * Gets access to the underlying implementation of the context.

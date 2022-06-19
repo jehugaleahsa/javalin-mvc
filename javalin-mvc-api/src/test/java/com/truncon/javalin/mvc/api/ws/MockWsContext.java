@@ -1,5 +1,6 @@
 package com.truncon.javalin.mvc.api.ws;
 
+import java.io.InputStream;
 import java.util.UUID;
 
 public final class MockWsContext implements WsContext {
@@ -21,12 +22,22 @@ public final class MockWsContext implements WsContext {
     }
 
     @Override
-    public String toJson(Object data) {
+    public String toJsonString(Object data) {
         return null;
     }
 
     @Override
-    public <T> T fromJson(String json, Class<T> dataClass) {
+    public InputStream toJsonStream(Object data) {
+        return null;
+    }
+
+    @Override
+    public <T> T fromJsonString(String json, Class<T> dataClass) {
+        return null;
+    }
+
+    @Override
+    public <T> T fromJsonStream(InputStream json, Class<T> dataClass) {
         return null;
     }
 

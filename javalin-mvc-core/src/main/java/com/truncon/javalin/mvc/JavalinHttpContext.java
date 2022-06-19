@@ -1,5 +1,6 @@
 package com.truncon.javalin.mvc;
 
+import java.io.InputStream;
 import java.util.Objects;
 
 import com.truncon.javalin.mvc.api.HttpContext;
@@ -30,13 +31,22 @@ public final class JavalinHttpContext implements HttpContext {
     }
 
     @Override
-    public String toJson(Object data) {
+    public String toJsonString(Object data) {
         return jsonMapper.toJsonString(data);
     }
 
+    public InputStream toJsonStream(Object data) {
+        return jsonMapper.toJsonStream(data);
+    }
+
     @Override
-    public <T> T fromJson(String json, Class<T> dataClass) {
+    public <T> T fromJsonString(String json, Class<T> dataClass) {
         return jsonMapper.fromJsonString(json, dataClass);
+    }
+
+    @Override
+    public <T> T fromJsonStream(InputStream json, Class<T> dataClass) {
+        return jsonMapper.fromJsonStream(json, dataClass);
     }
 
     @Override

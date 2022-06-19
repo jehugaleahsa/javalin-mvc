@@ -5,6 +5,7 @@ import com.truncon.javalin.mvc.api.ws.WsRequest;
 import com.truncon.javalin.mvc.api.ws.WsResponse;
 import io.javalin.plugin.json.JsonMapper;
 
+import java.io.InputStream;
 import java.util.Objects;
 
 public abstract class JavalinWsContext implements WsContext {
@@ -34,13 +35,23 @@ public abstract class JavalinWsContext implements WsContext {
     }
 
     @Override
-    public String toJson(Object data) {
+    public String toJsonString(Object data) {
         return jsonMapper.toJsonString(data);
     }
 
     @Override
-    public <T> T fromJson(String json, Class<T> dataClass) {
+    public InputStream toJsonStream(Object data) {
+        return jsonMapper.toJsonStream(data);
+    }
+
+    @Override
+    public <T> T fromJsonString(String json, Class<T> dataClass) {
         return jsonMapper.fromJsonString(json, dataClass);
+    }
+
+    @Override
+    public <T> T fromJsonStream(InputStream json, Class<T> dataClass) {
+        return jsonMapper.fromJsonStream(json, dataClass);
     }
 
     @Override
