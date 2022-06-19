@@ -81,14 +81,4 @@ public final class RedirectResultTest {
         Assert.assertEquals("/index", response.getRedirectLocation());
         Assert.assertEquals(308, response.getStatusCode());
     }
-
-    @Test
-    public void testExecuteAsync_permanentPreserveMethod() {
-        RedirectResult result = new RedirectResult("/index", true, true);
-        MockHttpContext context = new MockHttpContext();
-        result.executeAsync(context);
-        MockHttpResponse response = context.getResponse();
-        Assert.assertEquals("/index", response.getRedirectLocation());
-        Assert.assertEquals(308, response.getStatusCode());
-    }
 }

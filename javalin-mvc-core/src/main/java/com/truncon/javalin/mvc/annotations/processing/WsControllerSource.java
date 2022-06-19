@@ -227,10 +227,10 @@ final class WsControllerSource {
         if (method == null) {
             return;
         }
-        final String context = "ctx";
+        String context = "ctx";
         handlerBuilder.beginControlFlow("ws.$N(($N) ->", javalinHandler, context);
-        final String wrapper = "context";
-        handlerBuilder.addStatement("$T $N = new $T(this.jsonMapper, $N)", contextInterface, wrapper, contextImpl, context);
+        String wrapper = "context";
+        handlerBuilder.addStatement("$T $N = new $T($N)", contextInterface, wrapper, contextImpl, context);
 
         CodeBlock.Builder restBuilder = CodeBlock.builder();
 

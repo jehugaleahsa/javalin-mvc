@@ -141,21 +141,11 @@ public final class DownloadResult implements ActionResult {
      * Sends the stream as a response to the request with the specified MIME type.
      * @param context The request context.
      */
+    @Override
     public void execute(HttpContext context) {
         HttpResponse response = context.getResponse();
         setSynchronousSettings(response);
         response.setStreamBody(inputStream);
-    }
-
-    /**
-     * Sets the status code and headers, and returns the stream to be sent asynchronously.
-     * @param context The request context.
-     * @return the stream.
-     */
-    public Object executeAsync(HttpContext context) {
-        HttpResponse response = context.getResponse();
-        setSynchronousSettings(response);
-        return inputStream;
     }
 
     private void setSynchronousSettings(HttpResponse response) {

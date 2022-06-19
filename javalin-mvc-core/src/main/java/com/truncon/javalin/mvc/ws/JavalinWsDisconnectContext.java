@@ -1,13 +1,12 @@
 package com.truncon.javalin.mvc.ws;
 
 import com.truncon.javalin.mvc.api.ws.WsDisconnectContext;
-import io.javalin.plugin.json.JsonMapper;
 
 public final class JavalinWsDisconnectContext extends JavalinWsContext implements WsDisconnectContext {
     private final io.javalin.websocket.WsCloseContext context;
 
-    public JavalinWsDisconnectContext(JsonMapper jsonMapper, io.javalin.websocket.WsCloseContext context) {
-        super(jsonMapper, context);
+    public JavalinWsDisconnectContext(io.javalin.websocket.WsCloseContext context) {
+        super(context);
         this.context = context;
     }
 

@@ -26,6 +26,7 @@ public final class WsJsonResult implements WsActionResult {
      * Sets the JSON serialized object as the response.
      * @param context The context.
      */
+    @Override
     public void execute(WsContext context) {
         WsResponse response = context.getResponse();
         response.sendJson(data);

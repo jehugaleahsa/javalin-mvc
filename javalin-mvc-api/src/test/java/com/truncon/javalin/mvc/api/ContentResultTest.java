@@ -26,13 +26,4 @@ public final class ContentResultTest {
         Assert.assertEquals(200, context.getResponse().getStatusCode());
         Assert.assertEquals("hello", context.getResponse().getTextBody());
     }
-
-    @Test
-    public void testExecuteAsync_setsStatusCodeBody() {
-        ContentResult result = new ContentResult("hello");
-        MockHttpContext context = new MockHttpContext();
-        Object content = result.executeAsync(context);
-        Assert.assertEquals(200, context.getResponse().getStatusCode());
-        Assert.assertEquals("hello", content);
-    }
 }

@@ -17,12 +17,4 @@ public final class StatusCodeResultTest {
         result.execute(context);
         Assert.assertEquals(400, context.getResponse().getStatusCode());
     }
-
-    @Test
-    public void testExecuteAsync() {
-        StatusCodeResult result = new StatusCodeResult(400);
-        MockHttpContext context = new MockHttpContext();
-        result.executeAsync(context);
-        Assert.assertEquals(400, context.getResponse().getStatusCode());
-    }
 }

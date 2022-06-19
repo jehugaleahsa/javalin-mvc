@@ -10,6 +10,7 @@ public final class MockHttpResponse implements HttpResponse {
     private String textBody;
     private InputStream streamBody;
     private Object jsonBody;
+    private Object jsonStreamBody;
     private String redirectLocation;
     private final Map<String, String> headers = new LinkedHashMap<>();
 
@@ -65,6 +66,16 @@ public final class MockHttpResponse implements HttpResponse {
     @Override
     public HttpResponse setJsonBody(Object data) {
         this.jsonBody = data;
+        return this;
+    }
+
+    public Object getJsonStreamBody() {
+        return this.jsonStreamBody;
+    }
+
+    @Override
+    public HttpResponse setJsonStreamBody(Object data) {
+        this.jsonStreamBody = data;
         return this;
     }
 

@@ -82,20 +82,11 @@ public final class RedirectResult implements ActionResult {
      * Sets the redirect response.
      * @param context The request context.
      */
+    @Override
     public void execute(HttpContext context) {
         int statusCode = preserveMethod
             ? (permanent ? 308 : 307) // Permanent Direct vs Temporary Redirect
             : (permanent ? 301 : 302); // Moved Permanently vs Found (Previously Moved Temporarily)
         context.getResponse().redirect(location, statusCode);
-    }
-
-    /**
-     * Sets the redirect response.
-     * @param context The request context.
-     * @return null
-     */
-    public Object executeAsync(HttpContext context) {
-        execute(context);
-        return null;
     }
 }

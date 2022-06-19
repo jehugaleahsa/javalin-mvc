@@ -26,17 +26,8 @@ public final class StatusCodeResult implements ActionResult {
      * Sets the status code.
      * @param context The request context.
      */
+    @Override
     public void execute(HttpContext context) {
         context.getResponse().setStatusCode(statusCode);
-    }
-
-    /**
-     * Sets the status code.
-     * @param context The request context.
-     * @return null
-     */
-    public Object executeAsync(HttpContext context) {
-        execute(context);
-        return null;
     }
 }

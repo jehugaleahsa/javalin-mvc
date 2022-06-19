@@ -40,15 +40,4 @@ public final class StreamResultTest {
         Assert.assertSame(stream, response.getStreamBody());
         Assert.assertEquals("text/plain", response.getHeader("Content-Type"));
     }
-
-    @Test
-    public void testExecuteAsync() {
-        ByteArrayInputStream stream = new ByteArrayInputStream(new byte[0]);
-        StreamResult result = new StreamResult(stream, "text/plain");
-        MockHttpContext context = new MockHttpContext();
-        Object content = result.executeAsync(context);
-        MockHttpResponse response = context.getResponse();
-        Assert.assertSame(stream, content);
-        Assert.assertEquals("text/plain", response.getHeader("Content-Type"));
-    }
 }

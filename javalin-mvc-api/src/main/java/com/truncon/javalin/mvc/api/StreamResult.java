@@ -54,20 +54,10 @@ public final class StreamResult implements ActionResult {
      * Sets the content type header and sends the stream as the response.
      * @param context The request context.
      */
+    @Override
     public void execute(HttpContext context) {
         HttpResponse response = context.getResponse();
         response.setHeader("Content-Type", contentType);
         response.setStreamBody(stream);
-    }
-
-    /**
-     * Sets the content type header synchronously, then returns the stream to be sent asynchronously.
-     * @param context The request context.
-     * @return the stream.
-     */
-    public Object executeAsync(HttpContext context) {
-        HttpResponse response = context.getResponse();
-        response.setHeader("Content-Type", contentType);
-        return stream;
     }
 }

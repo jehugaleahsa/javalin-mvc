@@ -17,16 +17,9 @@ import io.javalin.Javalin;
 import io.javalin.http.staticfiles.Location;
 import org.apache.log4j.Logger;
 
-import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
 public final class App {
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
-        .registerModule(new ParameterNamesModule())
-        .registerModule(new Jdk8Module())
-        .registerModule(new JavaTimeModule())
-        .configure(SerializationFeature.WRITE_DATES_WITH_ZONE_ID, true);
-    private static final JsonMapper JSON_MAPPER = new JavalinJackson(OBJECT_MAPPER);
     private static final Logger LOGGER = Logger.getLogger(App.class);
     private final Javalin app;
 
@@ -38,7 +31,15 @@ public final class App {
     public static App newInstance() {
         Javalin app = Javalin.create(config -> {
             config.showJavalinBanner = false;
-            config.jsonMapper(JSON_MAPPER);
+
+            ObjectMapper mapper = new ObjectMapper()
+                .registerModule(new ParameterNamesModule())
+                .registerModule(new Jdk8Module())
+                .registerModule(new JavaTimeModule())
+                .configure(SerializationFeature.WRITE_DATES_WITH_ZONE_ID, true);
+            JsonMapper jsonMapper = new JavalinJackson(mapper);
+            config.jsonMapper(jsonMapper);
+
             config.registerPlugin(new OpenApiPlugin(getOpenApiOptions()));
             config.addStaticFiles("./public", Location.EXTERNAL);
             config.addSinglePageRoot("/", "./public/index.html", Location.EXTERNAL);
@@ -46,7 +47,7 @@ public final class App {
 
         // Provide method of constructing a new DI container
         Supplier<WebContainer> scopeFactory = () -> DaggerWebContainer.builder().build();
-        ControllerRegistry registry = new JavalinControllerRegistry(JSON_MAPPER, scopeFactory);
+        ControllerRegistry registry = new JavalinControllerRegistry(scopeFactory);
         registry.register(app);
 
         // Prevent unhandled exceptions from taking down the web server

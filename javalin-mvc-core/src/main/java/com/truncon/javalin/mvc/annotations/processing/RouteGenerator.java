@@ -141,7 +141,7 @@ final class RouteGenerator {
 
         boolean injectorNeeded = false;
         CodeBlock.Builder restBuilder = CodeBlock.builder();
-        restBuilder.addStatement("$T wrapper = new $T(this.jsonMapper, ctx)", HttpContext.class, JavalinHttpContext.class);
+        restBuilder.addStatement("$T wrapper = new $T(ctx)", HttpContext.class, JavalinHttpContext.class);
         Name controllerName = container.getDependencyName(controller.getType());
         if (controllerName != null) {
             injectorNeeded = true;
@@ -176,23 +176,27 @@ final class RouteGenerator {
             restBuilder.addStatement("result.execute(wrapper)");
         } else if (methodUtils.hasFutureActionResultReturnType(method)) {
             restBuilder.addStatement(
-                "$T<?> future = controller.$N(" + parameterResult.getArgumentList() + ").thenApply(r -> r.executeAsync(wrapper))",
+                "$T<?> future = controller.$N(" + parameterResult.getArgumentList() + ")",
                 CompletableFuture.class,
                 method.getSimpleName());
-            restBuilder.addStatement("ctx.future(future)");
+            restBuilder.addStatement(
+                "$N.future(future, r -> (($T) r).execute($N))",
+                "ctx",
+                ActionResult.class,
+                "wrapper");
         } else if (methodUtils.hasFutureSimpleReturnType(method)) {
             restBuilder.addStatement(
-                "$T<?> future = controller.$N(" + parameterResult.getArgumentList() + ").thenApply(p -> new $T(p).executeAsync(wrapper))",
+                "$T<?> future = controller.$N(" + parameterResult.getArgumentList() + ")",
                 CompletableFuture.class,
                 method.getSimpleName(),
                 JsonResult.class);
-            restBuilder.addStatement("ctx.future(future)");
+            restBuilder.addStatement("$N.future(future)", "ctx");
         } else {
             restBuilder.addStatement(
                 "$T result = controller.$N(" + parameterResult.getArgumentList() + ")",
                 method.getReturnType(),
                 method.getSimpleName());
-            restBuilder.addStatement("new $T(result).execute(wrapper)", JsonResult.class);
+            restBuilder.addStatement("new $T(result).execute($N)", JsonResult.class, "wrapper");
         }
         injectorNeeded |= parameterResult.isInjectorNeeded();
 

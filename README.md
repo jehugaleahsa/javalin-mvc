@@ -129,10 +129,10 @@ import com.truncon.javalin.mvc.JavalinControllerRegistry;
 // etc...
 
 public static void main(String[] args) throws IOException {
-    JsonMapper jsonMapper = new JavalinJackson(new ObjectMapper());
     Javalin app = Javalin.create(config -> {
         // Remove the following line to disable Open API annotation processing
         config.registerPlugin(new OpenApiPlugin(getOpenApiOptions()));
+        JsonMapper jsonMapper = new JavalinJackson(new ObjectMapper());
         config.jsonMapper(jsonMapper);
         // This example is using the SPA feature
         config.addStaticFiles("./public", Location.EXTERNAL);

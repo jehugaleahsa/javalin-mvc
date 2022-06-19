@@ -9,13 +9,10 @@ import java.io.InputStream;
 import java.util.Objects;
 
 public abstract class JavalinWsContext implements WsContext {
-    private final JsonMapper jsonMapper;
     private final io.javalin.websocket.WsContext context;
 
-    public JavalinWsContext(JsonMapper jsonMapper, io.javalin.websocket.WsContext context) {
-        Objects.requireNonNull(jsonMapper);
+    public JavalinWsContext(io.javalin.websocket.WsContext context) {
         Objects.requireNonNull(context);
-        this.jsonMapper = jsonMapper;
         this.context = context;
     }
 
@@ -32,26 +29,6 @@ public abstract class JavalinWsContext implements WsContext {
     @Override
     public WsResponse getResponse() {
         return new JavalinWsResponse(context);
-    }
-
-    @Override
-    public String toJsonString(Object data) {
-        return jsonMapper.toJsonString(data);
-    }
-
-    @Override
-    public InputStream toJsonStream(Object data) {
-        return jsonMapper.toJsonStream(data);
-    }
-
-    @Override
-    public <T> T fromJsonString(String json, Class<T> dataClass) {
-        return jsonMapper.fromJsonString(json, dataClass);
-    }
-
-    @Override
-    public <T> T fromJsonStream(InputStream json, Class<T> dataClass) {
-        return jsonMapper.fromJsonStream(json, dataClass);
     }
 
     @Override

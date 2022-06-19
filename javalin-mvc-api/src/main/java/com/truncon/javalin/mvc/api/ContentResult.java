@@ -45,20 +45,10 @@ public final class ContentResult implements ActionResult {
      * Sets the content as the response with the status code.
      * @param context The request context.
      */
+    @Override
     public void execute(HttpContext context) {
         HttpResponse response = context.getResponse();
         response.setStatusCode(statusCode);
         response.setTextBody(content);
-    }
-
-    /**
-     * Sets the status code and returns the content to be sent asynchronously.
-     * @param context The request context.
-     * @return the content.
-     */
-    public Object executeAsync(HttpContext context) {
-        HttpResponse response = context.getResponse();
-        response.setStatusCode(statusCode);
-        return content;
     }
 }

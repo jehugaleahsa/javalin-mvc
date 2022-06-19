@@ -31,13 +31,13 @@ public final class JsonResultTest {
     }
 
     @Test
-    public void testExecuteAsync() {
+    public void testExecute_streaming() {
         Object data = new Object();
-        JsonResult result = new JsonResult(data, 400);
+        JsonResult result = new JsonResult(data, 400, true);
         MockHttpContext context = new MockHttpContext();
-        result.executeAsync(context);
+        result.execute(context);
         MockHttpResponse response = context.getResponse();
         Assert.assertEquals(400, response.getStatusCode());
-        Assert.assertTrue(context.isToJsonCalled());
+        Assert.assertSame(data, response.getJsonStreamBody());
     }
 }

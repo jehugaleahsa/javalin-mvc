@@ -166,15 +166,4 @@ public final class DownloadResultTest {
         String header = response.getHeader("Content-Disposition");
         Assert.assertEquals("attachment;fileName=text.txt", header);
     }
-
-    @Test
-    public void testExecuteAsync() {
-        InputStream inputStream = new ByteArrayInputStream(new byte[0]);
-        DownloadResult result = new DownloadResult(inputStream);
-        MockHttpContext context = new MockHttpContext();
-        Object response = result.executeAsync(context);
-        Assert.assertEquals(inputStream, response);
-        String header = context.getResponse().getHeader("Content-Disposition");
-        Assert.assertEquals("attachment;", header);
-    }
 }

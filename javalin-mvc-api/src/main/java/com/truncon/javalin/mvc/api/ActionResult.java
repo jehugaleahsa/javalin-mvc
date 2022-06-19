@@ -10,11 +10,4 @@ public interface ActionResult {
      * @param context The request context.
      */
     void execute(HttpContext context);
-
-    /**
-     * Generate the response to be sent asynchronously. Headers will be set synchronously.
-     * @param context The request context.
-     * @return the content to send asynchronously.
-     */
-    Object executeAsync(HttpContext context);
 }

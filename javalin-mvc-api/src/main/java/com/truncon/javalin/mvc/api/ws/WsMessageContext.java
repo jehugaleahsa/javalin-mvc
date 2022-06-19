@@ -16,7 +16,5 @@ public interface WsMessageContext extends WsContext {
      * @param <T> The type of the object being deserialized.
      * @return the deserialized object.
      */
-    default <T> T getMessage(Class<T>  dataClass) {
-        return fromJsonString(getMessage(), dataClass);
-    }
+    <T> T getMessage(Class<T>  dataClass);
 }

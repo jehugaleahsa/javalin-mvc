@@ -43,11 +43,18 @@ public interface HttpResponse {
     HttpResponse setHtmlBody(String content);
 
     /**
-     * Sets the body of the response as a JSON document, with a MIME type of application/JSON.
+     * Sets the body of the response as a JSON document, with a MIME type of application/json.
      * @param data The object to serialize as JSON.
      * @return The current response object.
      */
     HttpResponse setJsonBody(Object data);
+
+    /**
+     * Sets the body of the response as a JSON stream, with a MIME type of application/json.
+     * @param data The object to serialize to JSON.
+     * @return The current response object.
+     */
+    HttpResponse setJsonStreamBody(Object data);
 
     /**
      * Sets the body of the response as the contents of the given stream. The MIME type must be set separately.

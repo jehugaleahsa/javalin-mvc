@@ -73,30 +73,14 @@ public final class JsonResult implements ActionResult {
      * Sets the JSON serialized object as the response with the status code.
      * @param context The request context.
      */
+    @Override
     public void execute(HttpContext context) {
         HttpResponse response = context.getResponse();
         response.setStatusCode(statusCode);
         if (stream) {
-            response.setContentType("application/json");
-            response.setStreamBody(context.toJsonStream(data));
+            response.setJsonStreamBody(data);
         } else {
             response.setJsonBody(data);
-        }
-    }
-
-    /**
-     * Sets the status code and returns the JSON serialized object to be sent asynchronously.
-     * @param context The request context.
-     * @return the JSON document.
-     */
-    public Object executeAsync(HttpContext context) {
-        HttpResponse response = context.getResponse();
-        response.setStatusCode(statusCode);
-        if (stream) {
-            response.setContentType("application/json");
-            return context.toJsonStream(data);
-        } else {
-            return context.toJsonString(data);
         }
     }
 }

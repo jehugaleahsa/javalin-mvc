@@ -169,7 +169,7 @@ public final class ControllerProcessor extends AbstractProcessor {
                 .filter(Objects::nonNull) // Someone could have deleted the class since last time
                 .collect(Collectors.toSet());
         } catch (IOException exception) {
-            messager.printMessage(Diagnostic.Kind.MANDATORY_WARNING, exception.getMessage());
+            messager.printMessage(Diagnostic.Kind.NOTE, exception.getMessage());
             return Collections.emptySet();
         }
     }
