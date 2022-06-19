@@ -217,7 +217,7 @@ Here is a list of supported and/or desired features. An `x` means it is already 
 * [x] Support returning `ActionResult` implementations
     * [x] `ContentResult` - return plain strings
     * [x] `JsonResult` - return Object as JSON
-    * [x] `StatusCodeResult` - return HTTP status code (no body)
+    * [x] `StatusCodeResult` - return HTTP status code (with no body)
     * [x] `RedirectResult` - tell the browser to redirect to another URL
     * [x] `StreamResult` - respond with a stream of bytes (think images, movies, etc.)
     * [x] `DownloadResult` - respond so the browser prompts to download the response
@@ -320,7 +320,7 @@ public ActionResult update(Customer customer) {
 You can have as many `@Before` and `@After` annotations on a single action method as you need. They will be executed in the order they appear (top-down).
 
 ## OpenAPI/Swagger Support
-You can directly use Javalin OpenAPI annotations on controller methods and they will appear in swagger/Swagger-UI. You must first configure Javalin to use swagger (see the example main above). Below is an absurd example demonstrating the majority of the annotations you can use.
+You can directly use Javalin OpenAPI annotations on controller methods, and they will appear in swagger/Swagger-UI. You must first configure Javalin to use swagger (see the example main above). Below is an absurd example demonstrating the majority of the annotations you can use.
 
 ```java
 @HttpGet(route="/api/pickles")
@@ -659,11 +659,12 @@ Javalin MVC always checks for `@UseConverter` first before trying to perform any
 ### Dependency Injection
 For instance method converters (a.k.a, non-`static`), Javalin MVC will try to create the converter objects using the default constructor, by default. However, if you register your class with Dagger, Javalin MVC will use Dagger to instantiate the converter.
 
+### Incremental Compilation Support
+As of Javalin MVC 4.x, there is very early, basic support for incremental builds. In IDE environments, like IntelliJ, compile times are improved by only compiling files that changed. However, the sources that are generated at compile-time by Javalin MVC require looking at every decorated controller class, etc. Javalin MVC solves this by keeping track of which files were previously used so the full output can be generated. Keep in mind that this is very experimental, and if you encounter any issues, please let me know. My expectation is that support for incremental builds will eliminate some of the more mystifying errors reported in the past.
+
+Often, if you can't figure out why the build is failing, try cleaning the project (like deleting the `target` directory or whatever). In IntelliJ, you can also right-click on the module and select Rebuild to perform a full compilation.
+
 ## Known Limitations
-At the time of this writing, Javalin MVC does not support incremental compilation. This means that all of your classes must be compiled in the same `javac` command in order for the full `JavalinControllerRegistry.java` file to be generated. This is the default behavior using Maven (e.g., `mvn compile`) but if you are working in an IDE, such as IntelliJ, you might need to use the "Rebuild" command or run Maven as a separate step.
-
-A common alternative workflow is to temporarily enable annotation processing and run `mvn compile` from the command line. Then simply copy the generated `/target/generated-sources/annotations/com/truncon/javalin/mvc/JavalinControllerRegistry.java` file into your codebase and disable the annotation processor again until you make another change. This is a bit of a pain but is useful for people who only intend to use this project to save themselves typing route handlers by hand.
-
 Also, note some IDEs incorrectly run the Dagger and Javalin MVC annotation processors out-of-order or at random. Dagger should always run first - otherwise Javalin MVC can't see that a dependency is provided. This often manifests itself as Javalin MVC trying to default-construct a class without a default constructor. 😬 
 
 ## Submitting Issues/Feature Requests
