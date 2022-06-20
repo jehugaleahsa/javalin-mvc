@@ -122,6 +122,10 @@ public final class TypeUtils {
         return typeUtils.isSubtype(type1, type2);
     }
 
+    public boolean isSameType(TypeMirror type1, TypeMirror type2) {
+        return typeUtils.isSameType(type1, type2);
+    }
+
     public DeclaredType getDeclaredType(TypeElement element, TypeMirror... types) {
         return typeUtils.getDeclaredType(element, types);
     }

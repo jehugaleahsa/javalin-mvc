@@ -268,23 +268,28 @@ final class WsControllerSource {
                 WsActionResult.class,
                 method.getSimpleName());
             restBuilder.addStatement("result.execute($N)", wrapper);
-        } else if (methodUtils.hasFutureWsActionResultReturnType(method)) {
+        } else if (methodUtils.hasFutureReturnType(method)) {
+            // Since the return type can be any reference type, we must first cast to
+            // Object to avoid potential compiler errors.
             restBuilder.addStatement(
-                "controller.$N(" + parameterResult.getArgumentList() + ").thenApply(r -> r.execute($N))",
+                "controller.$N("
+                    + parameterResult.getArgumentList()
+                    + ").thenApply(p -> ((Object) p instanceof $T ? ($T)(Object) p : new $T(p)).execute($N))",
                 method.getSimpleName(),
-                wrapper);
-        } else if (methodUtils.hasFutureSimpleReturnType(method)) {
-            restBuilder.addStatement(
-                "controller.$N(" + parameterResult.getArgumentList() + ").thenApply(p -> new $T(p).execute($N))",
-                method.getSimpleName(),
+                WsActionResult.class,
+                WsActionResult.class,
                 WsJsonResult.class,
                 wrapper);
         } else {
             restBuilder.addStatement(
-                "$T result = controller.$N(" + parameterResult.getArgumentList() + ")",
-                method.getReturnType(),
+                "Object result = controller.$N(" + parameterResult.getArgumentList() + ")",
                 method.getSimpleName());
-            restBuilder.addStatement("new $T(result).execute($N)", WsJsonResult.class, wrapper);
+            restBuilder.addStatement(
+                "(result instanceof $T ? ($T) result : new $T(result)).execute($N)",
+                WsActionResult.class,
+                WsActionResult.class,
+                WsJsonResult.class,
+                wrapper);
         }
         injectorNeeded |= parameterResult.isInjectorNeeded();
 

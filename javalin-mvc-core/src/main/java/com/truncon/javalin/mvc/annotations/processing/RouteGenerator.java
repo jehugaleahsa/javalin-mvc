@@ -23,7 +23,6 @@ import java.lang.annotation.Annotation;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -174,29 +173,27 @@ final class RouteGenerator {
                 ActionResult.class,
                 method.getSimpleName());
             restBuilder.addStatement("result.execute(wrapper)");
-        } else if (methodUtils.hasFutureActionResultReturnType(method)) {
+        } else if (methodUtils.hasFutureReturnType(method)) {
             restBuilder.addStatement(
-                "$T<?> future = controller.$N(" + parameterResult.getArgumentList() + ")",
-                CompletableFuture.class,
-                method.getSimpleName());
-            restBuilder.addStatement(
-                "$N.future(future, r -> (($T) r).execute($N))",
-                "ctx",
-                ActionResult.class,
-                "wrapper");
-        } else if (methodUtils.hasFutureSimpleReturnType(method)) {
-            restBuilder.addStatement(
-                "$T<?> future = controller.$N(" + parameterResult.getArgumentList() + ")",
-                CompletableFuture.class,
-                method.getSimpleName(),
-                JsonResult.class);
-            restBuilder.addStatement("$N.future(future)", "ctx");
-        } else {
-            restBuilder.addStatement(
-                "$T result = controller.$N(" + parameterResult.getArgumentList() + ")",
+                "$T future = controller.$N(" + parameterResult.getArgumentList() + ")",
                 method.getReturnType(),
                 method.getSimpleName());
-            restBuilder.addStatement("new $T(result).execute($N)", JsonResult.class, "wrapper");
+            restBuilder.addStatement(
+                "$N.future(future, r -> (r instanceof $T ? ($T) r : new $T(r)).execute($N))",
+                "ctx",
+                ActionResult.class,
+                ActionResult.class,
+                JsonResult.class,
+                "wrapper");
+        } else {
+            restBuilder.addStatement(
+                "Object result = controller.$N(" + parameterResult.getArgumentList() + ")",
+                method.getSimpleName());
+            restBuilder.addStatement("(result instanceof $T ? ($T) result : new $T(result)).execute($N)",
+                ActionResult.class,
+                ActionResult.class,
+                JsonResult.class,
+                "wrapper");
         }
         injectorNeeded |= parameterResult.isInjectorNeeded();
 
