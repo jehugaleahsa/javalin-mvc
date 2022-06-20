@@ -8,14 +8,14 @@
   <parent>
     <groupId>com.truncon</groupId>
     <artifactId>javalin-mvc</artifactId>
-    <version>4.0.0</version>
+    <version>4.0.1</version>
   </parent>
   <dependencies>
     <!-- API definitions -->
     <dependency>
       <groupId>com.truncon</groupId>
       <artifactId>javalin-mvc-api</artifactId>
-      <version>4.0.0</version>
+      <version>4.0.1</version>
     </dependency>
     <!-- Javalin -->
     <dependency>
