@@ -40,27 +40,37 @@ final class AfterGenerator {
             String injectorName,
             String contextName,
             String exceptionName) {
-        Name handlerGetter = injectorName == null ? null : getHandlerGetter();
         String arguments = getArguments();
-        if (handlerGetter == null) {
+        Name handlerGetter = injectorName == null ? null : getHandlerGetter();
+        if (container.getContainerType() == ContainerSource.Type.DAGGER && handlerGetter != null) {
             routeBuilder.addStatement(
-                    "$L = new $T().executeAfter($L, $L, $L)",
-                    exceptionName,
-                    getTypeMirror(),
-                    contextName,
-                    arguments,
-                    exceptionName);
-            return false;
-        } else {
-            routeBuilder.addStatement(
-                    "$L = $L.$L().executeAfter($L, $L, $L)",
-                    exceptionName,
-                    injectorName,
-                    handlerGetter,
-                    contextName,
-                    arguments,
-                    exceptionName);
+                "$L = $L.$L().executeAfter($L, $L, $L)",
+                exceptionName,
+                injectorName,
+                handlerGetter,
+                contextName,
+                arguments,
+                exceptionName);
             return true;
+        } else if (container.getContainerType() == ContainerSource.Type.GUICE) {
+            routeBuilder.addStatement(
+                "$L = $L.getInstance($T.class).executeAfter($L, $L, $L)",
+                exceptionName,
+                injectorName,
+                getTypeMirror(),
+                contextName,
+                arguments,
+                exceptionName);
+            return true;
+        } else  {
+            routeBuilder.addStatement(
+                "$L = new $T().executeAfter($L, $L, $L)",
+                exceptionName,
+                getTypeMirror(),
+                contextName,
+                arguments,
+                exceptionName);
+            return false;
         }
     }
 

@@ -40,17 +40,9 @@ final class WsBeforeGenerator {
             CodeBlock.Builder routeBuilder,
             String injectorName,
             String contextName) {
-        Name handlerGetter = injectorName == null ? null : getHandlerGetter();
         String arguments = getArguments();
-        if (handlerGetter == null) {
-            routeBuilder.beginControlFlow(
-                "if (!new $T().executeBefore($L, $L))",
-                getTypeMirror(),
-                contextName,
-                arguments
-            ).addStatement("return").endControlFlow();
-            return false;
-        } else {
+        Name handlerGetter = injectorName == null ? null : getHandlerGetter();
+        if (container.getContainerType() == ContainerSource.Type.DAGGER && handlerGetter != null) {
             routeBuilder.beginControlFlow(
                 "if (!$L.$L().executeBefore($L, $L))",
                 injectorName,
@@ -59,6 +51,23 @@ final class WsBeforeGenerator {
                 arguments
             ).addStatement("return").endControlFlow();
             return true;
+        } else if (container.getContainerType() == ContainerSource.Type.GUICE) {
+            routeBuilder.beginControlFlow(
+                "if (!$L.getInstance($T.class).executeBefore($L, $L))",
+                injectorName,
+                getTypeMirror(),
+                contextName,
+                arguments
+            ).addStatement("return").endControlFlow();
+            return true;
+        } else {
+            routeBuilder.beginControlFlow(
+                "if (!new $T().executeBefore($L, $L))",
+                getTypeMirror(),
+                contextName,
+                arguments
+            ).addStatement("return").endControlFlow();
+            return false;
         }
     }
 

@@ -214,11 +214,14 @@ public final class ConverterBuilder {
             callBuilder.add("$T", conversionClass.asType());
         } else {
             Name converterName = container.getDependencyName(conversionClass);
-            if (converterName == null) {
-                callBuilder.add("new $T()", conversionClass.asType());
-            } else {
+            if (container.getContainerType() == ContainerSource.Type.DAGGER && converterName != null) {
                 callBuilder.add("$N.$L()", injectorName, converterName);
                 injectorNeeded = true;
+            } else if (container.getContainerType() == ContainerSource.Type.GUICE) {
+                callBuilder.add("$N.getInstance($T.class)", injectorName, conversionClass.asType());
+                injectorNeeded = true;
+            } else {
+                callBuilder.add("new $T()", conversionClass.asType());
             }
         }
         callBuilder.add(".$N(", conversionMethod.getSimpleName());

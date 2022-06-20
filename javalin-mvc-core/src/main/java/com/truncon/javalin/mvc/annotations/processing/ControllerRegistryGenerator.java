@@ -1,5 +1,6 @@
 package com.truncon.javalin.mvc.annotations.processing;
 
+import com.google.inject.Injector;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
@@ -67,29 +68,54 @@ final class ControllerRegistryGenerator {
             .build();
         registryTypeBuilder.addAnnotation(generatedAnnotation);
 
-        if (container.isFound()) {
-            TypeName factoryType = ParameterizedTypeName.get(
-                ClassName.get(Supplier.class),
-                TypeName.get(container.getTypeMirror()));
-            FieldSpec scopeFactoryField = FieldSpec.builder(
-                factoryType,
-                SCOPE_FACTORY_NAME,
-                Modifier.PRIVATE,
-                Modifier.FINAL
-            ).build();
-            registryTypeBuilder.addField(scopeFactoryField);
+        switch (container.getContainerType()) {
+            case DAGGER: {
+                TypeName factoryType = ParameterizedTypeName.get(
+                    ClassName.get(Supplier.class),
+                    TypeName.get(container.getTypeMirror()));
+                FieldSpec scopeFactoryField = FieldSpec.builder(
+                    factoryType,
+                    SCOPE_FACTORY_NAME,
+                    Modifier.PRIVATE,
+                    Modifier.FINAL
+                ).build();
+                registryTypeBuilder.addField(scopeFactoryField);
 
-            MethodSpec constructor = MethodSpec.constructorBuilder()
-                .addModifiers(Modifier.PUBLIC)
-                .addParameter(factoryType, SCOPE_FACTORY_NAME)
-                .addStatement("this.$N = $N", SCOPE_FACTORY_NAME, SCOPE_FACTORY_NAME)
-                .build();
-            registryTypeBuilder.addMethod(constructor);
-        } else {
-            MethodSpec constructor = MethodSpec.constructorBuilder()
-                .addModifiers(Modifier.PUBLIC)
-                .build();
-            registryTypeBuilder.addMethod(constructor);
+                MethodSpec constructor = MethodSpec.constructorBuilder()
+                    .addModifiers(Modifier.PUBLIC)
+                    .addParameter(factoryType, SCOPE_FACTORY_NAME)
+                    .addStatement("this.$N = $N", SCOPE_FACTORY_NAME, SCOPE_FACTORY_NAME)
+                    .build();
+                registryTypeBuilder.addMethod(constructor);
+                break;
+            }
+            case GUICE: {
+                TypeName factoryType = ParameterizedTypeName.get(
+                    ClassName.get(Supplier.class),
+                    TypeName.get(Injector.class));
+                FieldSpec scopeFactoryField = FieldSpec.builder(
+                    factoryType,
+                    SCOPE_FACTORY_NAME,
+                    Modifier.PRIVATE,
+                    Modifier.FINAL
+                ).build();
+                registryTypeBuilder.addField(scopeFactoryField);
+
+                MethodSpec constructor = MethodSpec.constructorBuilder()
+                    .addModifiers(Modifier.PUBLIC)
+                    .addParameter(factoryType, SCOPE_FACTORY_NAME)
+                    .addStatement("this.$N = $N", SCOPE_FACTORY_NAME, SCOPE_FACTORY_NAME)
+                    .build();
+                registryTypeBuilder.addMethod(constructor);
+                break;
+            }
+            default: {
+                MethodSpec constructor = MethodSpec.constructorBuilder()
+                    .addModifiers(Modifier.PUBLIC)
+                    .build();
+                registryTypeBuilder.addMethod(constructor);
+                break;
+            }
         }
 
         HelperMethodBuilder helperBuilder = new HelperMethodBuilder(container, converterLookup, registryTypeBuilder);

@@ -1,5 +1,7 @@
 package com.truncon.javalin.mvc.annotations.processing;
 
+import com.google.inject.Module;
+import com.truncon.javalin.mvc.api.MvcModule;
 import dagger.Component;
 import com.truncon.javalin.mvc.api.MvcComponent;
 
@@ -10,19 +12,25 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 final class ContainerSource {
     private final TypeUtils typeUtils;
+    private final Type type;
     private final TypeElement containerElement;
     private final List<ExecutableElement> dependencies;
 
-    private ContainerSource(TypeUtils typeUtils, TypeElement containerElement, List<ExecutableElement> dependencies) {
+    private ContainerSource(
+            TypeUtils typeUtils,
+            Type type,
+            TypeElement containerElement,
+            List<ExecutableElement> dependencies) {
         this.typeUtils = typeUtils;
+        this.type = type;
         this.containerElement = containerElement;
         this.dependencies = dependencies;
     }
@@ -35,6 +43,22 @@ final class ContainerSource {
             TypeUtils typeUtils,
             RoundEnvironment environment,
             Collection<TypeElement> alternatives) throws ProcessingException {
+        ContainerSource daggerContainer = getDaggerContainer(typeUtils, environment, alternatives);
+        if (daggerContainer != null) {
+            return daggerContainer;
+        }
+        ContainerSource guiceContainer = getGuiceContainer(typeUtils, environment, alternatives);
+        if (guiceContainer != null) {
+            return guiceContainer;
+        }
+
+        return new ContainerSource(typeUtils, Type.NONE, null, Collections.emptyList());
+    }
+
+    private static ContainerSource getDaggerContainer(
+            TypeUtils typeUtils,
+            RoundEnvironment environment,
+            Collection<TypeElement> alternatives) {
         List<? extends TypeElement> elements = Stream.concat(
                 environment.getElementsAnnotatedWith(Component.class).stream(),
                 alternatives.stream() // Classes from previous builds, to support incremental
@@ -53,12 +77,41 @@ final class ContainerSource {
                 + " were found.";
             throw new ProcessingException(message, badElements);
         }
-        if (elements.size() == 0) {
-            return new ContainerSource(typeUtils, null, new ArrayList<>());
+        if (!elements.isEmpty()) {
+            TypeElement typeElement = elements.get(0);
+            List<ExecutableElement> dependencies = getDependencies(typeUtils, typeElement).collect(Collectors.toList());
+            return new ContainerSource(typeUtils, Type.DAGGER, typeElement, dependencies);
         }
-        TypeElement typeElement = elements.get(0);
-        List<ExecutableElement> dependencies = getDependencies(typeUtils, typeElement).collect(Collectors.toList());
-        return new ContainerSource(typeUtils, typeElement, dependencies);
+        return null;
+    }
+
+    private static ContainerSource getGuiceContainer(
+        TypeUtils typeUtils,
+        RoundEnvironment environment,
+        Collection<TypeElement> alternatives) {
+        List<? extends TypeElement> elements = Stream.concat(
+                environment.getElementsAnnotatedWith(MvcModule.class).stream(),
+                alternatives.stream() // Classes from previous builds, to support incremental
+            )
+            .distinct()
+            .filter(e -> e.getKind() == ElementKind.INTERFACE)
+            .filter(e -> e.getAnnotation(MvcModule.class) != null)
+            .map(e -> (TypeElement) e)
+            .collect(Collectors.toList());
+        if (elements.size() > 1) {
+            Element[] badElements = elements.toArray(new Element[0]);
+            String message = "More than one "
+                + Module.class.getSimpleName()
+                + " classes annotated with "
+                + MvcModule.class.getSimpleName()
+                + " were found.";
+            throw new ProcessingException(message, badElements);
+        }
+        if (!elements.isEmpty()) {
+            TypeElement typeElement = elements.get(0);
+            return new ContainerSource(typeUtils, Type.DAGGER, typeElement, Collections.emptyList());
+        }
+        return null;
     }
 
     private static Stream<ExecutableElement> getDependencies(TypeUtils typeUtils, TypeElement container) {
@@ -73,6 +126,10 @@ final class ContainerSource {
 
     }
 
+    public Type getContainerType() {
+        return type;
+    }
+
     public TypeElement getType() {
         return containerElement;
     }
@@ -82,7 +139,7 @@ final class ContainerSource {
     }
 
     public boolean isFound() {
-        return containerElement != null;
+        return type != Type.NONE;
     }
 
     public Name getDependencyName(Class<?> dependencyClass) {
@@ -102,5 +159,11 @@ final class ContainerSource {
             }
         }
         return null;
+    }
+
+    public enum Type {
+        NONE,
+        DAGGER,
+        GUICE
     }
 }

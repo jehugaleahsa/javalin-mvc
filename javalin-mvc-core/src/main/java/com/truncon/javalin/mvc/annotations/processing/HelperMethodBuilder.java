@@ -244,14 +244,21 @@ public final class HelperMethodBuilder {
             return new ConversionMethodResult(methodName, false);
         }
         CodeBlock.Builder methodBodyBuilder = CodeBlock.builder();
+        boolean injectorNeeded = false;
         Name modelName = container.isFound() ? container.getDependencyName(element) : null;
-        if (modelName == null) {
-            methodBodyBuilder.addStatement("$T model = new $T()", element.asType(), element.asType());
-        } else {
+        if (container.getContainerType() == ContainerSource.Type.DAGGER && modelName != null) {
             methodBodyBuilder.addStatement("$T model = injector.$L()", element.asType(), modelName);
+            injectorNeeded = true;
+        } else if (container.getContainerType() == ContainerSource.Type.GUICE) {
+            methodBodyBuilder.addStatement(
+                "$T model = injector.getInstance(T$.class)",
+                element.asType(),
+                element.asType());
+            injectorNeeded = true;
+        } else {
+            methodBodyBuilder.addStatement("$T model = new $T()", element.asType(), element.asType());
         }
 
-        boolean injectorNeeded = false;
         Collection<Element> memberElements = getBoundMemberElements(
             element,
             e -> defaultSource != ValueSource.Any || hasFromAnnotation(e) || hasMemberBinding(e)
@@ -590,13 +597,20 @@ public final class HelperMethodBuilder {
         }
 
         CodeBlock.Builder methodBodyBuilder = CodeBlock.builder();
-        Name modelName = container.isFound() ? container.getDependencyName(element) : null;
-        if (modelName == null) {
-            methodBodyBuilder.addStatement("$T model = new $T()", element.asType(), element.asType());
-        } else {
-            methodBodyBuilder.addStatement("$T model = injector.$L()", element.asType(), modelName);
-        }
         boolean injectorNeeded = false;
+        Name modelName = container.isFound() ? container.getDependencyName(element) : null;
+        if (container.getContainerType() == ContainerSource.Type.DAGGER && modelName != null) {
+            methodBodyBuilder.addStatement("$T model = injector.$L()", element.asType(), modelName);
+            injectorNeeded = true;
+        } else if (container.getContainerType() == ContainerSource.Type.GUICE) {
+            methodBodyBuilder.addStatement(
+                "$T model = injector.getInstance($T.class)",
+                element.asType(),
+                element.asType());
+            injectorNeeded = true;
+        } else {
+            methodBodyBuilder.addStatement("$T model = new $T()", element.asType(), element.asType());
+        }
         Collection<Element> memberElements = getBoundMemberElements(
             element,
             e -> defaultSource != WsValueSource.Any || hasWsFromAnnotation(e) || hasWsMemberBinding(e)

@@ -142,9 +142,12 @@ final class RouteGenerator {
         CodeBlock.Builder restBuilder = CodeBlock.builder();
         restBuilder.addStatement("$T wrapper = new $T(ctx)", HttpContext.class, JavalinHttpContext.class);
         Name controllerName = container.getDependencyName(controller.getType());
-        if (controllerName != null) {
-            injectorNeeded = true;
+        if (container.getContainerType() == ContainerSource.Type.DAGGER && controllerName != null) {
             restBuilder.addStatement("$T controller = injector.$L()", controller.getType(), controllerName);
+            injectorNeeded = true;
+        } else if (container.getContainerType() == ContainerSource.Type.GUICE) {
+            restBuilder.addStatement("$T controller = injector.getInstance($T.class)", controller.getType());
+            injectorNeeded = true;
         } else {
             restBuilder.addStatement("$T controller = new $T()", controller.getType(), controller.getType());
         }
