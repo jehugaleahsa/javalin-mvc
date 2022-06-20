@@ -7,7 +7,7 @@ import java.util.function.Supplier;
 
 public class AsyncTestUtils {
     private static final int RETRY_COUNT = 200;
-    private static final int TIMEOUT_MS = 250;
+    private static final int TIMEOUT_MS = 25;
 
     public static void runTestAsync(AsyncTestRunner runner) {
         AppHost.startNewAsync().thenCompose(a -> {
