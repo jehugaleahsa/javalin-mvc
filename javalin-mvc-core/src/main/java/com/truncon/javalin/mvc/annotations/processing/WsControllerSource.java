@@ -272,10 +272,11 @@ final class WsControllerSource {
             // Since the return type can be any reference type, we must first cast to
             // Object to avoid potential compiler errors.
             restBuilder.addStatement(
-                "controller.$N("
-                    + parameterResult.getArgumentList()
-                    + ").thenApply(p -> ((Object) p instanceof $T ? ($T)(Object) p : new $T(p)).execute($N))",
-                method.getSimpleName(),
+                "$T future = controller.$N(" + parameterResult.getArgumentList() + ")",
+                method.getReturnType(),
+                method.getSimpleName());
+            restBuilder.addStatement(
+                "future.thenApply(p -> ((Object) p instanceof $T ? ($T)(Object) p : new $T(p)).execute($N))",
                 WsActionResult.class,
                 WsActionResult.class,
                 WsJsonResult.class,

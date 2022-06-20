@@ -103,7 +103,7 @@ public final class ConverterBuilder {
         remaining.removeAll(contexts);
         // There should only be one name parameter, or none.
         List<VariableElement> names = remaining.stream()
-            .filter(p -> typeUtils.isType(p.asType(), String.class))
+            .filter(p -> typeUtils.isSameType(p.asType(), String.class))
             .collect(Collectors.toList());
         if (names.size() > 1) {
             return true;
@@ -124,21 +124,21 @@ public final class ConverterBuilder {
     }
 
     private static boolean isContextOrRequestType(TypeUtils typeUtils, VariableElement variableElement) {
-        return typeUtils.isType(variableElement.asType(), HttpContext.class)
-            || typeUtils.isType(variableElement.asType(), HttpRequest.class)
-            || typeUtils.isType(variableElement.asType(), WsContext.class)
-            || typeUtils.isType(variableElement.asType(), WsConnectContext.class)
-            || typeUtils.isType(variableElement.asType(), WsDisconnectContext.class)
-            || typeUtils.isType(variableElement.asType(), WsErrorContext.class)
-            || typeUtils.isType(variableElement.asType(), WsMessageContext.class)
-            || typeUtils.isType(variableElement.asType(), WsRequest.class);
+        return typeUtils.isSameType(variableElement.asType(), HttpContext.class)
+            || typeUtils.isSameType(variableElement.asType(), HttpRequest.class)
+            || typeUtils.isSameType(variableElement.asType(), WsContext.class)
+            || typeUtils.isSameType(variableElement.asType(), WsConnectContext.class)
+            || typeUtils.isSameType(variableElement.asType(), WsDisconnectContext.class)
+            || typeUtils.isSameType(variableElement.asType(), WsErrorContext.class)
+            || typeUtils.isSameType(variableElement.asType(), WsMessageContext.class)
+            || typeUtils.isSameType(variableElement.asType(), WsRequest.class);
     }
 
     private static boolean isSourceType(TypeUtils typeUtils, TypeMirror sourceType, TypeMirror contextType) {
-        boolean isHttp = typeUtils.isType(contextType, HttpContext.class)
-            || typeUtils.isType(contextType, HttpRequest.class);
-        return (isHttp && typeUtils.isType(sourceType, ValueSource.class))
-            || (!isHttp && typeUtils.isType(sourceType, WsValueSource.class));
+        boolean isHttp = typeUtils.isSameType(contextType, HttpContext.class)
+            || typeUtils.isSameType(contextType, HttpRequest.class);
+        return (isHttp && typeUtils.isSameType(sourceType, ValueSource.class))
+            || (!isHttp && typeUtils.isSameType(sourceType, WsValueSource.class));
     }
 
     private static ConverterBuilder create(TypeUtils typeUtils, ExecutableElement method) {
@@ -178,7 +178,7 @@ public final class ConverterBuilder {
     }
 
     public boolean hasContextOrRequestType(Class<?> contextType) {
-        return typeUtils.isType(conversionMethod.getParameters().get(0).asType(), contextType);
+        return typeUtils.isSameType(conversionMethod.getParameters().get(0).asType(), contextType);
     }
 
     public ConvertCallResult getConverterCall(
@@ -261,7 +261,7 @@ public final class ConverterBuilder {
     private int getNamePosition() {
         for (int index = 0; index != conversionMethod.getParameters().size(); ++index) {
             VariableElement parameter = conversionMethod.getParameters().get(index);
-            if (typeUtils.isType(parameter.asType(), String.class)) {
+            if (typeUtils.isSameType(parameter.asType(), String.class)) {
                 return index;
             }
         }
@@ -271,7 +271,7 @@ public final class ConverterBuilder {
     private int getSourcePosition(Class<?> valueSourceType) {
         for (int index = 0; index != conversionMethod.getParameters().size(); ++index) {
             VariableElement parameter = conversionMethod.getParameters().get(index);
-            if (typeUtils.isType(parameter.asType(), valueSourceType)) {
+            if (typeUtils.isSameType(parameter.asType(), valueSourceType)) {
                 return index;
             }
         }

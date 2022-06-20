@@ -164,11 +164,11 @@ public final class HelperMethodBuilder {
     public Class<?> getParameterClass(TypeMirror parameterType) {
         TypeUtils typeUtils = container.getTypeUtils();
         for (Class<?> parameterClass : HelperMethodBuilder.CONVERSION_HELPER_LOOKUP.keySet()) {
-            if (typeUtils.isType(parameterType, parameterClass)) {
+            if (typeUtils.isSameType(parameterType, parameterClass)) {
                 return parameterClass;
             } else if (parameterType.getKind() == TypeKind.ARRAY) {
                 Class<?> arrayClass = TypeUtils.getArrayClass(parameterClass);
-                if (typeUtils.isType(parameterType, arrayClass)) {
+                if (typeUtils.isSameType(parameterType, arrayClass)) {
                     return arrayClass;
                 }
             }
@@ -303,7 +303,7 @@ public final class HelperMethodBuilder {
             .addModifiers(Modifier.PRIVATE)
             .addModifiers(Modifier.STATIC)
             .returns(TypeName.get(element.asType()))
-            .addParameter(HttpContext.class, "context", Modifier.FINAL)
+            .addParameter(HttpContext.class, "context")
             .addCode(methodBodyBuilder.build())
             .build();
         typeBuilder.addMethod(method);
@@ -535,7 +535,7 @@ public final class HelperMethodBuilder {
             return true;
         }
         TypeMirror superType = element.getSuperclass();
-        if (superType.getKind() == TypeKind.NONE || container.getTypeUtils().isType(superType, Object.class)) {
+        if (superType.getKind() == TypeKind.NONE || container.getTypeUtils().isSameType(superType, Object.class)) {
             return false;
         }
         TypeElement superTypeElement = container.getTypeUtils().getTypeElement(superType);
@@ -658,7 +658,7 @@ public final class HelperMethodBuilder {
         MethodSpec method = MethodSpec.methodBuilder(methodName)
             .addModifiers(Modifier.PRIVATE, Modifier.STATIC)
             .returns(TypeName.get(element.asType()))
-            .addParameter(contextType, "context", Modifier.FINAL)
+            .addParameter(contextType, "context")
             .addCode(methodBodyBuilder.build())
             .build();
         typeBuilder.addMethod(method);
@@ -740,7 +740,7 @@ public final class HelperMethodBuilder {
         // The parameter type must be byte[] or ByteBuffer
         TypeUtils typeUtils = container.getTypeUtils();
         TypeMirror parameterType = getParameterType(memberElement);
-        if (!typeUtils.isType(parameterType, byte[].class) && !typeUtils.isType(parameterType, ByteBuffer.class)) {
+        if (!typeUtils.isSameType(parameterType, byte[].class) && !typeUtils.isSameType(parameterType, ByteBuffer.class)) {
             return false;
         }
         // We only bind from the binary message if there's an explicit FromBinary annotation or
@@ -778,7 +778,7 @@ public final class HelperMethodBuilder {
             .filter(hasBinding::apply)
             .filter(this::isValidBindTarget);
         TypeMirror superType = element.getSuperclass();
-        if (superType.getKind() == TypeKind.NONE || container.getTypeUtils().isType(superType, Object.class)) {
+        if (superType.getKind() == TypeKind.NONE || container.getTypeUtils().isSameType(superType, Object.class)) {
             return currentMembers;
         }
         TypeElement superTypeElement = container.getTypeUtils().getTypeElement(superType);
@@ -876,8 +876,8 @@ public final class HelperMethodBuilder {
             .addModifiers(Modifier.PRIVATE, Modifier.STATIC)
             .addTypeVariable(typeArgument)
             .returns(typeArgument)
-            .addParameter(HttpContext.class, "context", Modifier.FINAL)
-            .addParameter(ParameterizedTypeName.get(ClassName.get(Class.class), typeArgument), "type", Modifier.FINAL)
+            .addParameter(HttpContext.class, "context")
+            .addParameter(ParameterizedTypeName.get(ClassName.get(Class.class), typeArgument), "type")
             .addCode(CodeBlock.builder()
                 .beginControlFlow("try")
                 .addStatement("$T request = context.getRequest()", HttpRequest.class)
@@ -902,8 +902,8 @@ public final class HelperMethodBuilder {
             .addModifiers(Modifier.PRIVATE, Modifier.STATIC)
             .addTypeVariable(typeArgument)
             .returns(typeArgument)
-            .addParameter(WsMessageContext.class, "context", Modifier.FINAL)
-            .addParameter(ParameterizedTypeName.get(ClassName.get(Class.class), typeArgument), "type", Modifier.FINAL)
+            .addParameter(WsMessageContext.class, "context")
+            .addParameter(ParameterizedTypeName.get(ClassName.get(Class.class), typeArgument), "type")
             .addCode(CodeBlock.builder()
                 .beginControlFlow("try")
                 .addStatement("return context.getMessage(type)")
@@ -919,9 +919,9 @@ public final class HelperMethodBuilder {
     }
 
     public String addWsBinaryMethod(TypeMirror parameterType) {
-        if (container.getTypeUtils().isType(parameterType, byte[].class)) {
+        if (container.getTypeUtils().isSameType(parameterType, byte[].class)) {
             return addWsByteArrayBinaryMethod();
-        } else if (container.getTypeUtils().isType(parameterType, ByteBuffer.class)) {
+        } else if (container.getTypeUtils().isSameType(parameterType, ByteBuffer.class)) {
             return addWsByteBufferBinaryMethod();
         } else {
             return null;
@@ -935,7 +935,7 @@ public final class HelperMethodBuilder {
         MethodSpec method = MethodSpec.methodBuilder(BINARY_BYTE_ARRAY_METHOD_NAME)
             .addModifiers(Modifier.PRIVATE, Modifier.STATIC)
             .returns(byte[].class)
-            .addParameter(WsBinaryMessageContext.class, "context", Modifier.FINAL)
+            .addParameter(WsBinaryMessageContext.class, "context")
             .addCode(CodeBlock.builder()
                 .addStatement("$T data = context.getData()", byte[].class)
                 .addStatement("$T offset = context.getOffset()", int.class)
@@ -961,7 +961,7 @@ public final class HelperMethodBuilder {
         MethodSpec method = MethodSpec.methodBuilder(BINARY_BYTE_BUFFER_METHOD_NAME)
             .addModifiers(Modifier.PRIVATE, Modifier.STATIC)
             .returns(ByteBuffer.class)
-            .addParameter(WsBinaryMessageContext.class, "context", Modifier.FINAL)
+            .addParameter(WsBinaryMessageContext.class, "context")
             .addCode(CodeBlock.builder()
                 .addStatement("return $T.wrap(context.getData(), context.getOffset(), context.getLength())", ByteBuffer.class)
                 .build()
@@ -998,7 +998,7 @@ public final class HelperMethodBuilder {
             MethodSpec method = MethodSpec.methodBuilder(getSingletonName())
                 .addModifiers(Modifier.PRIVATE, Modifier.STATIC)
                 .returns(getSingletonType())
-                .addParameter(String.class, "value", Modifier.FINAL)
+                .addParameter(String.class, "value")
                 .addCode(getSingletonMethodBody(builder))
                 .build();
             builder.typeBuilder.addMethod(method);
@@ -1014,7 +1014,7 @@ public final class HelperMethodBuilder {
             MethodSpec method = MethodSpec.methodBuilder(getArrayName())
                 .addModifiers(Modifier.PRIVATE, Modifier.STATIC)
                 .returns(getArrayType())
-                .addParameter(String[].class, "values", Modifier.FINAL)
+                .addParameter(String[].class, "values")
                 .addCode(getArrayMethodBody(builder))
                 .build();
             builder.typeBuilder.addMethod(method);
@@ -2435,8 +2435,8 @@ public final class HelperMethodBuilder {
             MethodSpec method = MethodSpec.methodBuilder(getSingletonName())
                 .addModifiers(Modifier.PRIVATE, Modifier.STATIC)
                 .returns(String.class)
-                .addParameter(HttpContext.class, "context", Modifier.FINAL)
-                .addParameter(String.class, "key", Modifier.FINAL)
+                .addParameter(HttpContext.class, "context")
+                .addParameter(String.class, "key")
                 .addCode(getSingletonMethodBody(builder, "context", "key"))
                 .build();
             builder.typeBuilder.addMethod(method);
@@ -2452,8 +2452,8 @@ public final class HelperMethodBuilder {
             MethodSpec method = MethodSpec.methodBuilder(getArrayName())
                 .addModifiers(Modifier.PRIVATE, Modifier.STATIC)
                 .returns(String[].class)
-                .addParameter(HttpContext.class, "context", Modifier.FINAL)
-                .addParameter(String.class, "key", Modifier.FINAL)
+                .addParameter(HttpContext.class, "context")
+                .addParameter(String.class, "key")
                 .addCode(getArrayMethodBody(builder,"context", "key"))
                 .build();
             builder.typeBuilder.addMethod(method);
@@ -2768,8 +2768,8 @@ public final class HelperMethodBuilder {
             MethodSpec method = MethodSpec.methodBuilder(getSingletonName())
                 .addModifiers(Modifier.PRIVATE, Modifier.STATIC)
                 .returns(String.class)
-                .addParameter(wrapperType, "context", Modifier.FINAL)
-                .addParameter(String.class, "key", Modifier.FINAL)
+                .addParameter(wrapperType, "context")
+                .addParameter(String.class, "key")
                 .addCode(getSingletonMethodBody(builder, wrapperType, "context", "key"))
                 .build();
             builder.typeBuilder.addMethod(method);
@@ -2790,8 +2790,8 @@ public final class HelperMethodBuilder {
             MethodSpec method = MethodSpec.methodBuilder(getArrayName())
                 .addModifiers(Modifier.PRIVATE, Modifier.STATIC)
                 .returns(String[].class)
-                .addParameter(wrapperType, "context", Modifier.FINAL)
-                .addParameter(String.class, "key", Modifier.FINAL)
+                .addParameter(wrapperType, "context")
+                .addParameter(String.class, "key")
                 .addCode(getArrayMethodBody(builder, wrapperType, "context", "key"))
                 .build();
             builder.typeBuilder.addMethod(method);

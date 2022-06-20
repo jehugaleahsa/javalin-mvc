@@ -31,21 +31,21 @@ public final class TypeUtils {
         return (TypeElement) typeUtils.asElement(typeMirror);
     }
 
-    public boolean isType(TypeMirror type1, TypeMirror type2) {
+    public boolean isSameType(TypeMirror type1, TypeMirror type2) {
         return typeUtils.isSameType(type1, type2);
     }
 
-    public boolean isType(TypeMirror parameterType, Class<?> type) {
+    public boolean isSameType(TypeMirror parameterType, Class<?> type) {
         if (type == null) {
             return false;
         } else if (parameterType.getKind() == TypeKind.ARRAY) {
             ArrayType arrayType = (ArrayType) parameterType;
-            return type.isArray() && isType(arrayType.getComponentType(), type.getComponentType());
+            return type.isArray() && isSameType(arrayType.getComponentType(), type.getComponentType());
         } else if (type.isPrimitive()) {
             Class<?> primitiveType = getPrimitiveType(parameterType);
             return primitiveType == type;
         } else if (!type.isArray()) {
-            TypeElement typeElement = elementUtils.getTypeElement(type.getCanonicalName());
+            TypeElement typeElement = toElement(type);;
             if (typeElement == null) {
                 return false;
             }
@@ -122,16 +122,8 @@ public final class TypeUtils {
         return typeUtils.isSubtype(type1, type2);
     }
 
-    public boolean isSameType(TypeMirror type1, TypeMirror type2) {
-        return typeUtils.isSameType(type1, type2);
-    }
-
     public DeclaredType getDeclaredType(TypeElement element, TypeMirror... types) {
         return typeUtils.getDeclaredType(element, types);
-    }
-
-    public TypeMirror getType(DeclaredType declaredType) {
-        return elementUtils.getTypeElement(declaredType.toString()).asType();
     }
 
     public TypeMirror erasure(TypeMirror type) {
@@ -140,5 +132,15 @@ public final class TypeUtils {
 
     public Element asElement(TypeMirror type) {
         return typeUtils.asElement(type);
+    }
+
+    public boolean isAssignableTo(TypeMirror type, Class<?> clz) {
+        TypeElement element = toElement(clz);
+        TypeMirror otherType = element == null ? null : element.asType();
+        return otherType != null && typeUtils.isAssignable(type, otherType);
+    }
+
+    private TypeElement toElement(Class<?> clz) {
+        return elementUtils.getTypeElement(clz.getCanonicalName());
     }
 }

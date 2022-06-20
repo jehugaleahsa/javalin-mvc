@@ -198,15 +198,15 @@ final class ParameterGenerator {
     }
 
     private String getNonBinderParameter(String context, String wrapper, TypeUtils typeUtils, TypeMirror parameterType) {
-        if (typeUtils.isType(parameterType, Context.class)) {
+        if (typeUtils.isSameType(parameterType, Context.class)) {
             return context;
-        } else if (typeUtils.isType(parameterType, HttpContext.class)) {
+        } else if (typeUtils.isSameType(parameterType, HttpContext.class)) {
             return wrapper;
-        } else if (typeUtils.isType(parameterType, HttpRequest.class)) {
+        } else if (typeUtils.isSameType(parameterType, HttpRequest.class)) {
             return wrapper + ".getRequest()";
-        } else if (typeUtils.isType(parameterType, HttpResponse.class)) {
+        } else if (typeUtils.isSameType(parameterType, HttpResponse.class)) {
             return wrapper + ".getResponse()";
-        } else if (typeUtils.isType(parameterType, FileUpload.class)) {
+        } else if (typeUtils.isSameType(parameterType, FileUpload.class)) {
             return CodeBlock.of(wrapper + ".getRequest().getFile($S)", getParameterName()).toString();
         } else {
             return null;
@@ -362,13 +362,13 @@ final class ParameterGenerator {
             TypeMirror parameterType) {
         if (isBuiltInWsContextType(typeUtils, wrapperType, parameterType)) {
             return context;
-        } else if (typeUtils.isType(parameterType, wrapperType)) {
+        } else if (typeUtils.isSameType(parameterType, wrapperType)) {
             return wrapper;
-        } else if (typeUtils.isType(parameterType, WsContext.class)) {
+        } else if (typeUtils.isSameType(parameterType, WsContext.class)) {
             return wrapper + ".getContext()";
-        } else if (typeUtils.isType(parameterType, WsRequest.class)) {
+        } else if (typeUtils.isSameType(parameterType, WsRequest.class)) {
             return wrapper + ".getContext().getRequest()";
-        } else if (typeUtils.isType(parameterType, WsResponse.class)) {
+        } else if (typeUtils.isSameType(parameterType, WsResponse.class)) {
             return wrapper + ".getContext().getResponse()";
         } else {
             return null;
@@ -376,22 +376,22 @@ final class ParameterGenerator {
     }
 
     private static boolean isBuiltInWsContextType(TypeUtils typeUtils, Class<?> wrapperType, TypeMirror parameterType) {
-        if (typeUtils.isType(parameterType, io.javalin.websocket.WsContext.class)) {
+        if (typeUtils.isSameType(parameterType, io.javalin.websocket.WsContext.class)) {
             return true;
         } else if (wrapperType.equals(WsConnectContext.class)
-            && typeUtils.isType(parameterType, io.javalin.websocket.WsConnectContext.class)) {
+            && typeUtils.isSameType(parameterType, io.javalin.websocket.WsConnectContext.class)) {
             return true;
         } else if (wrapperType.equals(WsDisconnectContext.class)
-            && typeUtils.isType(parameterType, io.javalin.websocket.WsCloseContext.class)) {
+            && typeUtils.isSameType(parameterType, io.javalin.websocket.WsCloseContext.class)) {
             return true;
         } else if (wrapperType.equals(WsErrorContext.class)
-            && typeUtils.isType(parameterType, io.javalin.websocket.WsErrorContext.class)) {
+            && typeUtils.isSameType(parameterType, io.javalin.websocket.WsErrorContext.class)) {
             return true;
         } else if (wrapperType.equals(WsMessageContext.class)
-            && typeUtils.isType(parameterType, io.javalin.websocket.WsMessageContext.class)) {
+            && typeUtils.isSameType(parameterType, io.javalin.websocket.WsMessageContext.class)) {
             return true;
         } else if (wrapperType.equals(WsBinaryMessageContext.class)
-            && typeUtils.isType(parameterType, io.javalin.websocket.WsBinaryMessageContext.class)) {
+            && typeUtils.isSameType(parameterType, io.javalin.websocket.WsBinaryMessageContext.class)) {
             return true;
         } else {
             return false;

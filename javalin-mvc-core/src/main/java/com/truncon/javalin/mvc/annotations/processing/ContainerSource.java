@@ -154,7 +154,7 @@ final class ContainerSource {
 
     public Name getDependencyName(TypeElement searchType) {
         for (ExecutableElement dependency : dependencies) {
-            if (typeUtils.isType(searchType.asType(), dependency.getReturnType())) {
+            if (typeUtils.isSameType(searchType.asType(), dependency.getReturnType())) {
                 return dependency.getSimpleName();
             }
         }
