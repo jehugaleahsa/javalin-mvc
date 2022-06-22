@@ -285,11 +285,10 @@ public final class HelperMethodBuilder {
                 if (!visitedTypes.contains(subElement.getQualifiedName().toString())) {
                     visitedTypes.add(subElement.getQualifiedName().toString());
                     ConversionMethodResult methodResult = addConversionMethodInternal(subElement, defaultSource, visitedTypes);
-                    String valueExpression = CodeBlock.builder()
-                        .add("$N($N)", methodResult.getMethod(), "context")
-                        .build()
-                        .toString();
-                    setMember(memberElement, methodBodyBuilder, valueExpression);
+                    CodeBlock value = methodResult.isInjectorNeeded()
+                        ? CodeBlock.builder().add("$N($N, $N)", methodResult.getMethod(), "context", "injector").build()
+                        : CodeBlock.builder().add("$N($N)", methodResult.getMethod(), "context").build();
+                    setMember(memberElement, methodBodyBuilder, value.toString());
                     injectorNeeded |= methodResult.isInjectorNeeded();
                 }
             }
@@ -299,14 +298,18 @@ public final class HelperMethodBuilder {
         String simpleName = element.getSimpleName().toString();
         int count = complexConversionCounts.getOrDefault(simpleName, 0);
         methodName = "to" + simpleName + (count + 1);
-        MethodSpec method = MethodSpec.methodBuilder(methodName)
+        MethodSpec.Builder methodBuilder = MethodSpec.methodBuilder(methodName)
             .addModifiers(Modifier.PRIVATE)
             .addModifiers(Modifier.STATIC)
             .returns(TypeName.get(element.asType()))
             .addParameter(HttpContext.class, "context")
-            .addCode(methodBodyBuilder.build())
-            .build();
-        typeBuilder.addMethod(method);
+            .addCode(methodBodyBuilder.build());
+        if (injectorNeeded) {
+            methodBuilder.addParameter(
+                TypeName.get(container.getInjectorType()),
+                "injector");
+        }
+        typeBuilder.addMethod(methodBuilder.build());
         complexConversionLookup.put(key, methodName);
         complexConversionCounts.put(simpleName, count + 1);
         return new ConversionMethodResult(methodName, injectorNeeded);

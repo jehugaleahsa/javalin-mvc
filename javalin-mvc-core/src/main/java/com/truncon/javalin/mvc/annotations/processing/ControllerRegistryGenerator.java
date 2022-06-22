@@ -72,7 +72,7 @@ final class ControllerRegistryGenerator {
             case DAGGER: {
                 TypeName factoryType = ParameterizedTypeName.get(
                     ClassName.get(Supplier.class),
-                    TypeName.get(container.getTypeMirror()));
+                    TypeName.get(container.getInjectorType()));
                 FieldSpec scopeFactoryField = FieldSpec.builder(
                     factoryType,
                     SCOPE_FACTORY_NAME,

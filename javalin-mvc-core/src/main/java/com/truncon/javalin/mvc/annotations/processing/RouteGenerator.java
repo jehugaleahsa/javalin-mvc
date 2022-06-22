@@ -176,6 +176,10 @@ final class RouteGenerator {
                 ActionResult.class,
                 method.getSimpleName());
             restBuilder.addStatement("result.execute(wrapper)");
+        } else if (methodUtils.hasFutureVoidReturnType(method)) {
+            restBuilder.addStatement(
+                "controller.$N(" + parameterResult.getArgumentList() + ")",
+                method.getSimpleName());
         } else if (methodUtils.hasFutureReturnType(method)) {
             restBuilder.addStatement(
                 "$T future = controller.$N(" + parameterResult.getArgumentList() + ")",
@@ -214,8 +218,8 @@ final class RouteGenerator {
         }
 
         // Only create an injector if it is actually needed.
-        if (container.isFound() && injectorNeeded) {
-            handlerBuilder.addStatement("$T injector = $N.get()", container.getTypeMirror(), ControllerRegistryGenerator.SCOPE_FACTORY_NAME);
+        if (injectorNeeded) {
+            handlerBuilder.addStatement("$T injector = $N.get()", container.getInjectorType(), ControllerRegistryGenerator.SCOPE_FACTORY_NAME);
         }
         handlerBuilder.add(restBuilder.build());
 

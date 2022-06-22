@@ -268,6 +268,10 @@ final class WsControllerSource {
                 WsActionResult.class,
                 method.getSimpleName());
             restBuilder.addStatement("result.execute($N)", wrapper);
+        } else if (methodUtils.hasFutureVoidReturnType(method)) {
+            restBuilder.addStatement(
+                "controller.$N(" + parameterResult.getArgumentList() + ")",
+                method.getSimpleName());
         } else if (methodUtils.hasFutureReturnType(method)) {
             // Since the return type can be any reference type, we must first cast to
             // Object to avoid potential compiler errors.
@@ -276,7 +280,7 @@ final class WsControllerSource {
                 method.getReturnType(),
                 method.getSimpleName());
             restBuilder.addStatement(
-                "future.thenApply(p -> ((Object) p instanceof $T ? ($T)(Object) p : new $T(p)).execute($N))",
+                "future.thenAccept(p -> ((Object) p instanceof $T ? ($T)(Object) p : new $T(p)).execute($N))",
                 WsActionResult.class,
                 WsActionResult.class,
                 WsJsonResult.class,
@@ -309,7 +313,7 @@ final class WsControllerSource {
 
         // only create injector if needed
         if (injectorNeeded) {
-            handlerBuilder.addStatement("$T injector = $N.get()", container.getTypeMirror(), ControllerRegistryGenerator.SCOPE_FACTORY_NAME);
+            handlerBuilder.addStatement("$T injector = $N.get()", container.getInjectorType(), ControllerRegistryGenerator.SCOPE_FACTORY_NAME);
         }
         handlerBuilder.add(restBuilder.build());
 

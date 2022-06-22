@@ -3,10 +3,10 @@ package com.truncon.javalin.mvc.test;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
-import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -18,27 +18,27 @@ public final class RouteBuilder {
     private RouteBuilder() {
     }
 
-    public static String buildRoute(String path) throws IOException {
+    public static String buildRoute(String path) {
         return buildRoute(path, Collections.emptyMap(), Collections.emptyList(), false);
     }
 
-    public static String buildRouteWithPathParams(String path, Map<String, String> pathReplacements) throws IOException {
+    public static String buildRouteWithPathParams(String path, Map<String, String> pathReplacements) {
         return buildRoute(path, pathReplacements, Collections.emptyList(), false);
     }
 
-    public static String buildRouteWithQueryParams(String path, Collection<Pair<String, String>> queryString) throws IOException {
+    public static String buildRouteWithQueryParams(String path, Collection<Pair<String, String>> queryString) {
         return buildRoute(path, Collections.emptyMap(), queryString, false);
     }
 
-    public static String buildWsRoute(String path) throws IOException {
+    public static String buildWsRoute(String path) {
         return buildRoute(path, Collections.emptyMap(), Collections.emptyList(), true);
     }
 
-    public static String buildWsRouteWithPathParams(String path, Map<String, String> pathReplacements) throws IOException {
+    public static String buildWsRouteWithPathParams(String path, Map<String, String> pathReplacements) {
         return buildRoute(path, pathReplacements, Collections.emptyList(), true);
     }
 
-    public static String buildWsRouteWithQueryParams(String path, Collection<Pair<String, String>> queryString) throws IOException {
+    public static String buildWsRouteWithQueryParams(String path, Collection<Pair<String, String>> queryString) {
         return buildRoute(path, Collections.emptyMap(), queryString, true);
     }
 
@@ -46,17 +46,21 @@ public final class RouteBuilder {
             String path,
             Map<String, String> pathReplacements,
             Collection<Pair<String, String>> query,
-            boolean isWebSockets) throws IOException {
+            boolean isWebSockets) {
         if (path == null) {
             path = "";
         } else {
             path = StringUtils.prependIfMissing(path, "/");
         }
-        for (String pathKey : pathReplacements.keySet()) {
-            String replacement = pathReplacements.get(pathKey);
-            replacement = URLEncoder.encode(replacement, StandardCharsets.UTF_8.name());
-            String placeholder = "\\{" + pathKey + "\\}";
-            path = path.replaceAll(placeholder, replacement);
+        try {
+            for (String pathKey : pathReplacements.keySet()) {
+                String replacement = pathReplacements.get(pathKey);
+                replacement = URLEncoder.encode(replacement, StandardCharsets.UTF_8.name());
+                String placeholder = "\\{" + pathKey + "}";
+                path = path.replaceAll(placeholder, replacement);
+            }
+        } catch (UnsupportedEncodingException exception) {
+            throw new UncheckedIOException(exception);
         }
         String queryString = query.stream().map(pair -> {
             try {

@@ -3,6 +3,7 @@ package com.truncon.javalin.mvc.test;
 import com.truncon.javalin.mvc.test.controllers.InjectionController;
 import com.truncon.javalin.mvc.test.converters.InjectionConverter;
 import com.truncon.javalin.mvc.test.handlers.InjectionHandler;
+import com.truncon.javalin.mvc.test.models.InjectionModel;
 import com.truncon.javalin.mvc.test.utils.Dependency;
 import com.truncon.javalin.mvc.test.utils.DependencyImpl;
 import dagger.Module;

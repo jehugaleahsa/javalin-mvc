@@ -1,5 +1,6 @@
 package com.truncon.javalin.mvc.test;
 
+import com.truncon.javalin.mvc.test.models.PrimitiveModel;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.StatusCode;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketClose;
@@ -16,6 +17,7 @@ import java.net.URI;
 import java.nio.ByteBuffer;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CountDownLatch;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -122,6 +124,15 @@ public final class WsTestUtils {
             }
         }
 
+        public void sendJson(Object object) {
+            try {
+                String asString = QueryUtils.MAPPER.writeValueAsString(object);
+                sendString(asString);
+            } catch (IOException exception) {
+                throw new UncheckedIOException(exception);
+            }
+        }
+
         public void sendBinary(ByteBuffer buffer) {
             try {
                 session.getRemote().sendBytes(buffer);
@@ -140,6 +151,16 @@ public final class WsTestUtils {
             return socket.awaitStringMessage();
         }
 
+        public <T> CompletableFuture<T> awaitJsonMessage(Class<T> clz) {
+            return awaitStringMessage().thenApply(m -> {
+                try {
+                    return QueryUtils.MAPPER.readValue(m, clz);
+                } catch (IOException exception) {
+                    throw new UncheckedIOException(exception);
+                }
+            });
+        }
+
         public CompletableFuture<ByteBuffer> sendBinaryAndAwaitResponse(ByteBuffer buffer) {
             CompletableFuture<ByteBuffer> future = awaitBinaryMessage();
             sendBinary(buffer);
@@ -149,6 +170,18 @@ public final class WsTestUtils {
         public CompletableFuture<String> sendBinaryAndAwaitStringResponse(ByteBuffer buffer) {
             CompletableFuture<String> future = awaitStringMessage();
             sendBinary(buffer);
+            return future;
+        }
+
+        public <T> CompletableFuture<T> sendStringAndAwaitJsonResponse(String message, Class<T> responseClz) {
+            CompletableFuture<T> future = awaitJsonMessage(responseClz);
+            sendString(message);
+            return future;
+        }
+
+        public <U, T> CompletableFuture<T> sendJsonAndAwaitJsonResponse(U message, Class<T> responseClz) {
+            CompletableFuture<T> future = awaitJsonMessage(responseClz);
+            sendJson(message);
             return future;
         }
 

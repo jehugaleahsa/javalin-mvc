@@ -1,5 +1,6 @@
 package com.truncon.javalin.mvc.annotations.processing;
 
+import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.truncon.javalin.mvc.api.MvcModule;
 import dagger.Component;
@@ -134,8 +135,14 @@ final class ContainerSource {
         return containerElement;
     }
 
-    public TypeMirror getTypeMirror() {
-        return containerElement == null ? null : containerElement.asType();
+    public TypeMirror getInjectorType() {
+        if (type == Type.DAGGER) {
+            return containerElement.asType();
+        } else if (type == Type.GUICE) {
+            return typeUtils.toType(Injector.class);
+        } else {
+            return null;
+        }
     }
 
     public boolean isFound() {

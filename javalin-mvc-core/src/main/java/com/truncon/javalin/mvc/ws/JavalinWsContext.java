@@ -3,9 +3,7 @@ package com.truncon.javalin.mvc.ws;
 import com.truncon.javalin.mvc.api.ws.WsContext;
 import com.truncon.javalin.mvc.api.ws.WsRequest;
 import com.truncon.javalin.mvc.api.ws.WsResponse;
-import io.javalin.plugin.json.JsonMapper;
 
-import java.io.InputStream;
 import java.util.Objects;
 
 public abstract class JavalinWsContext implements WsContext {
@@ -32,7 +30,7 @@ public abstract class JavalinWsContext implements WsContext {
     }
 
     @Override
-    public Object getHandle() {
+    public io.javalin.websocket.WsContext getHandle() {
         return context;
     }
 }

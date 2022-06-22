@@ -143,4 +143,9 @@ public final class TypeUtils {
     private TypeElement toElement(Class<?> clz) {
         return elementUtils.getTypeElement(clz.getCanonicalName());
     }
+
+    public TypeMirror toType(Class<?> clz) {
+        TypeElement element = toElement(clz);
+        return element == null ? null : element.asType();
+    }
 }

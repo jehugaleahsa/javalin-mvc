@@ -158,11 +158,10 @@ final class ParameterGenerator {
         if (defaultBinding != ValueSource.Any || helperBuilder.hasMemberBinding(parameter)) {
             TypeElement element = typeUtils.getTypeElement(parameterType);
             ConversionMethodResult methodResult = helperBuilder.addConversionMethod(element, defaultBinding);
-            String argument = CodeBlock.builder()
-                .add("$N($N)", methodResult.getMethod(), wrapper)
-                .build()
-                .toString();
-            result.addArgument(argument);
+            CodeBlock argument = methodResult.isInjectorNeeded()
+                ? CodeBlock.builder().add("$N($N, $N)", methodResult.getMethod(), wrapper, injector).build()
+                : CodeBlock.builder().add("$N($N)", methodResult.getMethod(), wrapper).build();
+            result.addArgument(argument.toString());
             result.markInjectorNeeded(methodResult.isInjectorNeeded());
             return;
         }
@@ -367,9 +366,9 @@ final class ParameterGenerator {
         } else if (typeUtils.isSameType(parameterType, WsContext.class)) {
             return wrapper + ".getContext()";
         } else if (typeUtils.isSameType(parameterType, WsRequest.class)) {
-            return wrapper + ".getContext().getRequest()";
+            return wrapper + ".getRequest()";
         } else if (typeUtils.isSameType(parameterType, WsResponse.class)) {
-            return wrapper + ".getContext().getResponse()";
+            return wrapper + ".getResponse()";
         } else {
             return null;
         }

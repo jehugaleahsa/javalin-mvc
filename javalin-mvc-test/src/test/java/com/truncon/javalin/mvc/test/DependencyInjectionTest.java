@@ -1,6 +1,7 @@
 package com.truncon.javalin.mvc.test;
 
 import com.truncon.javalin.mvc.test.controllers.InjectionController;
+import com.truncon.javalin.mvc.test.models.InjectionModel;
 import com.truncon.javalin.mvc.test.utils.DependencyImpl;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Assert;
@@ -12,7 +13,7 @@ public final class DependencyInjectionTest {
     @Test
     public void testInjectorUsed_controller_returnsDependencyValue() {
         AsyncTestUtils.runTest(a -> {
-            String route = InjectionController.GET_CONTROLLER_ROUTE;
+            String route = RouteBuilder.buildRoute(InjectionController.GET_CONTROLLER_ROUTE);
             String value = QueryUtils.getStringForGet(route);
             Assert.assertEquals(new DependencyImpl().getValue(), value);
         });
@@ -21,7 +22,7 @@ public final class DependencyInjectionTest {
     @Test
     public void testInjectorUsed_beforeHandler_returnsDependencyValue() {
         AsyncTestUtils.runTest(a -> {
-            String route = InjectionController.GET_BEFORE_HANDLER_ROUTE;
+            String route = RouteBuilder.buildRoute(InjectionController.GET_BEFORE_HANDLER_ROUTE);
             String value = QueryUtils.getStringForGet(route);
             Assert.assertEquals(new DependencyImpl().getValue(), value);
         });
@@ -30,7 +31,7 @@ public final class DependencyInjectionTest {
     @Test
     public void testInjectorUsed_afterHandler_returnsDependencyValue() {
         AsyncTestUtils.runTest(a -> {
-            String route = InjectionController.GET_AFTER_HANDLER_ROUTE;
+            String route = RouteBuilder.buildRoute(InjectionController.GET_AFTER_HANDLER_ROUTE);
             String value = QueryUtils.getStringForGet(route);
             Assert.assertEquals(new DependencyImpl().getValue(), value);
         });
@@ -46,5 +47,39 @@ public final class DependencyInjectionTest {
             String value = QueryUtils.getStringForGet(route);
             Assert.assertEquals(new DependencyImpl().getValue(), value);
         });
+    }
+
+    @Test
+    public void testInjectorUsed_model_returnsDependencyValue() {
+        AsyncTestUtils.runTest(a -> {
+            String route = RouteBuilder.buildRouteWithQueryParams(
+                InjectionController.GET_MODEL_ROUTE,
+                Collections.singletonList(Pair.of("x", "123"))
+            );
+            FakeInjectionModel model = QueryUtils.getJsonResponseForGet(route, FakeInjectionModel.class);
+            Assert.assertEquals(new DependencyImpl().getValue(), model.getValue());
+            Assert.assertEquals((Integer) 123, model.getX());
+        });
+    }
+
+    private static final class FakeInjectionModel {
+        private String value;
+        private Integer x;
+
+        public String getValue() {
+            return value;
+        }
+
+        public void setValue(String value) {
+            this.value = value;
+        }
+
+        public Integer getX() {
+            return x;
+        }
+
+        public void setX(Integer x) {
+            this.x = x;
+        }
     }
 }

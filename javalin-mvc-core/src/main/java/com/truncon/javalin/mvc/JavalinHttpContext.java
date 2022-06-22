@@ -26,7 +26,7 @@ public final class JavalinHttpContext implements HttpContext {
     }
 
     @Override
-    public Object getHandle() {
+    public Context getHandle() {
         return context;
     }
 }

@@ -1,5 +1,7 @@
 package com.truncon.javalin.mvc.test;
 
+import org.apache.http.NoHttpResponseException;
+
 import java.net.SocketException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -12,7 +14,7 @@ public class AsyncTestUtils {
     public static void runTestAsync(AsyncTestRunner runner) {
         AppHost.startNewAsync().thenCompose(a -> {
             CompletableFuture<Void> future = retry(() -> runner.runAsync(a), RETRY_COUNT);
-            return future.handle((r, error) ->
+            return future.handleAsync((r, error) ->
                 a.stopAsync().handle((r2, closeError) -> {
                     if (error != null) {
                         throw new CompletionException(error);
@@ -21,7 +23,7 @@ public class AsyncTestUtils {
                     } else {
                         return r2;
                     }
-                })
+                }).join()
             );
         }).join();
     }
@@ -34,7 +36,8 @@ public class AsyncTestUtils {
         return future.handle((r, ex) -> {
             if (ex == null) {
                 return CompletableFuture.completedFuture(r);
-            } else if (ex instanceof CompletionException &&  ex.getCause() instanceof SocketException) {
+            } else if (ex instanceof CompletionException
+                    && (ex.getCause() instanceof SocketException || ex.getCause() instanceof NoHttpResponseException)) {
                 return CompletableFuture.runAsync(() -> {
                     try {
                         Thread.sleep(TIMEOUT_MS);
