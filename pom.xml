@@ -31,8 +31,8 @@
   </issueManagement>
   <licenses>
     <license>
-      <name>UNLICENSE</name>
-      <url>https://github.com/jehugaleahsa/javalin-mvc/blob/master/LICENSE</url>
+      <name>The Apache Software License, Version 2.0</name>
+      <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
       <distribution>repo</distribution>
     </license>
   </licenses>
