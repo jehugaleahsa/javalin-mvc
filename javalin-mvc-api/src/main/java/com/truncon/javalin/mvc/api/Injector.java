@@ -12,4 +12,10 @@ public interface Injector {
      * @param <T> The type of the object to retrieve.
      */
     <T> T getInstance(Class<T> clz);
+
+    /**
+     * Provides access to the underlying implementation of the interface.
+     * @return The underlying DI container implementation.
+     */
+    Object getHandle();
 }
