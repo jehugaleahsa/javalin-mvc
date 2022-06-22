@@ -1,6 +1,5 @@
 package com.truncon.javalin.mvc.annotations.processing;
 
-import com.google.inject.Injector;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
@@ -11,6 +10,7 @@ import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import com.truncon.javalin.mvc.ControllerRegistry;
+import com.truncon.javalin.mvc.api.Injector;
 import io.javalin.Javalin;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 
@@ -89,7 +89,7 @@ final class ControllerRegistryGenerator {
                 registryTypeBuilder.addMethod(constructor);
                 break;
             }
-            case GUICE: {
+            case RUNTIME: {
                 TypeName factoryType = ParameterizedTypeName.get(
                     ClassName.get(Supplier.class),
                     TypeName.get(Injector.class));

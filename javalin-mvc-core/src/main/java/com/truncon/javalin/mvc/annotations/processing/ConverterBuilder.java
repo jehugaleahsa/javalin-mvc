@@ -217,7 +217,7 @@ public final class ConverterBuilder {
             if (container.getContainerType() == ContainerSource.Type.DAGGER && converterName != null) {
                 callBuilder.add("$N.$L()", injectorName, converterName);
                 injectorNeeded = true;
-            } else if (container.getContainerType() == ContainerSource.Type.GUICE) {
+            } else if (container.getContainerType() == ContainerSource.Type.RUNTIME) {
                 callBuilder.add("$N.getInstance($T.class)", injectorName, conversionClass.asType());
                 injectorNeeded = true;
             } else {

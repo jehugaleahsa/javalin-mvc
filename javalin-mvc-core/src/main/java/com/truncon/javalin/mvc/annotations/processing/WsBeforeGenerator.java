@@ -51,7 +51,7 @@ final class WsBeforeGenerator {
                 arguments
             ).addStatement("return").endControlFlow();
             return true;
-        } else if (container.getContainerType() == ContainerSource.Type.GUICE) {
+        } else if (container.getContainerType() == ContainerSource.Type.RUNTIME) {
             routeBuilder.beginControlFlow(
                 "if (!$L.getInstance($T.class).executeBefore($L, $L))",
                 injectorName,

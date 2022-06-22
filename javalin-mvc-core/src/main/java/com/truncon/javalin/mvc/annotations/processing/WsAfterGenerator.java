@@ -53,7 +53,7 @@ final class WsAfterGenerator {
                 arguments,
                 exceptionName);
             return true;
-        } else if (container.getContainerType() == ContainerSource.Type.GUICE) {
+        } else if (container.getContainerType() == ContainerSource.Type.RUNTIME) {
             routeBuilder.addStatement(
                 "$L = $L.getInstance($T.class).executeAfter($L, $L, $L)",
                 exceptionName,

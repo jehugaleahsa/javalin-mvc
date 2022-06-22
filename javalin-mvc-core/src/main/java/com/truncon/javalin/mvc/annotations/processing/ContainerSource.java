@@ -1,7 +1,6 @@
 package com.truncon.javalin.mvc.annotations.processing;
 
-import com.google.inject.Injector;
-import com.google.inject.Module;
+import com.truncon.javalin.mvc.api.Injector;
 import com.truncon.javalin.mvc.api.MvcModule;
 import dagger.Component;
 import com.truncon.javalin.mvc.api.MvcComponent;
@@ -101,9 +100,7 @@ final class ContainerSource {
             .collect(Collectors.toList());
         if (elements.size() > 1) {
             Element[] badElements = elements.toArray(new Element[0]);
-            String message = "More than one "
-                + Module.class.getSimpleName()
-                + " classes annotated with "
+            String message = "More than one classes annotated with "
                 + MvcModule.class.getSimpleName()
                 + " were found.";
             throw new ProcessingException(message, badElements);
@@ -138,7 +135,7 @@ final class ContainerSource {
     public TypeMirror getInjectorType() {
         if (type == Type.DAGGER) {
             return containerElement.asType();
-        } else if (type == Type.GUICE) {
+        } else if (type == Type.RUNTIME) {
             return typeUtils.toType(Injector.class);
         } else {
             return null;
@@ -171,6 +168,6 @@ final class ContainerSource {
     public enum Type {
         NONE,
         DAGGER,
-        GUICE
+        RUNTIME
     }
 }

@@ -249,7 +249,7 @@ public final class HelperMethodBuilder {
         if (container.getContainerType() == ContainerSource.Type.DAGGER && modelName != null) {
             methodBodyBuilder.addStatement("$T model = injector.$L()", element.asType(), modelName);
             injectorNeeded = true;
-        } else if (container.getContainerType() == ContainerSource.Type.GUICE) {
+        } else if (container.getContainerType() == ContainerSource.Type.RUNTIME) {
             methodBodyBuilder.addStatement(
                 "$T model = injector.getInstance(T$.class)",
                 element.asType(),
@@ -605,7 +605,7 @@ public final class HelperMethodBuilder {
         if (container.getContainerType() == ContainerSource.Type.DAGGER && modelName != null) {
             methodBodyBuilder.addStatement("$T model = injector.$L()", element.asType(), modelName);
             injectorNeeded = true;
-        } else if (container.getContainerType() == ContainerSource.Type.GUICE) {
+        } else if (container.getContainerType() == ContainerSource.Type.RUNTIME) {
             methodBodyBuilder.addStatement(
                 "$T model = injector.getInstance($T.class)",
                 element.asType(),

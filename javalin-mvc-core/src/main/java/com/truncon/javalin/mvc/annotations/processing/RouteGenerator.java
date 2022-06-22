@@ -145,7 +145,7 @@ final class RouteGenerator {
         if (container.getContainerType() == ContainerSource.Type.DAGGER && controllerName != null) {
             restBuilder.addStatement("$T controller = injector.$L()", controller.getType(), controllerName);
             injectorNeeded = true;
-        } else if (container.getContainerType() == ContainerSource.Type.GUICE) {
+        } else if (container.getContainerType() == ContainerSource.Type.RUNTIME) {
             restBuilder.addStatement("$T controller = injector.getInstance($T.class)", controller.getType());
             injectorNeeded = true;
         } else {

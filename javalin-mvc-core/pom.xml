@@ -54,12 +54,6 @@
       <version>2.42</version>
       <scope>compile</scope>
     </dependency>
-    <dependency>
-      <groupId>com.google.inject</groupId>
-      <artifactId>guice</artifactId>
-      <version>5.1.0</version>
-      <scope>compile</scope>
-    </dependency>
     <!-- JSON Support -->
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
