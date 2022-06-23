@@ -18,27 +18,25 @@ The following dependencies are needed in your web project:
 
 ```xml
 <dependencies>
+  <!-- Javalin -->
+  <dependency>
+    <groupId>io.javalin</groupId>
+    <artifactId>javalin</artifactId>
+    <version>4.6.3</version>
+  </dependency>
   <!-- Javalin MVC -->
   <dependency>
     <groupId>com.truncon</groupId>
     <artifactId>javalin-mvc-api</artifactId>
-    <version>4.0.0</version>
+    <version>4.1.0</version>
   </dependency>
   <dependency>
     <groupId>com.truncon</groupId>
     <artifactId>javalin-mvc-core</artifactId>
-    <version>4.0.0</version>
-  </dependency>
-  <!-- Dependency Injection -->
-  <dependency>
-    <groupId>com.google.dagger</groupId>
-    <artifactId>dagger</artifactId>
-    <version>2.42</version>
+    <version>4.1.0</version>
   </dependency>
 </dependencies>
 ```
-
-By having `javalin-mvc-core` as a dependency, you get Javalin as a transitive dependency, along with access to its OpenAPI plugin. 
 
 Javalin MVC uses annotation processing (more on this later) so must be setup in your web project's `pom.xml` in order to be run at compile time. If you do not want to use Dagger, you can exclude the dagger-compiler configuration below: 
 
@@ -51,15 +49,17 @@ Javalin MVC uses annotation processing (more on this later) so must be setup in 
             <version>3.8.1</version>
             <configuration>
                 <annotationProcessorPaths>
+                    <!-- Optional -->
                     <path>
                         <groupId>com.google.dagger</groupId>
                         <artifactId>dagger-compiler</artifactId>
                         <version>2.42</version>
                     </path>
+                    <!-- Required -->
                     <path>
                         <groupId>com.truncon</groupId>
-                        <artifactId>javalin-mvc-core</artifactId>
-                        <version>4.0.0</version>
+                        <artifactId>javalin-mvc-generator</artifactId>
+                        <version>4.1.0</version>
                     </path>
                 </annotationProcessorPaths>
             </configuration>
