@@ -167,8 +167,16 @@ final class JavalinHttpRequest implements HttpRequest {
 
     private static List<String> listOf(String item) {
         List<String> list = new ArrayList<>();
-        list.add(StringUtils.trimToNull(item));
+        list.add(trimToNull(item));
         return list;
+    }
+
+    private static String trimToNull(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 
     private static Map<String, List<String>> copy(Map<String, List<String>> map) {
