@@ -5,7 +5,6 @@ import io.javalin.http.Context;
 import io.javalin.http.UploadedFile;
 import com.truncon.javalin.mvc.api.FileUpload;
 import com.truncon.javalin.mvc.api.HttpRequest;
-import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;

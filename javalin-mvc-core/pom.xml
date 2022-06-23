@@ -23,49 +23,5 @@
         <artifactId>javalin</artifactId>
         <version>[4.0.0,5.0.0)</version>
     </dependency>
-    <dependency>
-      <groupId>io.javalin</groupId>
-      <artifactId>javalin-openapi</artifactId>
-      <version>[4.0.0,5.0.0)</version>
-      <exclusions>
-        <!-- Dependencies within javalin-openapi reference incompatible versions of redoc -->
-        <exclusion>
-          <groupId>org.webjars.npm</groupId>
-          <artifactId>redoc</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <!-- Compile-time Code generation -->
-    <dependency>
-      <groupId>com.squareup</groupId>
-      <artifactId>javapoet</artifactId>
-      <version>1.13.0</version>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>javax.annotation</groupId>
-      <artifactId>javax.annotation-api</artifactId>
-      <version>1.3.2</version>
-      <scope>compile</scope>
-    </dependency>
-    <!-- Dependency Injection -->
-    <dependency>
-      <groupId>com.google.dagger</groupId>
-      <artifactId>dagger</artifactId>
-      <version>2.42</version>
-      <scope>compile</scope>
-    </dependency>
   </dependencies>
-  <build>
-    <plugins>
-      <plugin>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.8.1</version>
-        <configuration>
-          <!-- Disable annotation processing for ourselves. -->
-          <compilerArgument>-proc:none</compilerArgument>
-        </configuration>
-      </plugin>
-    </plugins>
-  </build>
 </project>

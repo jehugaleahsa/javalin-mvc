@@ -28,6 +28,17 @@
             <artifactId>javalin-mvc-core</artifactId>
             <version>4.0.1</version>
         </dependency>
+        <!-- Javalin -->
+        <dependency>
+            <groupId>io.javalin</groupId>
+            <artifactId>javalin</artifactId>
+            <version>4.6.3</version>
+        </dependency>
+        <dependency>
+            <groupId>io.javalin</groupId>
+            <artifactId>javalin-openapi</artifactId>
+            <version>4.6.3</version>
+        </dependency>
         <!-- JSON -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
@@ -86,6 +97,11 @@
             <artifactId>commons-io</artifactId>
             <version>2.11.0</version>
         </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.12.0</version>
+        </dependency>
         <!-- REST Client -->
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
@@ -122,7 +138,7 @@
                         </path>
                         <path>
                             <groupId>com.truncon</groupId>
-                            <artifactId>javalin-mvc-core</artifactId>
+                            <artifactId>javalin-mvc-generator</artifactId>
                             <version>4.0.1</version>
                         </path>
                     </annotationProcessorPaths>

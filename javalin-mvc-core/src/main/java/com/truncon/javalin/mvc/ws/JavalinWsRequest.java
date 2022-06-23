@@ -1,8 +1,8 @@
 package com.truncon.javalin.mvc.ws;
 
+import com.truncon.javalin.mvc.StringUtils;
 import com.truncon.javalin.mvc.api.ws.WsRequest;
 import io.javalin.websocket.WsContext;
-import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;

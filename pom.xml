@@ -15,6 +15,7 @@
   <modules>
     <module>javalin-mvc-api</module>
     <module>javalin-mvc-core</module>
+    <module>javalin-mvc-generator</module>
     <module>javalin-mvc-test</module>
   </modules>
   <description>
@@ -50,7 +51,7 @@
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <version>4.13.1</version>
+      <version>4.13.2</version>
       <scope>test</scope>
     </dependency>
   </dependencies>

@@ -8,8 +8,6 @@ import com.truncon.javalin.mvc.api.FromPath;
 import com.truncon.javalin.mvc.api.FromQuery;
 import com.truncon.javalin.mvc.api.Named;
 import com.truncon.javalin.mvc.api.ValueSource;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
@@ -76,15 +74,15 @@ public final class ParameterLookup {
             for (String key : getDefaultKeys(defaultSource)) {
                 bindValue(type, defaultSource, instance, key);
             }
-            for (Pair<Method, ValueSource> pair : getBoundMethods(type)) {
-                Method method = pair.getLeft();
-                ValueSource source = pair.getRight();
+            for (BoundMethod boundMethod : getBoundMethods(type)) {
+                Method method = boundMethod.getMethod();
+                ValueSource source = boundMethod.getValueSource();
                 String key = getKey(method);
                 setMethodValue(source, instance, key, method);
             }
-            for (Pair<Field, ValueSource> pair : getBoundFields(type)) {
-                Field field = pair.getLeft();
-                ValueSource source = pair.getRight();
+            for (BoundField boundField : getBoundFields(type)) {
+                Field field = boundField.getField();
+                ValueSource source = boundField.getValueSource();
                 String key = getKey(field);
                 setFieldValue(source, instance, key, field);
             }
@@ -165,8 +163,8 @@ public final class ParameterLookup {
         return lookup.get(name);
     }
 
-    private static Collection<Pair<Method, ValueSource>> getBoundMethods(Class<?> type) {
-        List<Pair<Method, ValueSource>> pairs = new ArrayList<>();
+    private static Collection<BoundMethod> getBoundMethods(Class<?> type) {
+        List<BoundMethod> pairs = new ArrayList<>();
         for (Method method : getMethods(type)) {
             if (Modifier.isStatic(method.getModifiers())) {
                 continue;
@@ -177,7 +175,7 @@ public final class ParameterLookup {
             for (Map.Entry<Class<? extends Annotation>, ValueSource> entry : BINDING_ANNOTATION_TYPES.entrySet()) {
                 Annotation[] annotations = method.getAnnotationsByType(entry.getKey());
                 if (annotations.length > 0) {
-                    pairs.add(Pair.of(method, entry.getValue()));
+                    pairs.add(new BoundMethod(method, entry.getValue()));
                     break;
                 }
             }
@@ -185,8 +183,8 @@ public final class ParameterLookup {
         return pairs;
     }
 
-    private static Collection<Pair<Field, ValueSource>> getBoundFields(Class<?> type) {
-        List<Pair<Field, ValueSource>> pairs = new ArrayList<>();
+    private static Collection<BoundField> getBoundFields(Class<?> type) {
+        List<BoundField> pairs = new ArrayList<>();
         for (Field field : getFields(type)) {
             if (Modifier.isStatic(field.getModifiers()) || Modifier.isFinal(field.getModifiers())) {
                 continue;
@@ -194,7 +192,7 @@ public final class ParameterLookup {
             for (Map.Entry<Class<? extends Annotation>, ValueSource> entry : BINDING_ANNOTATION_TYPES.entrySet()) {
                 Annotation[] annotations = field.getAnnotationsByType(entry.getKey());
                 if (annotations.length > 0) {
-                    pairs.add(Pair.of(field, entry.getValue()));
+                    pairs.add(new BoundField(field, entry.getValue()));
                     break;
                 }
             }
@@ -278,5 +276,41 @@ public final class ParameterLookup {
             next = next.getSuperclass();
         }
         return members;
+    }
+
+    private static final class BoundMethod {
+        private final Method method;
+        private final ValueSource valueSource;
+
+        public BoundMethod(Method method, ValueSource valueSource) {
+            this.method = method;
+            this.valueSource = valueSource;
+        }
+
+        public Method getMethod() {
+            return method;
+        }
+
+        public ValueSource getValueSource() {
+            return valueSource;
+        }
+    }
+
+    private static final class BoundField {
+        private final Field field;
+        private final ValueSource valueSource;
+
+        public BoundField(Field field, ValueSource valueSource) {
+            this.field = field;
+            this.valueSource = valueSource;
+        }
+
+        public Field getField() {
+            return field;
+        }
+
+        public ValueSource getValueSource() {
+            return valueSource;
+        }
     }
 }

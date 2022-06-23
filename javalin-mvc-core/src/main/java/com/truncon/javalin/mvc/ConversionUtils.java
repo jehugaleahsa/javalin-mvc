@@ -1,7 +1,5 @@
 package com.truncon.javalin.mvc;
 
-import org.apache.commons.lang3.StringUtils;
-
 import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.math.BigInteger;
