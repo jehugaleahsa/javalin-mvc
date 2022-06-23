@@ -1,5 +1,6 @@
 package com.truncon.javalin.mvc.annotations.processing;
 
+import com.squareup.javapoet.CodeBlock;
 import com.truncon.javalin.mvc.api.Injector;
 import com.truncon.javalin.mvc.api.MvcModule;
 import dagger.Component;
@@ -145,6 +146,28 @@ final class ContainerSource {
 
     public boolean isFound() {
         return type != Type.NONE;
+    }
+
+    public InjectionResult getInstanceCall(TypeMirror type, String injectorName) {
+        if (injectorName != null) {
+            if (this.type == ContainerSource.Type.DAGGER) {
+                Name dependencyName = getDependencyName(type);
+                if (dependencyName != null) {
+                    CodeBlock call = CodeBlock.of("$N.$L()", injectorName, dependencyName);
+                    return new InjectionResult(call, true);
+                }
+            } else if (this.type == ContainerSource.Type.RUNTIME) {
+                CodeBlock call = CodeBlock.of("$N.getInstance($T.class)", injectorName, type);
+                return new InjectionResult(call, true);
+            }
+        }
+        CodeBlock call = CodeBlock.of("new $T()", type);
+        return new InjectionResult(call, false);
+    }
+
+    private Name getDependencyName(TypeMirror searchType) {
+        TypeElement element = typeUtils.getTypeElement(searchType);
+        return getDependencyName(element);
     }
 
     public Name getDependencyName(TypeElement searchType) {

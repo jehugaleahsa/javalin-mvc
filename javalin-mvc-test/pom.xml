@@ -45,11 +45,6 @@
                 </exclusion>
             </exclusions>
         </dependency>
-        <dependency>
-            <groupId>io.javalin</groupId>
-            <artifactId>javalin-openapi</artifactId>
-            <version>4.6.3</version>
-        </dependency>
         <!-- JSON -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>

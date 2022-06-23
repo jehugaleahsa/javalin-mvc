@@ -4,8 +4,6 @@ import com.squareup.javapoet.CodeBlock;
 import com.truncon.javalin.mvc.api.After;
 import com.truncon.javalin.mvc.api.AfterContainer;
 
-import javax.lang.model.element.Name;
-import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.MirroredTypeException;
 import javax.lang.model.type.TypeMirror;
 import java.util.ArrayList;
@@ -41,44 +39,15 @@ final class AfterGenerator {
             String contextName,
             String exceptionName) {
         String arguments = getArguments();
-        if (container.getContainerType() == ContainerSource.Type.DAGGER) {
-            Name handlerGetter = injectorName == null ? null : getHandlerGetter();
-            if (handlerGetter != null) {
-                routeBuilder.addStatement(
-                    "$L = $L.$L().executeAfter($L, $L, $L)",
-                    exceptionName,
-                    injectorName,
-                    handlerGetter,
-                    contextName,
-                    arguments,
-                    exceptionName);
-                return true;
-            }
-        } else if (container.getContainerType() == ContainerSource.Type.RUNTIME) {
-            routeBuilder.addStatement(
-                "$L = $L.getInstance($T.class).executeAfter($L, $L, $L)",
-                exceptionName,
-                injectorName,
-                getTypeMirror(),
-                contextName,
-                arguments,
-                exceptionName);
-            return true;
-        }
+        routeBuilder.add("$L = ", exceptionName);
+        InjectionResult result = container.getInstanceCall(getTypeMirror(), injectorName);
+        routeBuilder.add(result.getInstanceCall());
         routeBuilder.addStatement(
-            "$L = new $T().executeAfter($L, $L, $L)",
-            exceptionName,
-            getTypeMirror(),
+            ".executeAfter($L, $L, $L)",
             contextName,
             arguments,
             exceptionName);
-        return false;
-    }
-
-    private Name getHandlerGetter() {
-        TypeMirror handlerType = getTypeMirror();
-        TypeElement handlerTypeElement = container.getTypeUtils().getTypeElement(handlerType);
-        return container.getDependencyName(handlerTypeElement);
+        return result.isInjectorNeeded();
     }
 
     private TypeMirror getTypeMirror() {
