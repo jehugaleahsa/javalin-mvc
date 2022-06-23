@@ -138,19 +138,9 @@ final class RouteGenerator {
         CodeBlock.Builder handlerBuilder = CodeBlock.builder();
         handlerBuilder.beginControlFlow("$T handler$L = (ctx) ->", Handler.class, index);
 
-        boolean injectorNeeded = false;
         CodeBlock.Builder restBuilder = CodeBlock.builder();
         restBuilder.addStatement("$T wrapper = new $T(ctx)", HttpContext.class, JavalinHttpContext.class);
-        Name controllerName = container.getDependencyName(controller.getType());
-        if (container.getContainerType() == ContainerSource.Type.DAGGER && controllerName != null) {
-            restBuilder.addStatement("$T controller = injector.$L()", controller.getType(), controllerName);
-            injectorNeeded = true;
-        } else if (container.getContainerType() == ContainerSource.Type.RUNTIME) {
-            restBuilder.addStatement("$T controller = injector.getInstance($T.class)", controller.getType());
-            injectorNeeded = true;
-        } else {
-            restBuilder.addStatement("$T controller = new $T()", controller.getType(), controller.getType());
-        }
+        boolean injectorNeeded = addControllerCreation(restBuilder, container);
 
         List<BeforeGenerator> beforeGenerators = BeforeGenerator.getBeforeGenerators(container, this);
         boolean beforeInjectorNeeded = generateBeforeHandlers(
@@ -238,6 +228,21 @@ final class RouteGenerator {
             .add(handlerBuilder.build())
             .addStatement("$N.$L($S, handler$L)", ControllerRegistryGenerator.APP_NAME, methodType, route, index)
             .build();
+    }
+
+    private boolean addControllerCreation(CodeBlock.Builder restBuilder, ContainerSource container) {
+        if (container.getContainerType() == ContainerSource.Type.DAGGER) {
+            Name controllerName = container.getDependencyName(controller.getType());
+            if (controllerName != null) {
+                restBuilder.addStatement("$T controller = injector.$L()", controller.getType(), controllerName);
+                return true;
+            }
+        } else if (container.getContainerType() == ContainerSource.Type.RUNTIME) {
+            restBuilder.addStatement("$T controller = injector.getInstance($T.class)", controller.getType());
+            return true;
+        }
+        restBuilder.addStatement("$T controller = new $T()", controller.getType(), controller.getType());
+        return false;
     }
 
     private static boolean generateBeforeHandlers(

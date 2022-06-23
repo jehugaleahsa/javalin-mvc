@@ -244,20 +244,7 @@ public final class HelperMethodBuilder {
             return new ConversionMethodResult(methodName, false);
         }
         CodeBlock.Builder methodBodyBuilder = CodeBlock.builder();
-        boolean injectorNeeded = false;
-        Name modelName = container.isFound() ? container.getDependencyName(element) : null;
-        if (container.getContainerType() == ContainerSource.Type.DAGGER && modelName != null) {
-            methodBodyBuilder.addStatement("$T model = injector.$L()", element.asType(), modelName);
-            injectorNeeded = true;
-        } else if (container.getContainerType() == ContainerSource.Type.RUNTIME) {
-            methodBodyBuilder.addStatement(
-                "$T model = injector.getInstance(T$.class)",
-                element.asType(),
-                element.asType());
-            injectorNeeded = true;
-        } else {
-            methodBodyBuilder.addStatement("$T model = new $T()", element.asType(), element.asType());
-        }
+        boolean injectorNeeded = addModelBuilderCreation(methodBodyBuilder, element);
 
         Collection<Element> memberElements = getBoundMemberElements(
             element,
@@ -313,6 +300,24 @@ public final class HelperMethodBuilder {
         complexConversionLookup.put(key, methodName);
         complexConversionCounts.put(simpleName, count + 1);
         return new ConversionMethodResult(methodName, injectorNeeded);
+    }
+
+    private boolean addModelBuilderCreation(CodeBlock.Builder methodBodyBuilder, TypeElement element) {
+        if (container.getContainerType() == ContainerSource.Type.DAGGER) {
+            Name modelName = container.getDependencyName(element);
+            if (modelName != null) {
+                methodBodyBuilder.addStatement("$T model = injector.$L()", element.asType(), modelName);
+                return true;
+            }
+        } else if (container.getContainerType() == ContainerSource.Type.RUNTIME) {
+            methodBodyBuilder.addStatement(
+                "$T model = injector.getInstance(T$.class)",
+                element.asType(),
+                element.asType());
+            return true;
+        }
+        methodBodyBuilder.addStatement("$T model = new $T()", element.asType(), element.asType());
+        return false;
     }
 
     private boolean isValidBindTarget(Element memberElement) {

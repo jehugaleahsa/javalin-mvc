@@ -41,17 +41,19 @@ final class AfterGenerator {
             String contextName,
             String exceptionName) {
         String arguments = getArguments();
-        Name handlerGetter = injectorName == null ? null : getHandlerGetter();
-        if (container.getContainerType() == ContainerSource.Type.DAGGER && handlerGetter != null) {
-            routeBuilder.addStatement(
-                "$L = $L.$L().executeAfter($L, $L, $L)",
-                exceptionName,
-                injectorName,
-                handlerGetter,
-                contextName,
-                arguments,
-                exceptionName);
-            return true;
+        if (container.getContainerType() == ContainerSource.Type.DAGGER) {
+            Name handlerGetter = injectorName == null ? null : getHandlerGetter();
+            if (handlerGetter != null) {
+                routeBuilder.addStatement(
+                    "$L = $L.$L().executeAfter($L, $L, $L)",
+                    exceptionName,
+                    injectorName,
+                    handlerGetter,
+                    contextName,
+                    arguments,
+                    exceptionName);
+                return true;
+            }
         } else if (container.getContainerType() == ContainerSource.Type.RUNTIME) {
             routeBuilder.addStatement(
                 "$L = $L.getInstance($T.class).executeAfter($L, $L, $L)",
@@ -62,16 +64,15 @@ final class AfterGenerator {
                 arguments,
                 exceptionName);
             return true;
-        } else  {
-            routeBuilder.addStatement(
-                "$L = new $T().executeAfter($L, $L, $L)",
-                exceptionName,
-                getTypeMirror(),
-                contextName,
-                arguments,
-                exceptionName);
-            return false;
         }
+        routeBuilder.addStatement(
+            "$L = new $T().executeAfter($L, $L, $L)",
+            exceptionName,
+            getTypeMirror(),
+            contextName,
+            arguments,
+            exceptionName);
+        return false;
     }
 
     private Name getHandlerGetter() {

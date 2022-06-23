@@ -213,16 +213,7 @@ public final class ConverterBuilder {
         if (conversionMethod.getModifiers().contains(Modifier.STATIC)) {
             callBuilder.add("$T", conversionClass.asType());
         } else {
-            Name converterName = container.getDependencyName(conversionClass);
-            if (container.getContainerType() == ContainerSource.Type.DAGGER && converterName != null) {
-                callBuilder.add("$N.$L()", injectorName, converterName);
-                injectorNeeded = true;
-            } else if (container.getContainerType() == ContainerSource.Type.RUNTIME) {
-                callBuilder.add("$N.getInstance($T.class)", injectorName, conversionClass.asType());
-                injectorNeeded = true;
-            } else {
-                callBuilder.add("new $T()", conversionClass.asType());
-            }
+            injectorNeeded = addConversionClassCreation(callBuilder, container, injectorName);
         }
         callBuilder.add(".$N(", conversionMethod.getSimpleName());
 
@@ -246,6 +237,24 @@ public final class ConverterBuilder {
         callBuilder.add(")");
         String call = callBuilder.build().toString();
         return new ConvertCallResult(call, injectorNeeded);
+    }
+
+    private boolean addConversionClassCreation(
+            CodeBlock.Builder callBuilder,
+            ContainerSource container,
+            String injectorName) {
+        if (container.getContainerType() == ContainerSource.Type.DAGGER) {
+            Name converterName = container.getDependencyName(conversionClass);
+            if (converterName != null) {
+                callBuilder.add("$N.$L()", injectorName, converterName);
+                return true;
+            }
+        } else if (container.getContainerType() == ContainerSource.Type.RUNTIME) {
+            callBuilder.add("$N.getInstance($T.class)", injectorName, conversionClass.asType());
+            return true;
+        }
+        callBuilder.add("new $T()", conversionClass.asType());
+        return false;
     }
 
     private int getContextOrRequestPosition() {

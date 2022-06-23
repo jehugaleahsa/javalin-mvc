@@ -321,14 +321,18 @@ final class WsControllerSource {
     }
 
     private boolean addController(ContainerSource container, CodeBlock.Builder handlerBuilder) {
-        Name controllerName = container.getDependencyName(controllerElement);
-        if (container.isFound() && controllerName != null) {
-            handlerBuilder.addStatement("$T controller = injector.$L()", controllerElement, controllerName);
+        if (container.getContainerType() == ContainerSource.Type.DAGGER) {
+            Name controllerName = container.getDependencyName(controllerElement);
+            if (controllerName != null) {
+                handlerBuilder.addStatement("$T controller = injector.$L()", controllerElement, controllerName);
+                return true;
+            }
+        } else if (container.getContainerType() == ContainerSource.Type.RUNTIME) {
+            handlerBuilder.addStatement("$T controller = injector.getInstance($T.class)", controllerElement, controllerElement);
             return true;
-        } else {
-            handlerBuilder.addStatement("$T controller = new $T()", controllerElement, controllerElement);
-            return false;
         }
+        handlerBuilder.addStatement("$T controller = new $T()", controllerElement, controllerElement);
+        return false;
     }
 
     private boolean generateBeforeHandlers(

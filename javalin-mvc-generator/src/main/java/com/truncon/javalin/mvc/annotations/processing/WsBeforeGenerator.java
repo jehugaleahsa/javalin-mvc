@@ -41,16 +41,18 @@ final class WsBeforeGenerator {
             String injectorName,
             String contextName) {
         String arguments = getArguments();
-        Name handlerGetter = injectorName == null ? null : getHandlerGetter();
-        if (container.getContainerType() == ContainerSource.Type.DAGGER && handlerGetter != null) {
-            routeBuilder.beginControlFlow(
-                "if (!$L.$L().executeBefore($L, $L))",
-                injectorName,
-                handlerGetter,
-                contextName,
-                arguments
-            ).addStatement("return").endControlFlow();
-            return true;
+        if (container.getContainerType() == ContainerSource.Type.DAGGER) {
+            Name handlerGetter = injectorName == null ? null : getHandlerGetter();
+            if (handlerGetter != null) {
+                routeBuilder.beginControlFlow(
+                    "if (!$L.$L().executeBefore($L, $L))",
+                    injectorName,
+                    handlerGetter,
+                    contextName,
+                    arguments
+                ).addStatement("return").endControlFlow();
+                return true;
+            }
         } else if (container.getContainerType() == ContainerSource.Type.RUNTIME) {
             routeBuilder.beginControlFlow(
                 "if (!$L.getInstance($T.class).executeBefore($L, $L))",
@@ -60,15 +62,14 @@ final class WsBeforeGenerator {
                 arguments
             ).addStatement("return").endControlFlow();
             return true;
-        } else {
-            routeBuilder.beginControlFlow(
-                "if (!new $T().executeBefore($L, $L))",
-                getTypeMirror(),
-                contextName,
-                arguments
-            ).addStatement("return").endControlFlow();
-            return false;
         }
+        routeBuilder.beginControlFlow(
+            "if (!new $T().executeBefore($L, $L))",
+            getTypeMirror(),
+            contextName,
+            arguments
+        ).addStatement("return").endControlFlow();
+        return false;
     }
 
     private Name getHandlerGetter() {

@@ -79,7 +79,8 @@ final class ContainerSource {
         }
         if (!elements.isEmpty()) {
             TypeElement typeElement = elements.get(0);
-            List<ExecutableElement> dependencies = getDependencies(typeUtils, typeElement).collect(Collectors.toList());
+            List<ExecutableElement> dependencies = getDependencies(typeUtils, typeElement)
+                .collect(Collectors.toList());
             return new ContainerSource(typeUtils, Type.DAGGER, typeElement, dependencies);
         }
         return null;
@@ -144,16 +145,6 @@ final class ContainerSource {
 
     public boolean isFound() {
         return type != Type.NONE;
-    }
-
-    public Name getDependencyName(Class<?> dependencyClass) {
-        TypeElement searchType = typeUtils.getTypeElement(dependencyClass.getCanonicalName());
-        return getDependencyName(searchType);
-    }
-
-    public Name getDependencyName(Name dependencyName) {
-        TypeElement searchType = typeUtils.getTypeElement(dependencyName);
-        return getDependencyName(searchType);
     }
 
     public Name getDependencyName(TypeElement searchType) {
