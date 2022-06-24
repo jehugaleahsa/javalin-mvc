@@ -8,7 +8,7 @@
     <parent>
         <groupId>com.truncon</groupId>
         <artifactId>javalin-mvc</artifactId>
-        <version>4.0.1</version>
+        <version>4.1.0</version>
     </parent>
     <dependencies>
         <!-- Dependency Injection: Example only - only one would really be used -->
@@ -26,12 +26,12 @@
         <dependency>
             <groupId>com.truncon</groupId>
             <artifactId>javalin-mvc-api</artifactId>
-            <version>4.0.1</version>
+            <version>4.1.0</version>
         </dependency>
         <dependency>
             <groupId>com.truncon</groupId>
             <artifactId>javalin-mvc-core</artifactId>
-            <version>4.0.1</version>
+            <version>4.1.0</version>
         </dependency>
         <!-- Javalin -->
         <dependency>
@@ -150,7 +150,7 @@
                         <path>
                             <groupId>com.truncon</groupId>
                             <artifactId>javalin-mvc-generator</artifactId>
-                            <version>4.0.1</version>
+                            <version>4.1.0</version>
                         </path>
                     </annotationProcessorPaths>
                 </configuration>

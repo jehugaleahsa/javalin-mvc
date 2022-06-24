@@ -19,6 +19,7 @@ public final class JsonResult implements ActionResult {
     /**
      * Initializes a new instance of a JsonResult.
      * @param data The object to serialize as JSON.
+     * @param stream Whether to stream the JSON.
      */
     public JsonResult(Object data, boolean stream) {
         this(data, 200, stream);
