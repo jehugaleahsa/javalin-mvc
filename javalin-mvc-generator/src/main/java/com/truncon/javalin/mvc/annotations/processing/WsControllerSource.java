@@ -321,18 +321,9 @@ final class WsControllerSource {
     }
 
     private boolean addController(ContainerSource container, CodeBlock.Builder handlerBuilder) {
-        if (container.getContainerType() == ContainerSource.Type.DAGGER) {
-            Name controllerName = container.getDependencyName(controllerElement);
-            if (controllerName != null) {
-                handlerBuilder.addStatement("$T controller = injector.$L()", controllerElement, controllerName);
-                return true;
-            }
-        } else if (container.getContainerType() == ContainerSource.Type.RUNTIME) {
-            handlerBuilder.addStatement("$T controller = injector.getInstance($T.class)", controllerElement, controllerElement);
-            return true;
-        }
-        handlerBuilder.addStatement("$T controller = new $T()", controllerElement, controllerElement);
-        return false;
+        InjectionResult result = container.getInstanceCall(controllerElement.asType(), "injector");
+        handlerBuilder.addStatement("$T controller = $L", controllerElement, result.getInstanceCall());
+        return result.isInjectorNeeded();
     }
 
     private boolean generateBeforeHandlers(

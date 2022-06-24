@@ -243,18 +243,9 @@ public final class ConverterBuilder {
             CodeBlock.Builder callBuilder,
             ContainerSource container,
             String injectorName) {
-        if (container.getContainerType() == ContainerSource.Type.DAGGER) {
-            Name converterName = container.getDependencyName(conversionClass);
-            if (converterName != null) {
-                callBuilder.add("$N.$L()", injectorName, converterName);
-                return true;
-            }
-        } else if (container.getContainerType() == ContainerSource.Type.RUNTIME) {
-            callBuilder.add("$N.getInstance($T.class)", injectorName, conversionClass.asType());
-            return true;
-        }
-        callBuilder.add("new $T()", conversionClass.asType());
-        return false;
+        InjectionResult result = container.getInstanceCall(conversionClass.asType(), injectorName);
+        callBuilder.add(result.getInstanceCall());
+        return result.isInjectorNeeded();
     }
 
     private int getContextOrRequestPosition() {

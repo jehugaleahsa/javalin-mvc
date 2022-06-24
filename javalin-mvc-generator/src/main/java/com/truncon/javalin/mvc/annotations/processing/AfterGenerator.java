@@ -39,11 +39,10 @@ final class AfterGenerator {
             String contextName,
             String exceptionName) {
         String arguments = getArguments();
-        routeBuilder.add("$L = ", exceptionName);
         InjectionResult result = container.getInstanceCall(getTypeMirror(), injectorName);
-        routeBuilder.add(result.getInstanceCall());
-        routeBuilder.addStatement(
-            ".executeAfter($L, $L, $L)",
+        routeBuilder.addStatement("$L = $L.executeAfter($L, $L, $L)",
+            exceptionName,
+            result.getInstanceCall(),
             contextName,
             arguments,
             exceptionName);

@@ -41,41 +41,15 @@ final class WsBeforeGenerator {
             String injectorName,
             String contextName) {
         String arguments = getArguments();
-        if (container.getContainerType() == ContainerSource.Type.DAGGER) {
-            Name handlerGetter = injectorName == null ? null : getHandlerGetter();
-            if (handlerGetter != null) {
-                routeBuilder.beginControlFlow(
-                    "if (!$L.$L().executeBefore($L, $L))",
-                    injectorName,
-                    handlerGetter,
-                    contextName,
-                    arguments
-                ).addStatement("return").endControlFlow();
-                return true;
-            }
-        } else if (container.getContainerType() == ContainerSource.Type.RUNTIME) {
-            routeBuilder.beginControlFlow(
-                "if (!$L.getInstance($T.class).executeBefore($L, $L))",
-                injectorName,
-                getTypeMirror(),
-                contextName,
-                arguments
-            ).addStatement("return").endControlFlow();
-            return true;
-        }
+        InjectionResult result = container.getInstanceCall(getTypeMirror(), injectorName);
         routeBuilder.beginControlFlow(
-            "if (!new $T().executeBefore($L, $L))",
-            getTypeMirror(),
+            "if (!$L.executeBefore($L, $L))",
+            result.getInstanceCall(),
             contextName,
-            arguments
-        ).addStatement("return").endControlFlow();
-        return false;
-    }
-
-    private Name getHandlerGetter() {
-        TypeMirror handlerType = getTypeMirror();
-        TypeElement handlerTypeElement = container.getTypeUtils().getTypeElement(handlerType);
-        return container.getDependencyName(handlerTypeElement);
+            arguments)
+            .addStatement("return")
+            .endControlFlow();
+        return result.isInjectorNeeded();
     }
 
     private TypeMirror getTypeMirror() {

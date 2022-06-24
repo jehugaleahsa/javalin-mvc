@@ -231,18 +231,9 @@ final class RouteGenerator {
     }
 
     private boolean addControllerCreation(CodeBlock.Builder restBuilder, ContainerSource container) {
-        if (container.getContainerType() == ContainerSource.Type.DAGGER) {
-            Name controllerName = container.getDependencyName(controller.getType());
-            if (controllerName != null) {
-                restBuilder.addStatement("$T controller = injector.$L()", controller.getType(), controllerName);
-                return true;
-            }
-        } else if (container.getContainerType() == ContainerSource.Type.RUNTIME) {
-            restBuilder.addStatement("$T controller = injector.getInstance($T.class)", controller.getType());
-            return true;
-        }
-        restBuilder.addStatement("$T controller = new $T()", controller.getType(), controller.getType());
-        return false;
+        InjectionResult result = container.getInstanceCall(controller.getType().asType(), "injector");
+        restBuilder.addStatement("$T controller = $L", controller.getType(), result.getInstanceCall());
+        return result.isInjectorNeeded();
     }
 
     private static boolean generateBeforeHandlers(

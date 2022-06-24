@@ -1,7 +1,5 @@
 package com.truncon.javalin.mvc.api;
 
-import java.io.InputStream;
-
 public final class MockHttpContext implements HttpContext {
     private final MockHttpResponse response = new MockHttpResponse();
 
