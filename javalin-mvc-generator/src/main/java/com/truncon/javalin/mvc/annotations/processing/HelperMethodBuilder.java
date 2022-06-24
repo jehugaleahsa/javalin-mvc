@@ -593,20 +593,9 @@ public final class HelperMethodBuilder {
         }
 
         CodeBlock.Builder methodBodyBuilder = CodeBlock.builder();
-        boolean injectorNeeded = false;
-        Name modelName = container.isFound() ? container.getDependencyName(element) : null;
-        if (container.getContainerType() == ContainerSource.Type.DAGGER && modelName != null) {
-            methodBodyBuilder.addStatement("$T model = injector.$L()", element.asType(), modelName);
-            injectorNeeded = true;
-        } else if (container.getContainerType() == ContainerSource.Type.RUNTIME) {
-            methodBodyBuilder.addStatement(
-                "$T model = injector.getInstance($T.class)",
-                element.asType(),
-                element.asType());
-            injectorNeeded = true;
-        } else {
-            methodBodyBuilder.addStatement("$T model = new $T()", element.asType(), element.asType());
-        }
+        InjectionResult result = container.getInstanceCall(element.asType(), "injector");
+        boolean injectorNeeded = result.isInjectorNeeded();
+        methodBodyBuilder.addStatement("$T model = $L", element, result.getInstanceCall());
         Collection<Element> memberElements = getBoundMemberElements(
             element,
             e -> defaultSource != WsValueSource.Any || hasWsFromAnnotation(e) || hasWsMemberBinding(e)

@@ -7,6 +7,7 @@ import dagger.Component;
 import com.truncon.javalin.mvc.api.MvcComponent;
 
 import javax.annotation.processing.RoundEnvironment;
+import javax.inject.Inject;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
@@ -80,23 +81,35 @@ final class ContainerSource {
         }
         if (!elements.isEmpty()) {
             TypeElement typeElement = elements.get(0);
-            List<ExecutableElement> dependencies = getDependencies(typeUtils, typeElement)
+            List<ExecutableElement> dependencies = getDaggerDependencies(typeUtils, typeElement)
                 .collect(Collectors.toList());
             return new ContainerSource(typeUtils, Type.DAGGER, typeElement, dependencies);
         }
         return null;
     }
 
+    private static Stream<ExecutableElement> getDaggerDependencies(TypeUtils typeUtils, TypeElement container) {
+        return Stream.concat(
+            container.getEnclosedElements().stream()
+                .filter(e -> e.getKind() == ElementKind.METHOD)
+                .map(e -> (ExecutableElement) e),
+            container.getInterfaces().stream()
+                .map(i -> (TypeElement) typeUtils.asElement(i))
+                .flatMap(i -> getDaggerDependencies(typeUtils, i))
+        );
+
+    }
+
     private static ContainerSource getGuiceContainer(
-        TypeUtils typeUtils,
-        RoundEnvironment environment,
-        Collection<TypeElement> alternatives) {
+            TypeUtils typeUtils,
+            RoundEnvironment environment,
+            Collection<TypeElement> alternatives) {
         List<? extends TypeElement> elements = Stream.concat(
                 environment.getElementsAnnotatedWith(MvcModule.class).stream(),
                 alternatives.stream() // Classes from previous builds, to support incremental
             )
             .distinct()
-            .filter(e -> e.getKind() == ElementKind.INTERFACE)
+            .filter(e -> e.getKind() == ElementKind.CLASS)
             .filter(e -> e.getAnnotation(MvcModule.class) != null)
             .map(e -> (TypeElement) e)
             .collect(Collectors.toList());
@@ -109,21 +122,10 @@ final class ContainerSource {
         }
         if (!elements.isEmpty()) {
             TypeElement typeElement = elements.get(0);
-            return new ContainerSource(typeUtils, Type.DAGGER, typeElement, Collections.emptyList());
+
+            return new ContainerSource(typeUtils, Type.RUNTIME, typeElement, Collections.emptyList());
         }
         return null;
-    }
-
-    private static Stream<ExecutableElement> getDependencies(TypeUtils typeUtils, TypeElement container) {
-        return Stream.concat(
-            container.getEnclosedElements().stream()
-                .filter(e -> e.getKind() == ElementKind.METHOD)
-                .map(e -> (ExecutableElement) e),
-            container.getInterfaces().stream()
-                .map(i -> (TypeElement) typeUtils.asElement(i))
-                .flatMap(i -> getDependencies(typeUtils, i))
-        );
-
     }
 
     public Type getContainerType() {
@@ -157,22 +159,27 @@ final class ContainerSource {
                     return new InjectionResult(call, true);
                 }
             } else if (this.type == ContainerSource.Type.RUNTIME) {
-                CodeBlock call = CodeBlock.of("$N.getInstance($T.class)", injectorName, type);
-                return new InjectionResult(call, true);
+                boolean hasInjectConstructor = isInjectedClass(type);
+                if (hasInjectConstructor) {
+                    CodeBlock call = CodeBlock.of("$N.getInstance($T.class)", injectorName, type);
+                    return new InjectionResult(call, true);
+                }
             }
         }
         CodeBlock call = CodeBlock.of("new $T()", type);
         return new InjectionResult(call, false);
     }
 
-    private Name getDependencyName(TypeMirror searchType) {
-        TypeElement element = typeUtils.getTypeElement(searchType);
-        return getDependencyName(element);
+    private boolean isInjectedClass(TypeMirror type) {
+        TypeElement element = typeUtils.getTypeElement(type);
+        return element.getEnclosedElements().stream()
+            .filter(e -> e.getKind() == ElementKind.CONSTRUCTOR)
+            .anyMatch(e -> e.getAnnotation(Inject.class) != null);
     }
 
-    public Name getDependencyName(TypeElement searchType) {
+    private Name getDependencyName(TypeMirror searchType) {
         for (ExecutableElement dependency : dependencies) {
-            if (typeUtils.isSameType(searchType.asType(), dependency.getReturnType())) {
+            if (typeUtils.isSameType(searchType, dependency.getReturnType())) {
                 return dependency.getSimpleName();
             }
         }

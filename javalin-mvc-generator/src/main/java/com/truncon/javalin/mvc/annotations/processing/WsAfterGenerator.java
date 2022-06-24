@@ -52,12 +52,6 @@ final class WsAfterGenerator {
         return result.isInjectorNeeded();
     }
 
-    private Name getHandlerGetter() {
-        TypeMirror handlerType = getTypeMirror();
-        TypeElement handlerTypeElement = container.getTypeUtils().getTypeElement(handlerType);
-        return container.getDependencyName(handlerTypeElement);
-    }
-
     private TypeMirror getTypeMirror() {
         try {
             annotation.handler();
