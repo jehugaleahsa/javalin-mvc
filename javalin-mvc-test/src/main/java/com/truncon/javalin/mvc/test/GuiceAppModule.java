@@ -6,8 +6,8 @@ import com.truncon.javalin.mvc.test.utils.Dependency;
 import com.truncon.javalin.mvc.test.utils.DependencyImpl;
 
 @MvcModule
-public final class AppGuiceModule extends AbstractModule {
-    public AppGuiceModule() {
+public final class GuiceAppModule extends AbstractModule {
+    public GuiceAppModule() {
     }
 
     @Override

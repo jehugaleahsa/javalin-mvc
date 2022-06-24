@@ -5,10 +5,9 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
-import com.google.inject.Guice;
+import com.google.inject.Module;
 import com.truncon.javalin.mvc.ControllerRegistry;
 import com.truncon.javalin.mvc.JavalinControllerRegistry;
-import com.truncon.javalin.mvc.api.Injector;
 import io.javalin.plugin.json.JavalinJackson;
 import io.javalin.plugin.json.JsonMapper;
 import io.javalin.plugin.openapi.OpenApiOptions;
@@ -18,8 +17,6 @@ import io.swagger.v3.oas.models.info.Info;
 import io.javalin.Javalin;
 import io.javalin.http.staticfiles.Location;
 import org.apache.log4j.Logger;
-
-import java.util.function.Supplier;
 
 public final class App {
     private static final Logger LOGGER = Logger.getLogger(App.class);
@@ -48,21 +45,9 @@ public final class App {
         });
 
         // Provide method of constructing a new DI container
-        //Supplier<WebContainer> scopeFactory = DaggerWebContainer::create;
-        Supplier<Injector> scopeFactory = () -> new Injector() {
-            private final com.google.inject.Injector injector = Guice.createInjector(new AppGuiceModule());
-
-            @Override
-            public <T> T getInstance(Class<T> clz) {
-                return injector.getInstance(clz);
-            }
-
-            @Override
-            public Object getHandle() {
-                return injector;
-            }
-        };
-        ControllerRegistry registry = new JavalinControllerRegistry(scopeFactory);
+        ControllerRegistry registry = new JavalinControllerRegistry(DaggerWebContainer::create);
+        //Module module = new GuiceAppModule();
+        //ControllerRegistry registry = new JavalinControllerRegistry(() -> new GuiceInjector(module));
         registry.register(app);
 
         // Prevent unhandled exceptions from taking down the web server

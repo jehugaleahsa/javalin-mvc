@@ -11,7 +11,7 @@ import javax.inject.Singleton;
 
 @Singleton
 @Component(modules = AppModule.class)
-//@MvcComponent
+@MvcComponent
 public interface WebContainer {
     InjectionController getInjectionController();
     InjectionHandler getInjectionHandler();
