@@ -46,7 +46,7 @@ public final class App {
         });
 
         // Provide method of constructing a new DI container
-        Supplier<WebContainer> scopeFactory = () -> DaggerWebContainer.builder().build();
+        Supplier<WebContainer> scopeFactory = DaggerWebContainer::create;
         ControllerRegistry registry = new JavalinControllerRegistry(scopeFactory);
         registry.register(app);
 
