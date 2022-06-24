@@ -5,9 +5,12 @@ import com.truncon.javalin.mvc.api.BeforeActionHandler;
 import com.truncon.javalin.mvc.api.HttpContext;
 import com.truncon.javalin.mvc.test.utils.Dependency;
 
+import javax.inject.Inject;
+
 public final class InjectionHandler implements BeforeActionHandler, AfterActionHandler {
     private final Dependency dependency;
 
+    @Inject
     public InjectionHandler(Dependency dependency) {
         this.dependency = dependency;
     }

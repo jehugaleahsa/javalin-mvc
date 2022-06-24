@@ -4,9 +4,12 @@ import com.truncon.javalin.mvc.api.Converter;
 import com.truncon.javalin.mvc.api.HttpContext;
 import com.truncon.javalin.mvc.test.utils.Dependency;
 
+import javax.inject.Inject;
+
 public final class InjectionConverter {
     private final Dependency dependency;
 
+    @Inject
     public InjectionConverter(Dependency dependency) {
         this.dependency = dependency;
     }
