@@ -373,6 +373,8 @@ public class MyController {
 }
 ```
 
+> Make sure you use either `javax.inject.Inject` or `jakarta.inject.Inject`. Some dependency injection frameworks will provide their own `@Inject` annotations, like Guice's `com.google.inject.Inject`, but all of them should also work with one of the standard annotations.
+
 Finally, when you create the `JavalinControllerRegistry`, you need to pass an additional argument: a `Supplier<Injector>`. `Injector` is a very basic interface in the `javalin-mvc-api` library that Javalin MVC uses to construct your classes at runtime. Here is how you would implement the `Injector` interface for Guice:
 
 ```java
