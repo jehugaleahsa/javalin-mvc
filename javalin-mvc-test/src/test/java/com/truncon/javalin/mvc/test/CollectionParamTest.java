@@ -1,12 +1,10 @@
 package com.truncon.javalin.mvc.test;
 
-import com.fasterxml.jackson.databind.node.DoubleNode;
 import com.truncon.javalin.mvc.test.controllers.CollectionParameterController;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.math.BigInteger;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
@@ -17,7 +15,7 @@ import static com.truncon.javalin.mvc.test.QueryUtils.getJsonResponseForGet;
 import static com.truncon.javalin.mvc.test.RouteBuilder.param;
 import static com.truncon.javalin.mvc.test.RouteBuilder.queryParams;
 
-public final class CollectionQueryParamTest {
+public final class CollectionParamTest {
     @Test
     public void testIterable() {
         AsyncTestUtils.runTest(app -> {

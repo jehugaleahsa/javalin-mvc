@@ -3175,7 +3175,7 @@ public final class HelperMethodBuilder {
             }
             MethodSpec method = MethodSpec.methodBuilder(getCollectionName())
                 .addModifiers(Modifier.PRIVATE, Modifier.STATIC)
-                .returns(String[].class)
+                .returns(ParameterizedTypeName.get(List.class, String.class))
                 .addParameter(wrapperType, "context")
                 .addParameter(String.class, "key")
                 .addCode(getArrayMethodBody(builder, wrapperType, "context", "key"))
@@ -3229,8 +3229,8 @@ public final class HelperMethodBuilder {
                 String key) {
             return CodeBlock.builder()
                 .addStatement("$T request = $N.getRequest()", WsRequest.class, wrapper)
-                .addStatement("$T<String> values = request.getPathLookup().get($N)", Collection.class, key)
-                .addStatement("return values == null ? new String[0] : values.toArray(new String[0])")
+                .addStatement("$T<String> values = request.getPathLookup().get($N)", List.class, key)
+                .addStatement("return values == null ? $T.emptyList() : values", Collections.class)
                 .build();
         }
 
@@ -3278,8 +3278,8 @@ public final class HelperMethodBuilder {
                 String key) {
             return CodeBlock.builder()
                 .addStatement("$T request = $N.getRequest()", WsRequest.class, wrapper)
-                .addStatement("$T<String> values = request.getQueryLookup().get($N)", Collection.class, key)
-                .addStatement("return values == null ? new String[0] : values.toArray(new String[0])")
+                .addStatement("$T<String> values = request.getQueryLookup().get($N)", List.class, key)
+                .addStatement("return values == null ? $T.emptyList() : values", Collections.class)
                 .build();
         }
 
@@ -3327,8 +3327,8 @@ public final class HelperMethodBuilder {
                 String key) {
             return CodeBlock.builder()
                 .addStatement("$T request = $N.getRequest()", WsRequest.class, wrapper)
-                .addStatement("$T<String> values = request.getHeaderLookup().get($N)", Collection.class, key)
-                .addStatement("return values == null ? new String[0] : values.toArray(new String[0])")
+                .addStatement("$T<String> values = request.getHeaderLookup().get($N)", List.class, key)
+                .addStatement("return values == null ? $T.emptyList() : values", Collections.class)
                 .build();
         }
 
@@ -3376,8 +3376,8 @@ public final class HelperMethodBuilder {
                 String key) {
             return CodeBlock.builder()
                 .addStatement("$T request = $N.getRequest()", WsRequest.class, wrapper)
-                .addStatement("$T<String> values = request.getCookieLookup().get($N)", Collection.class, key)
-                .addStatement("return values == null ? new String[0] : values.toArray(new String[0])")
+                .addStatement("$T<String> values = request.getCookieLookup().get($N)", List.class, key)
+                .addStatement("return values == null ? $T.emptyList() : values", Collections.class)
                 .build();
         }
 
@@ -3425,11 +3425,9 @@ public final class HelperMethodBuilder {
                 String wrapper,
                 String key) {
             if (wrapperType == WsMessageContext.class) {
-                return CodeBlock.builder()
-                    .addStatement("return new String[] { $N.getMessage() }", wrapper)
-                    .build();
+                return CodeBlock.of("return $T.singletonList($N.getMessage())", Collections.class, wrapper);
             } else {
-                return CodeBlock.builder().addStatement("return new String[0]").build();
+                return CodeBlock.of("return $T.emptyList()", Collections.class);
             }
         }
 
