@@ -1,5 +1,6 @@
 package com.truncon.javalin.mvc.api;
 
+import java.io.InputStream;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -120,6 +121,20 @@ public interface HttpRequest {
      * @return the deserialized JSON document.
      */
     <T> T getBodyFromJson(Class<T> bodyCls);
+
+    /**
+     * Gets the request body as a deserialized JSON document.
+     * @param bodyCls The {@link Class} of the object to deserialize.
+     * @param <T> The type of the object to deserialize.
+     * @return The deserialized JSON document.
+     */
+    <T> T getBodyFromJsonStream(Class<T> bodyCls);
+
+    /**
+     * Gets the request body as an {@link InputStream}.
+     * @return The body as an input stream.
+     */
+    InputStream getBodyAsInputStream();
 
     /**
      * Gets the full URL of the request.

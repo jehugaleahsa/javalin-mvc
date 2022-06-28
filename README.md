@@ -195,7 +195,7 @@ Here is a list of supported and/or desired features. An `x` means it is already 
         * [x] `Year`
     * [x] `UUID`
     * [x] Arrays
-    * [ ] Collection types (`List<T>`, `Set<T>`, `Map<K, V>`, etc.) 
+    * [x] Collection types (`List<T>`, `Set<T>`, etc.) 
     * [x] File uploads
 * [x] Bind Java object from request body (JSON)
 * [x] Bind Java object from other sources

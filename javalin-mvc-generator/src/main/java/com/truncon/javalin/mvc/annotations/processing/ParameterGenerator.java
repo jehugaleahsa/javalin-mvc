@@ -132,42 +132,39 @@ final class ParameterGenerator {
 
         if (valueSource == ValueSource.Json) {
             String jsonMethod = helperBuilder.addJsonMethod();
-            String argument = CodeBlock.of("$N($N, $T.class)", jsonMethod, wrapper, parameterType).toString();
+            TypeMirror erased = typeUtils.erasure(parameterType);
+            String argument = CodeBlock.of("$N($N, $T.class)", jsonMethod, wrapper, erased).toString();
             result.addArgument(argument);
             return;
         }
 
-        Class<?> parameterClass = helperBuilder.getParameterClass(parameterType);
-        if (parameterClass != null) {
-            Class<?> actualClass = parameterClass.isArray()
-                ? parameterClass.getComponentType() // NOTE: We pass the component type to the helper builder, not the array type
-                : parameterClass;
-            String conversionMethod = helperBuilder.addConversionMethod(actualClass, parameterClass.isArray());
-            if (conversionMethod != null) {
-                String sourceMethod = helperBuilder.addSourceMethod(valueSource, parameterClass.isArray());
-                String argument = CodeBlock.builder()
-                    .add("$N($N($N, $S))", conversionMethod, sourceMethod, wrapper, parameterName)
-                    .build()
-                    .toString();
-                result.addArgument(argument);
-                return;
-            }
+        HelperMethodBuilder.ConversionHelper conversionHelper = helperBuilder.getConversionHelper(parameterType);
+        if (conversionHelper != null) {
+            conversionHelper.addConversionMethod(helperBuilder);
+            String sourceMethod = helperBuilder.addSourceMethod(valueSource, conversionHelper.isCollectionType());
+            String sourceCall = CodeBlock.of("$N($N, $S)", sourceMethod, wrapper, parameterName).toString();
+            String conversionCall = conversionHelper.getConversionCall(sourceCall);
+            result.addArgument(conversionCall);
+            return;
         }
 
         ValueSource defaultBinding = HelperMethodBuilder.getDefaultFromBinding(parameter);
         if (defaultBinding != ValueSource.Any || helperBuilder.hasMemberBinding(parameter)) {
             TypeElement element = typeUtils.getTypeElement(parameterType);
-            ConversionMethodResult methodResult = helperBuilder.addConversionMethod(element, defaultBinding);
-            CodeBlock argument = methodResult.isInjectorNeeded()
-                ? CodeBlock.builder().add("$N($N, $N)", methodResult.getMethod(), wrapper, injector).build()
-                : CodeBlock.builder().add("$N($N)", methodResult.getMethod(), wrapper).build();
-            result.addArgument(argument.toString());
-            result.markInjectorNeeded(methodResult.isInjectorNeeded());
-            return;
+            if (element != null && typeUtils.getCollectionComponentType(parameterType) == null) {
+                ConversionMethodResult methodResult = helperBuilder.addConversionMethod(element, defaultBinding);
+                CodeBlock argument = methodResult.isInjectorNeeded()
+                    ? CodeBlock.builder().add("$N($N, $N)", methodResult.getMethod(), wrapper, injector).build()
+                    : CodeBlock.builder().add("$N($N)", methodResult.getMethod(), wrapper).build();
+                result.addArgument(argument.toString());
+                result.markInjectorNeeded(methodResult.isInjectorNeeded());
+                return;
+            }
         }
 
         String jsonMethod = helperBuilder.addJsonMethod();
-        String argument = CodeBlock.of("$N($N, $T.class)", jsonMethod, wrapper, parameterType).toString();
+        TypeMirror erased = typeUtils.erasure(parameterType);
+        String argument = CodeBlock.of("$N($N, $T.class)", jsonMethod, wrapper, erased).toString();
         result.addArgument(argument);
     }
 
@@ -273,7 +270,8 @@ final class ParameterGenerator {
             if (wrapperType == WsMessageContext.class) {
                 // Lastly, assume the type should be converted using JSON.
                 String jsonMethod = helperBuilder.addWsJsonMethod();
-                String argument = CodeBlock.of("$N($N, $T.class)", jsonMethod, wrapper, parameterType).toString();
+                TypeMirror erased = typeUtils.erasure(parameterType);
+                String argument = CodeBlock.of("$N($N, $T.class)", jsonMethod, wrapper, erased).toString();
                 result.addArgument(argument);
                 return;
             } else if (wrapperType == WsBinaryMessageContext.class) {
@@ -306,21 +304,14 @@ final class ParameterGenerator {
 
         // The getParameterClass method will only return a non-null value if the
         // parameter type is one of the types with built-in converters.
-        Class<?> parameterClass = helperBuilder.getParameterClass(parameterType);
-        if (parameterClass != null) {
-            Class<?> actualClass = parameterClass.isArray()
-                ? parameterClass.getComponentType() // NOTE: We pass the component type to the helper builder, not the array type
-                : parameterClass;
-            String conversionMethod = helperBuilder.addConversionMethod(actualClass, parameterClass.isArray());
-            if (conversionMethod != null) {
-                String sourceMethod = helperBuilder.addSourceMethod(valueSource, wrapperType, parameterClass.isArray());
-                String argument = CodeBlock.builder()
-                    .add("$N($N($N, $S))", conversionMethod, sourceMethod, wrapper, parameterName)
-                    .build()
-                    .toString();
-                result.addArgument(argument);
-                return;
-            }
+        HelperMethodBuilder.ConversionHelper conversionHelper = helperBuilder.getConversionHelper(parameterType);
+        if (conversionHelper != null) {
+            conversionHelper.addConversionMethod(helperBuilder);
+            String sourceMethod = helperBuilder.addSourceMethod(valueSource, wrapperType, conversionHelper.isCollectionType());
+            String sourceCall = CodeBlock.of("$N($N, $S)", sourceMethod, wrapper, parameterName).toString();
+            String conversionCall = conversionHelper.getConversionCall(sourceCall);
+            result.addArgument(conversionCall);
+            return;
         }
 
         // Next, check if this is an object with a @From* annotation or if one of the type's
@@ -328,14 +319,16 @@ final class ParameterGenerator {
         WsValueSource defaultBinding = HelperMethodBuilder.getDefaultWsFromBinding(parameter);
         if (defaultBinding != WsValueSource.Any || helperBuilder.hasWsMemberBinding(parameter)) {
             TypeElement element = typeUtils.getTypeElement(parameterType);
-            ConversionMethodResult methodResult = helperBuilder.addConversionMethod(element, defaultBinding, wrapperType);
-            String argument = CodeBlock.builder()
-                .add("$N($N)", methodResult.getMethod(), wrapper)
-                .build()
-                .toString();
-            result.addArgument(argument);
-            result.markInjectorNeeded(methodResult.isInjectorNeeded());
-            return;
+            if (element != null && typeUtils.getCollectionComponentType(parameterType) == null) {
+                ConversionMethodResult methodResult = helperBuilder.addConversionMethod(element, defaultBinding, wrapperType);
+                String argument = CodeBlock.builder()
+                    .add("$N($N)", methodResult.getMethod(), wrapper)
+                    .build()
+                    .toString();
+                result.addArgument(argument);
+                result.markInjectorNeeded(methodResult.isInjectorNeeded());
+                return;
+            }
         }
 
         // If we get to this point, we know there's no converter, @From annotation or primitive mapping.
@@ -343,7 +336,8 @@ final class ParameterGenerator {
         // then, that it is probably meant to be bound from JSON.
         if (wrapperType == WsMessageContext.class) {
             String jsonMethod = helperBuilder.addWsJsonMethod();
-            String argument = CodeBlock.of("$N($N, $T.class)", jsonMethod, wrapper, parameterType).toString();
+            TypeMirror erased = typeUtils.erasure(parameterType);
+            String argument = CodeBlock.of("$N($N, $T.class)", jsonMethod, wrapper, erased).toString();
             result.addArgument(argument);
             return;
         }

@@ -220,7 +220,7 @@ final class RouteGenerator {
             "handler$L = $T.moveDocumentationFromAnnotationToHandler($T.class, $S, handler$L)",
             index,
             io.javalin.plugin.openapi.dsl.OpenApiBuilder.class,
-            controller.getType(),
+            typeUtils.erasure(controller.getType().asType()),
             method.getSimpleName(),
             index);
 

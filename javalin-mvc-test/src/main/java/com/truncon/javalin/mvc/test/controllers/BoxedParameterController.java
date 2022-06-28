@@ -149,7 +149,7 @@ public class BoxedParameterController {
 
     public static final String UUID_ROUTE = "/api/boxed/uuid/{value}";
     @HttpGet(route = UUID_ROUTE)
-    public ActionResult getBigDecimal(UUID value) {
+    public ActionResult getUUID(UUID value) {
         return new ContentResult(Objects.toString(value));
     }
 }

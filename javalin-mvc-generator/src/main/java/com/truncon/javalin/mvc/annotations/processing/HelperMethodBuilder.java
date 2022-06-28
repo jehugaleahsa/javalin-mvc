@@ -29,13 +29,11 @@ import com.truncon.javalin.mvc.api.ws.WsValueSource;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.ImmutableTriple;
-import org.jetbrains.annotations.NotNull;
 
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
-import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
@@ -55,11 +53,16 @@ import java.time.Year;
 import java.time.YearMonth;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
@@ -69,43 +72,57 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public final class HelperMethodBuilder {
-    public static final Map<Class<?>, ConversionHelper> CONVERSION_HELPER_LOOKUP = getConversionHelperLookup();
+    public static final Map<Class<?>, Function<Boolean, ConversionHelper>> CONVERSION_HELPER_LOOKUP = getConversionHelperLookup();
+    private static final Map<Class<?>, Function<ConversionHelper, ConversionHelper>> COLLECTION_HELPER_LOOKUP = getCollectionHelperLookup();
     private static final Map<ValueSource, SourceHelper> SOURCE_HELPER_LOOKUP = getSourceHelperLookup();
     private static final Map<WsValueSource, WsSourceHelper> WS_SOURCE_HELPER_LOOKUP = getWsSourceHelperLookup();
     private static final String JSON_METHOD_NAME = "toJson";
     private static final String BINARY_BYTE_ARRAY_METHOD_NAME = "toBinaryByteArray";
     private static final String BINARY_BYTE_BUFFER_METHOD_NAME = "toBinaryByteBuffer";
 
-    private static Map<Class<?>, ConversionHelper> getConversionHelperLookup() {
-        Map<Class<?>, ConversionHelper> lookup = new HashMap<>();
-        lookup.put(byte.class, new PrimitiveByteHelper());
-        lookup.put(short.class, new PrimitiveShortHelper());
-        lookup.put(int.class, new PrimitiveIntegerHelper());
-        lookup.put(long.class, new PrimitiveLongHelper());
-        lookup.put(float.class, new PrimitiveFloatHelper());
-        lookup.put(double.class, new PrimitiveDoubleHelper());
-        lookup.put(boolean.class, new PrimitiveBooleanHelper());
-        lookup.put(char.class, new PrimitiveCharacterHelper());
-        lookup.put(Byte.class, new BoxedByteHelper());
-        lookup.put(Short.class, new BoxedShortHelper());
-        lookup.put(Integer.class, new BoxedIntegerHelper());
-        lookup.put(Long.class, new BoxedLongHelper());
-        lookup.put(Float.class, new BoxedFloatHelper());
-        lookup.put(Double.class, new BoxedDoubleHelper());
-        lookup.put(Boolean.class, new BoxedBooleanHelper());
-        lookup.put(Character.class, new BoxedCharacterHelper());
-        lookup.put(String.class, new StringHelper());
-        lookup.put(Date.class, new DateHelper());
-        lookup.put(Instant.class, new InstantHelper());
-        lookup.put(ZonedDateTime.class, new ZonedDateTimeHelper());
-        lookup.put(OffsetDateTime.class, new OffsetDateTimeHelper());
-        lookup.put(LocalDateTime.class, new LocalDateTimeHelper());
-        lookup.put(LocalDate.class, new LocalDateHelper());
-        lookup.put(YearMonth.class, new YearMonthHelper());
-        lookup.put(Year.class, new YearHelper());
-        lookup.put(BigInteger.class, new BigIntegerHelper());
-        lookup.put(BigDecimal.class, new BigDecimalHelper());
-        lookup.put(UUID.class, new UUIDHelper());
+    private static Map<Class<?>, Function<Boolean, ConversionHelper>> getConversionHelperLookup() {
+        Map<Class<?>, Function<Boolean, ConversionHelper>> lookup = new HashMap<>();
+        lookup.put(byte.class, PrimitiveByteHelper::new);
+        lookup.put(short.class, PrimitiveShortHelper::new);
+        lookup.put(int.class, PrimitiveIntegerHelper::new);
+        lookup.put(long.class, PrimitiveLongHelper::new);
+        lookup.put(float.class, PrimitiveFloatHelper::new);
+        lookup.put(double.class, PrimitiveDoubleHelper::new);
+        lookup.put(boolean.class, PrimitiveBooleanHelper::new);
+        lookup.put(char.class, PrimitiveCharacterHelper::new);
+        lookup.put(Byte.class, BoxedByteHelper::new);
+        lookup.put(Short.class, BoxedShortHelper::new);
+        lookup.put(Integer.class, BoxedIntegerHelper::new);
+        lookup.put(Long.class, BoxedLongHelper::new);
+        lookup.put(Float.class, BoxedFloatHelper::new);
+        lookup.put(Double.class, BoxedDoubleHelper::new);
+        lookup.put(Boolean.class, BoxedBooleanHelper::new);
+        lookup.put(Character.class, BoxedCharacterHelper::new);
+        lookup.put(String.class, StringHelper::new);
+        lookup.put(Date.class, DateHelper::new);
+        lookup.put(Instant.class, InstantHelper::new);
+        lookup.put(ZonedDateTime.class, ZonedDateTimeHelper::new);
+        lookup.put(OffsetDateTime.class, OffsetDateTimeHelper::new);
+        lookup.put(LocalDateTime.class, LocalDateTimeHelper::new);
+        lookup.put(LocalDate.class, LocalDateHelper::new);
+        lookup.put(YearMonth.class, YearMonthHelper::new);
+        lookup.put(Year.class, YearHelper::new);
+        lookup.put(BigInteger.class, BigIntegerHelper::new);
+        lookup.put(BigDecimal.class, BigDecimalHelper::new);
+        lookup.put(UUID.class, UUIDHelper::new);
+        return lookup;
+    }
+
+    private static Map<Class<?>, Function<ConversionHelper, ConversionHelper>> getCollectionHelperLookup() {
+        Map<Class<?>, Function<ConversionHelper, ConversionHelper>> lookup = new HashMap<>();
+        lookup.put(Iterable.class, IterableHelper::new);
+        lookup.put(Collection.class, CollectionHelper::new);
+        lookup.put(List.class, ListHelper::new);
+        lookup.put(Set.class, SetHelper::new);
+        lookup.put(ArrayList.class, ArrayListHelper::new);
+        lookup.put(LinkedList.class, LinkedListHelper::new);
+        lookup.put(HashSet.class, HashSetHelper::new);
+        lookup.put(LinkedHashSet.class, LinkedHashSetHelper::new);
         return lookup;
     }
 
@@ -138,8 +155,10 @@ public final class HelperMethodBuilder {
     private final TypeSpec.Builder typeBuilder;
     private final Set<Class<?>> addedSingletonConversionHelpers = new HashSet<>();
     private final Set<Class<?>> addedArrayConversionHelpers = new HashSet<>();
+    private final Set<String> addedCollectionConversionHelpers = new HashSet<>();
     private final Set<ValueSource> addedSingletonSourceHelpers = new HashSet<>();
     private final Set<ValueSource> addedArraySourceHelpers = new HashSet<>();
+    private final Set<String> addedFields = new HashSet<>();
     private final Set<ImmutablePair<WsValueSource, Class<?>>> addedSingletonWsSourceHelpers = new HashSet<>();
     private final Set<ImmutablePair<WsValueSource, Class<?>>> addedArrayWsSourceHelpers = new HashSet<>();
     private final Map<ImmutablePair<ValueSource, String>, String> complexConversionLookup = new HashMap<>();
@@ -161,23 +180,57 @@ public final class HelperMethodBuilder {
         return container;
     }
 
-    public Class<?> getParameterClass(TypeMirror parameterType) {
+    public ConversionHelper getConversionHelper(TypeMirror parameterType) {
         TypeUtils typeUtils = container.getTypeUtils();
-        for (Class<?> parameterClass : HelperMethodBuilder.CONVERSION_HELPER_LOOKUP.keySet()) {
-            if (typeUtils.isSameType(parameterType, parameterClass)) {
-                return parameterClass;
-            } else if (parameterType.getKind() == TypeKind.ARRAY) {
-                Class<?> arrayClass = TypeUtils.getArrayClass(parameterClass);
-                if (typeUtils.isSameType(parameterType, arrayClass)) {
-                    return arrayClass;
+
+        // Handle the parameter being an array type
+        if (parameterType.getKind() == TypeKind.ARRAY) {
+            TypeMirror componentType = typeUtils.getArrayComponentType(parameterType);
+            for (Map.Entry<Class<?>, Function<Boolean, ConversionHelper>> entry : HelperMethodBuilder.CONVERSION_HELPER_LOOKUP.entrySet()) {
+                Class<?> parameterClass = entry.getKey();
+                if (typeUtils.isSameType(componentType, parameterClass)) {
+                    Function<Boolean, ConversionHelper> factory = entry.getValue();
+                    return factory.apply(true);
                 }
+            }
+            return null;
+        }
+
+        // Handle the parameter being a collection type
+        TypeMirror componentType = typeUtils.getCollectionComponentType(parameterType);
+        if (componentType != null) {
+            // We force array here, so we get the collection-oriented conversion helper
+            ConversionHelper componentHelper = getConversionHelper(componentType);
+            return componentHelper == null ? null : getCollectionHelper(parameterType, componentHelper);
+        }
+
+        // Handle the parameter being a scalar type
+        for (Map.Entry<Class<?>, Function<Boolean, ConversionHelper>> entry : HelperMethodBuilder.CONVERSION_HELPER_LOOKUP.entrySet()) {
+            Class<?> parameterClass = entry.getKey();
+            if (typeUtils.isSameType(parameterType, parameterClass)) {
+                Function<Boolean, ConversionHelper> factory = entry.getValue();
+                return factory.apply(false);
+            }
+        }
+
+        return null;
+    }
+
+    private ConversionHelper getCollectionHelper(TypeMirror collectionType, ConversionHelper componentHelper) {
+        TypeUtils typeUtils = container.getTypeUtils();
+        TypeMirror erased = typeUtils.erasure(collectionType);
+        for (Map.Entry<Class<?>, Function<ConversionHelper, ConversionHelper>> entry : COLLECTION_HELPER_LOOKUP.entrySet()) {
+            TypeMirror entryType = typeUtils.erasure(typeUtils.toType(entry.getKey()));
+            if (typeUtils.isSameType(erased, entryType)) {
+                Function<ConversionHelper, ConversionHelper> factory = entry.getValue();
+                return factory.apply(componentHelper);
             }
         }
         return null;
     }
 
-    private Class<?> getParameterClass(Element memberElement) {
-        return getParameterClass(getParameterType(memberElement));
+    private ConversionHelper getConversionHelper(Element memberElement) {
+        return getConversionHelper(getParameterType(memberElement));
     }
 
     private static TypeMirror getParameterType(Element memberElement) {
@@ -188,23 +241,6 @@ public final class HelperMethodBuilder {
             VariableElement parameter = method.getParameters().get(0); // We already checked it's a setter
             return parameter.asType();
         }
-    }
-
-    public String addConversionMethod(Class<?> parameterClass, boolean isArray) {
-        if (isArray) {
-            ConversionHelper arrayHelper = CONVERSION_HELPER_LOOKUP.get(parameterClass);
-            if (arrayHelper != null) {
-                arrayHelper.buildArrayHelper(this);
-                return arrayHelper.getArrayName();
-            }
-        } else {
-            ConversionHelper singletonHelper = CONVERSION_HELPER_LOOKUP.get(parameterClass);
-            if (singletonHelper != null) {
-                singletonHelper.buildSingletonHelper(this);
-                return singletonHelper.getSingletonName();
-            }
-        }
-        return null;
     }
 
     public static ValueSource getDefaultFromBinding(Element element) {
@@ -269,7 +305,7 @@ public final class HelperMethodBuilder {
             ValueSource defaultSubSource = getDefaultFromBinding(memberElement);
             if (defaultSubSource != ValueSource.Any || hasMemberBinding(memberElement)) {
                 TypeElement subElement = container.getTypeUtils().getTypeElement(getParameterType(memberElement));
-                if (!visitedTypes.contains(subElement.getQualifiedName().toString())) {
+                if (subElement != null && !visitedTypes.contains(subElement.getQualifiedName().toString())) {
                     visitedTypes.add(subElement.getQualifiedName().toString());
                     ConversionMethodResult methodResult = addConversionMethodInternal(subElement, defaultSource, visitedTypes);
                     CodeBlock value = methodResult.isInjectorNeeded()
@@ -421,24 +457,18 @@ public final class HelperMethodBuilder {
             Element memberElement,
             CodeBlock.Builder methodBodyBuilder,
             ValueSource defaultSource) {
-        Class<?> parameterClass = getParameterClass(memberElement);
-        if (parameterClass == null) {
-            return false;
-        }
-        Class<?> actualClass = parameterClass.isArray()
-            ? parameterClass.getComponentType()
-            : parameterClass;
-        String conversionMethod = addConversionMethod(actualClass, parameterClass.isArray());
-        if (conversionMethod == null) {
+        ConversionHelper conversionHelper = getConversionHelper(memberElement);
+        if (conversionHelper == null) {
             return false;
         }
         String memberName = getMemberName(memberElement);
         if (memberName == null) {
             return false;
         }
+        conversionHelper.addConversionMethod(this);
         ValueSource valueSource = getMemberValueSource(memberElement, defaultSource);
-        String sourceMethod = addSourceMethod(valueSource, parameterClass.isArray());
-        String valueExpression = getValueExpression(conversionMethod, sourceMethod, memberName);
+        String sourceMethod = addSourceMethod(valueSource, conversionHelper.isCollectionType());
+        String valueExpression = getValueExpression(conversionHelper, sourceMethod, memberName);
         return setMember(memberElement, methodBodyBuilder, valueExpression);
     }
 
@@ -454,11 +484,9 @@ public final class HelperMethodBuilder {
         }
     }
 
-    private String getValueExpression(String conversionMethod, String sourceMethod, String key) {
-        return CodeBlock.builder()
-            .add("$N($N($N, $S))", conversionMethod, sourceMethod, "context", key)
-            .build()
-            .toString();
+    private String getValueExpression(ConversionHelper conversionHelper, String sourceMethod, String key) {
+        String sourceCall = CodeBlock.of("$N($N, $S)", sourceMethod, "context", key).toString();
+        return conversionHelper.getConversionCall(sourceCall);
     }
 
     private static ValueSource getMemberValueSource(Element memberElement, ValueSource defaultSource) {
@@ -577,7 +605,6 @@ public final class HelperMethodBuilder {
         return addConversionMethodInternal(element, defaultSource, contextType, visitedTypes);
     }
 
-    @NotNull
     private ConversionMethodResult addConversionMethodInternal(
             TypeElement element,
             WsValueSource defaultSource,
@@ -788,24 +815,18 @@ public final class HelperMethodBuilder {
             CodeBlock.Builder methodBodyBuilder,
             WsValueSource defaultSource,
             Class<?> contextType) {
-        Class<?> parameterClass = getParameterClass(memberElement);
-        if (parameterClass == null) {
-            return false;
-        }
-        Class<?> actualClass = parameterClass.isArray()
-            ? parameterClass.getComponentType()
-            : parameterClass;
-        String conversionMethod = addConversionMethod(actualClass, parameterClass.isArray());
-        if (conversionMethod == null) {
+        ConversionHelper conversionHelper = getConversionHelper(memberElement);
+        if (conversionHelper == null) {
             return false;
         }
         String memberName = getMemberName(memberElement);
         if (memberName == null) {
             return false;
         }
+        conversionHelper.addConversionMethod(this);
         WsValueSource valueSource = getMemberValueSource(memberElement, defaultSource);
-        String sourceMethod = addSourceMethod(valueSource, contextType, parameterClass.isArray());
-        String valueExpression = getValueExpression(conversionMethod, sourceMethod, memberName);
+        String sourceMethod = addSourceMethod(valueSource, contextType, conversionHelper.isCollectionType());
+        String valueExpression = getValueExpression(conversionHelper, sourceMethod, memberName);
         return setMember(memberElement, methodBodyBuilder, valueExpression);
     }
 
@@ -832,10 +853,10 @@ public final class HelperMethodBuilder {
     public String addSourceMethod(ValueSource valueSource, boolean isArray) {
         SourceHelper sourceHelper = SOURCE_HELPER_LOOKUP.get(valueSource);
         if (isArray) {
-            sourceHelper.buildArrayHelper(this);
+            sourceHelper.buildCollectionHelper(this);
             return sourceHelper.getArrayName();
         } else {
-            sourceHelper.buildSingletonHelper(this);
+            sourceHelper.buildScalarHelper(this);
             return sourceHelper.getSingletonName();
         }
     }
@@ -844,11 +865,11 @@ public final class HelperMethodBuilder {
         // TODO - Check that the wrapper type and value source make sense together
         WsSourceHelper sourceHelper = WS_SOURCE_HELPER_LOOKUP.get(valueSource);
         if (isArray) {
-            sourceHelper.buildArrayHelper(this, wrapperType);
-            return sourceHelper.getArrayName();
+            sourceHelper.buildCollectionHelper(this, wrapperType);
+            return sourceHelper.getCollectionName();
         } else {
-            sourceHelper.buildSingletonHelper(this, wrapperType);
-            return sourceHelper.getSingletonName();
+            sourceHelper.buildScalarHelper(this, wrapperType);
+            return sourceHelper.getScalarName();
         }
     }
 
@@ -970,45 +991,81 @@ public final class HelperMethodBuilder {
 
     // region ConversionHelper
 
-    private static abstract class ConversionHelper {
-        public abstract Class<?> getSingletonType();
-        public abstract Class<?> getArrayType();
-        public abstract String getSingletonName();
-        public abstract String getArrayName();
+    public interface ConversionHelper {
+        boolean isCollectionType();
 
-        public void buildSingletonHelper(HelperMethodBuilder builder) {
-            if (builder.addedSingletonConversionHelpers.contains(getSingletonType())) {
+        Class<?> getScalarType();
+
+        void addConversionMethod(HelperMethodBuilder builder);
+
+        String getConversionCall(String sourceCall);
+    }
+
+    private static abstract class MethodBuildingConversionHelper implements ConversionHelper {
+        private final boolean isCollectionType;
+
+        protected MethodBuildingConversionHelper(boolean isCollectionType) {
+            this.isCollectionType = isCollectionType;
+        }
+
+        @Override
+        public boolean isCollectionType() {
+            return isCollectionType;
+        }
+
+        public abstract Class<?> getScalarType();
+
+        protected abstract Class<?> getCollectionType();
+
+        protected abstract String getScalarName();
+
+        protected abstract String getCollectionName();
+
+        @Override
+        public void addConversionMethod(HelperMethodBuilder builder) {
+            if (isCollectionType) {
+                buildCollectionHelper(builder);
+            } else {
+                buildScalarHelper(builder);
+            }
+        }
+
+        private void buildScalarHelper(HelperMethodBuilder builder) {
+            if (String.class.equals(getScalarType())) {
                 return;
             }
-            MethodSpec method = MethodSpec.methodBuilder(getSingletonName())
+            if (builder.addedSingletonConversionHelpers.contains(getScalarType())) {
+                return;
+            }
+            MethodSpec method = MethodSpec.methodBuilder(getScalarName())
                 .addModifiers(Modifier.PRIVATE, Modifier.STATIC)
-                .returns(getSingletonType())
+                .returns(getScalarType())
                 .addParameter(String.class, "value")
-                .addCode(getSingletonMethodBody(builder))
+                .addCode(getScalarMethodBody(builder))
                 .build();
             builder.typeBuilder.addMethod(method);
-            builder.addedSingletonConversionHelpers.add(getSingletonType());
+            builder.addedSingletonConversionHelpers.add(getScalarType());
         }
 
-        protected abstract CodeBlock getSingletonMethodBody(HelperMethodBuilder builder);
+        protected abstract CodeBlock getScalarMethodBody(HelperMethodBuilder builder);
 
-        public void buildArrayHelper(HelperMethodBuilder builder) {
-            if (builder.addedArrayConversionHelpers.contains(getSingletonType())) {
+        private void buildCollectionHelper(HelperMethodBuilder builder) {
+            if (builder.addedArrayConversionHelpers.contains(getScalarType())) {
                 return;
             }
-            MethodSpec method = MethodSpec.methodBuilder(getArrayName())
+            MethodSpec method = MethodSpec.methodBuilder(getCollectionName())
                 .addModifiers(Modifier.PRIVATE, Modifier.STATIC)
-                .returns(getArrayType())
-                .addParameter(String[].class, "values")
-                .addCode(getArrayMethodBody(builder))
+                .returns(getCollectionType())
+                .addParameter(ParameterizedTypeName.get(List.class, String.class), "values")
+                .addCode(getCollectionMethodBody(builder))
                 .build();
             builder.typeBuilder.addMethod(method);
-            builder.addedArrayConversionHelpers.add(getSingletonType());
+            builder.addedArrayConversionHelpers.add(getScalarType());
         }
 
-        protected abstract CodeBlock getArrayMethodBody(HelperMethodBuilder builder);
+        protected abstract CodeBlock getCollectionMethodBody(HelperMethodBuilder builder);
 
-        protected void addField(
+        protected static void addField(
                 TypeSpec.Builder typeBuilder,
                 String name,
                 Class<?> type,
@@ -1019,31 +1076,45 @@ public final class HelperMethodBuilder {
                 .build();
             typeBuilder.addField(field);
         }
+
+        @Override
+        public String getConversionCall(String sourceCall) {
+            // As an optimization, we do not create a converter for strings.
+            if (!isCollectionType && String.class.equals(getScalarType())) {
+                return sourceCall;
+            }
+            String methodName = isCollectionType ? getCollectionName() : getScalarName();
+            return CodeBlock.of("$L($L)", methodName, sourceCall).toString();
+        }
     }
 
-    private static final class PrimitiveByteHelper extends ConversionHelper {
+    private static final class PrimitiveByteHelper extends MethodBuildingConversionHelper {
+        public PrimitiveByteHelper(boolean isArrayType) {
+            super(isArrayType);
+        }
+
         @Override
-        public Class<?> getSingletonType() {
+        public Class<?> getScalarType() {
             return byte.class;
         }
 
         @Override
-        public Class<?> getArrayType() {
+        public Class<?> getCollectionType() {
             return byte[].class;
         }
 
         @Override
-        public String getSingletonName() {
+        public String getScalarName() {
             return "toPrimitiveByte";
         }
 
         @Override
-        public String getArrayName() {
+        public String getCollectionName() {
             return "toPrimitiveByteArray";
         }
 
         @Override
-        protected CodeBlock getSingletonMethodBody(HelperMethodBuilder builder) {
+        protected CodeBlock getScalarMethodBody(HelperMethodBuilder builder) {
             return CodeBlock.builder()
                 .beginControlFlow("try")
                 .addStatement("return value == null ? (byte) 0 : Byte.parseByte(value)")
@@ -1054,12 +1125,12 @@ public final class HelperMethodBuilder {
         }
 
         @Override
-        protected CodeBlock getArrayMethodBody(HelperMethodBuilder builder) {
+        protected CodeBlock getCollectionMethodBody(HelperMethodBuilder builder) {
             return CodeBlock.builder()
-                .addStatement("byte[] results = new byte[values.length]")
+                .addStatement("byte[] results = new byte[values.size()]")
                 .beginControlFlow("for (int i = 0; i != results.length; ++i)")
                 .beginControlFlow("try")
-                .addStatement("String value = values[i]")
+                .addStatement("String value = values.get(i)")
                 .beginControlFlow("if (value != null)")
                 .addStatement("results[i] = Byte.parseByte(value)")
                 .endControlFlow()
@@ -1071,29 +1142,33 @@ public final class HelperMethodBuilder {
         }
     }
 
-    private static final class PrimitiveShortHelper extends ConversionHelper {
+    private static final class PrimitiveShortHelper extends MethodBuildingConversionHelper {
+        public PrimitiveShortHelper(boolean isArrayType) {
+            super(isArrayType);
+        }
+
         @Override
-        public Class<?> getSingletonType() {
+        public Class<?> getScalarType() {
             return short.class;
         }
 
         @Override
-        public Class<?> getArrayType() {
+        public Class<?> getCollectionType() {
             return short[].class;
         }
 
         @Override
-        public String getSingletonName() {
+        public String getScalarName() {
             return "toPrimitiveShort";
         }
 
         @Override
-        public String getArrayName() {
+        public String getCollectionName() {
             return "toPrimitiveShortArray";
         }
 
         @Override
-        protected CodeBlock getSingletonMethodBody(HelperMethodBuilder builder) {
+        protected CodeBlock getScalarMethodBody(HelperMethodBuilder builder) {
             return CodeBlock.builder()
                 .beginControlFlow("try")
                 .addStatement("return value == null ? (short) 0 : Short.parseShort(value)")
@@ -1104,12 +1179,12 @@ public final class HelperMethodBuilder {
         }
 
         @Override
-        protected CodeBlock getArrayMethodBody(HelperMethodBuilder builder) {
+        protected CodeBlock getCollectionMethodBody(HelperMethodBuilder builder) {
             return CodeBlock.builder()
-                .addStatement("short[] results = new short[values.length]")
+                .addStatement("short[] results = new short[values.size()]")
                 .beginControlFlow("for (int i = 0; i != results.length; ++i)")
                 .beginControlFlow("try")
-                .addStatement("String value = values[i]")
+                .addStatement("String value = values.get(i)")
                 .beginControlFlow("if (value != null)")
                 .addStatement("results[i] = Short.parseShort(value)")
                 .endControlFlow()
@@ -1121,29 +1196,33 @@ public final class HelperMethodBuilder {
         }
     }
 
-    private static final class PrimitiveIntegerHelper extends ConversionHelper {
+    private static final class PrimitiveIntegerHelper extends MethodBuildingConversionHelper {
+        public PrimitiveIntegerHelper(boolean isArrayType) {
+            super(isArrayType);
+        }
+
         @Override
-        public Class<?> getSingletonType() {
+        public Class<?> getScalarType() {
             return int.class;
         }
 
         @Override
-        public Class<?> getArrayType() {
+        public Class<?> getCollectionType() {
             return int[].class;
         }
 
         @Override
-        public String getSingletonName() {
+        public String getScalarName() {
             return "toPrimitiveInteger";
         }
 
         @Override
-        public String getArrayName() {
+        public String getCollectionName() {
             return "toPrimitiveIntegerArray";
         }
 
         @Override
-        protected CodeBlock getSingletonMethodBody(HelperMethodBuilder builder) {
+        protected CodeBlock getScalarMethodBody(HelperMethodBuilder builder) {
             return CodeBlock.builder()
                 .beginControlFlow("try")
                 .addStatement("return value == null ? 0 : Integer.parseInt(value)")
@@ -1154,12 +1233,12 @@ public final class HelperMethodBuilder {
         }
 
         @Override
-        protected CodeBlock getArrayMethodBody(HelperMethodBuilder builder) {
+        protected CodeBlock getCollectionMethodBody(HelperMethodBuilder builder) {
             return CodeBlock.builder()
-                .addStatement("int[] results = new int[values.length]")
+                .addStatement("int[] results = new int[values.size()]")
                 .beginControlFlow("for (int i = 0; i != results.length; ++i)")
                 .beginControlFlow("try")
-                .addStatement("String value = values[i]")
+                .addStatement("String value = values.get(i)")
                 .beginControlFlow("if (value != null)")
                 .addStatement("results[i] = Integer.parseInt(value)")
                 .endControlFlow()
@@ -1171,29 +1250,33 @@ public final class HelperMethodBuilder {
         }
     }
 
-    private static final class PrimitiveLongHelper extends ConversionHelper {
+    private static final class PrimitiveLongHelper extends MethodBuildingConversionHelper {
+        public PrimitiveLongHelper(boolean isArrayType) {
+            super(isArrayType);
+        }
+
         @Override
-        public Class<?> getSingletonType() {
+        public Class<?> getScalarType() {
             return long.class;
         }
 
         @Override
-        public Class<?> getArrayType() {
+        public Class<?> getCollectionType() {
             return long[].class;
         }
 
         @Override
-        public String getSingletonName() {
+        public String getScalarName() {
             return "toPrimitiveLong";
         }
 
         @Override
-        public String getArrayName() {
+        public String getCollectionName() {
             return "toPrimitiveLongArray";
         }
 
         @Override
-        protected CodeBlock getSingletonMethodBody(HelperMethodBuilder builder) {
+        protected CodeBlock getScalarMethodBody(HelperMethodBuilder builder) {
             return CodeBlock.builder()
                 .beginControlFlow("try")
                 .addStatement("return value == null ? 0L : Long.parseLong(value)")
@@ -1204,12 +1287,12 @@ public final class HelperMethodBuilder {
         }
 
         @Override
-        protected CodeBlock getArrayMethodBody(HelperMethodBuilder builder) {
+        protected CodeBlock getCollectionMethodBody(HelperMethodBuilder builder) {
             return CodeBlock.builder()
-                .addStatement("long[] results = new long[values.length]")
+                .addStatement("long[] results = new long[values.size()]")
                 .beginControlFlow("for (int i = 0; i != results.length; ++i)")
                 .beginControlFlow("try")
-                .addStatement("String value = values[i]")
+                .addStatement("String value = values.get(i)")
                 .beginControlFlow("if (value != null)")
                 .addStatement("results[i] = Long.parseLong(value)")
                 .endControlFlow()
@@ -1221,29 +1304,33 @@ public final class HelperMethodBuilder {
         }
     }
 
-    private static final class PrimitiveFloatHelper extends ConversionHelper {
+    private static final class PrimitiveFloatHelper extends MethodBuildingConversionHelper {
+        public PrimitiveFloatHelper(boolean isArrayType) {
+            super(isArrayType);
+        }
+
         @Override
-        public Class<?> getSingletonType() {
+        public Class<?> getScalarType() {
             return float.class;
         }
 
         @Override
-        public Class<?> getArrayType() {
+        public Class<?> getCollectionType() {
             return float[].class;
         }
 
         @Override
-        public String getSingletonName() {
+        public String getScalarName() {
             return "toPrimitiveFloat";
         }
 
         @Override
-        public String getArrayName() {
+        public String getCollectionName() {
             return "toPrimitiveFloatArray";
         }
 
         @Override
-        protected CodeBlock getSingletonMethodBody(HelperMethodBuilder builder) {
+        protected CodeBlock getScalarMethodBody(HelperMethodBuilder builder) {
             return CodeBlock.builder()
                 .beginControlFlow("try")
                 .addStatement("return value == null ? 0.0f : Float.parseFloat(value)")
@@ -1254,12 +1341,12 @@ public final class HelperMethodBuilder {
         }
 
         @Override
-        protected CodeBlock getArrayMethodBody(HelperMethodBuilder builder) {
+        protected CodeBlock getCollectionMethodBody(HelperMethodBuilder builder) {
             return CodeBlock.builder()
-                .addStatement("float[] results = new float[values.length]")
+                .addStatement("float[] results = new float[values.size()]")
                 .beginControlFlow("for (int i = 0; i != results.length; ++i)")
                 .beginControlFlow("try")
-                .addStatement("String value = values[i]")
+                .addStatement("String value = values.get(i)")
                 .beginControlFlow("if (value != null)")
                 .addStatement("results[i] = Float.parseFloat(value)")
                 .endControlFlow()
@@ -1271,29 +1358,33 @@ public final class HelperMethodBuilder {
         }
     }
 
-    private static final class PrimitiveDoubleHelper extends ConversionHelper {
+    private static final class PrimitiveDoubleHelper extends MethodBuildingConversionHelper {
+        public PrimitiveDoubleHelper(boolean isArrayType) {
+            super(isArrayType);
+        }
+
         @Override
-        public Class<?> getSingletonType() {
+        public Class<?> getScalarType() {
             return double.class;
         }
 
         @Override
-        public Class<?> getArrayType() {
+        public Class<?> getCollectionType() {
             return double[].class;
         }
 
         @Override
-        public String getSingletonName() {
+        public String getScalarName() {
             return "toPrimitiveDouble";
         }
 
         @Override
-        public String getArrayName() {
+        public String getCollectionName() {
             return "toPrimitiveDoubleArray";
         }
 
         @Override
-        protected CodeBlock getSingletonMethodBody(HelperMethodBuilder builder) {
+        protected CodeBlock getScalarMethodBody(HelperMethodBuilder builder) {
             return CodeBlock.builder()
                 .beginControlFlow("try")
                 .addStatement("return value == null ? 0.0 : Double.parseDouble(value)")
@@ -1304,12 +1395,12 @@ public final class HelperMethodBuilder {
         }
 
         @Override
-        protected CodeBlock getArrayMethodBody(HelperMethodBuilder builder) {
+        protected CodeBlock getCollectionMethodBody(HelperMethodBuilder builder) {
             return CodeBlock.builder()
-                .addStatement("double[] results = new double[values.length]")
+                .addStatement("double[] results = new double[values.size()]")
                 .beginControlFlow("for (int i = 0; i != results.length; ++i)")
                 .beginControlFlow("try")
-                .addStatement("String value = values[i]")
+                .addStatement("String value = values.get(i)")
                 .beginControlFlow("if (value != null)")
                 .addStatement("results[i] = Double.parseDouble(value)")
                 .endControlFlow()
@@ -1321,40 +1412,44 @@ public final class HelperMethodBuilder {
         }
     }
 
-    private static final class PrimitiveBooleanHelper extends ConversionHelper {
+    private static final class PrimitiveBooleanHelper extends MethodBuildingConversionHelper {
+        public PrimitiveBooleanHelper(boolean isArrayType) {
+            super(isArrayType);
+        }
+
         @Override
-        public Class<?> getSingletonType() {
+        public Class<?> getScalarType() {
             return boolean.class;
         }
 
         @Override
-        public Class<?> getArrayType() {
+        public Class<?> getCollectionType() {
             return boolean[].class;
         }
 
         @Override
-        public String getSingletonName() {
+        public String getScalarName() {
             return "toPrimitiveBoolean";
         }
 
         @Override
-        public String getArrayName() {
+        public String getCollectionName() {
             return "toPrimitiveBooleanArray";
         }
 
         @Override
-        protected CodeBlock getSingletonMethodBody(HelperMethodBuilder builder) {
+        protected CodeBlock getScalarMethodBody(HelperMethodBuilder builder) {
             return CodeBlock.builder()
                 .addStatement("return Boolean.parseBoolean(value)")
                 .build();
         }
 
         @Override
-        protected CodeBlock getArrayMethodBody(HelperMethodBuilder builder) {
+        protected CodeBlock getCollectionMethodBody(HelperMethodBuilder builder) {
             return CodeBlock.builder()
-                .addStatement("boolean[] results = new boolean[values.length]")
+                .addStatement("boolean[] results = new boolean[values.size()]")
                 .beginControlFlow("for (int i = 0; i != results.length; ++i)")
-                .addStatement("String value = values[i]")
+                .addStatement("String value = values.get(i)")
                 .addStatement("results[i] = Boolean.parseBoolean(value)")
                 .endControlFlow()
                 .addStatement("return results")
@@ -1362,40 +1457,44 @@ public final class HelperMethodBuilder {
         }
     }
 
-    private static final class PrimitiveCharacterHelper extends ConversionHelper {
+    private static final class PrimitiveCharacterHelper extends MethodBuildingConversionHelper {
+        public PrimitiveCharacterHelper(boolean isArrayType) {
+            super(isArrayType);
+        }
+
         @Override
-        public Class<?> getSingletonType() {
+        public Class<?> getScalarType() {
             return char.class;
         }
 
         @Override
-        public Class<?> getArrayType() {
+        public Class<?> getCollectionType() {
             return char[].class;
         }
 
         @Override
-        public String getSingletonName() {
+        public String getScalarName() {
             return "toPrimitiveCharacter";
         }
 
         @Override
-        public String getArrayName() {
+        public String getCollectionName() {
             return "toPrimitiveCharacterArray";
         }
 
         @Override
-        protected CodeBlock getSingletonMethodBody(HelperMethodBuilder builder) {
+        protected CodeBlock getScalarMethodBody(HelperMethodBuilder builder) {
             return CodeBlock.builder()
                 .addStatement("return value != null && value.length() == 1 ? value.charAt(0) : '\\0'")
                 .build();
         }
 
         @Override
-        protected CodeBlock getArrayMethodBody(HelperMethodBuilder builder) {
+        protected CodeBlock getCollectionMethodBody(HelperMethodBuilder builder) {
             return CodeBlock.builder()
-                .addStatement("char[] results = new char[values.length]")
+                .addStatement("char[] results = new char[values.size()]")
                 .beginControlFlow("for (int i = 0; i != results.length; ++i)")
-                .addStatement("String value = values[i]")
+                .addStatement("String value = values.get(i)")
                 .beginControlFlow("if (value != null && value.length() == 1)")
                 .addStatement("results[i] = value.charAt(0)")
                 .endControlFlow()
@@ -1405,29 +1504,33 @@ public final class HelperMethodBuilder {
         }
     }
 
-    private static final class BoxedByteHelper extends ConversionHelper {
+    private static final class BoxedByteHelper extends MethodBuildingConversionHelper {
+        public BoxedByteHelper(boolean isArrayType) {
+            super(isArrayType);
+        }
+
         @Override
-        public Class<?> getSingletonType() {
+        public Class<?> getScalarType() {
             return Byte.class;
         }
 
         @Override
-        public Class<?> getArrayType() {
+        public Class<?> getCollectionType() {
             return Byte[].class;
         }
 
         @Override
-        public String getSingletonName() {
+        public String getScalarName() {
             return "toBoxedByte";
         }
 
         @Override
-        public String getArrayName() {
+        public String getCollectionName() {
             return "toBoxedByteArray";
         }
 
         @Override
-        protected CodeBlock getSingletonMethodBody(HelperMethodBuilder builder) {
+        protected CodeBlock getScalarMethodBody(HelperMethodBuilder builder) {
             return CodeBlock.builder()
                 .beginControlFlow("try")
                 .addStatement("return value == null ? null : Byte.parseByte(value)")
@@ -1438,12 +1541,12 @@ public final class HelperMethodBuilder {
         }
 
         @Override
-        protected CodeBlock getArrayMethodBody(HelperMethodBuilder builder) {
+        protected CodeBlock getCollectionMethodBody(HelperMethodBuilder builder) {
             return CodeBlock.builder()
-                .addStatement("Byte[] results = new Byte[values.length]")
+                .addStatement("Byte[] results = new Byte[values.size()]")
                 .beginControlFlow("for (int i = 0; i != results.length; ++i)")
                 .beginControlFlow("try")
-                .addStatement("String value = values[i]")
+                .addStatement("String value = values.get(i)")
                 .beginControlFlow("if (value != null)")
                 .addStatement("results[i] = Byte.parseByte(value)")
                 .endControlFlow()
@@ -1455,29 +1558,33 @@ public final class HelperMethodBuilder {
         }
     }
 
-    private static final class BoxedShortHelper extends ConversionHelper {
+    private static final class BoxedShortHelper extends MethodBuildingConversionHelper {
+        public BoxedShortHelper(boolean isArrayType) {
+            super(isArrayType);
+        }
+
         @Override
-        public Class<?> getSingletonType() {
+        public Class<?> getScalarType() {
             return Short.class;
         }
 
         @Override
-        public Class<?> getArrayType() {
+        public Class<?> getCollectionType() {
             return Short[].class;
         }
 
         @Override
-        public String getSingletonName() {
+        public String getScalarName() {
             return "toBoxedShort";
         }
 
         @Override
-        public String getArrayName() {
+        public String getCollectionName() {
             return "toBoxedShortArray";
         }
 
         @Override
-        protected CodeBlock getSingletonMethodBody(HelperMethodBuilder builder) {
+        protected CodeBlock getScalarMethodBody(HelperMethodBuilder builder) {
             return CodeBlock.builder()
                 .beginControlFlow("try")
                 .addStatement("return value == null ? null : Short.parseShort(value)")
@@ -1488,12 +1595,12 @@ public final class HelperMethodBuilder {
         }
 
         @Override
-        protected CodeBlock getArrayMethodBody(HelperMethodBuilder builder) {
+        protected CodeBlock getCollectionMethodBody(HelperMethodBuilder builder) {
             return CodeBlock.builder()
-                .addStatement("Short[] results = new Short[values.length]")
+                .addStatement("Short[] results = new Short[values.size()]")
                 .beginControlFlow("for (int i = 0; i != results.length; ++i)")
                 .beginControlFlow("try")
-                .addStatement("String value = values[i]")
+                .addStatement("String value = values.get(i)")
                 .beginControlFlow("if (value != null)")
                 .addStatement("results[i] = Short.parseShort(value)")
                 .endControlFlow()
@@ -1505,29 +1612,33 @@ public final class HelperMethodBuilder {
         }
     }
 
-    private static final class BoxedIntegerHelper extends ConversionHelper {
+    private static final class BoxedIntegerHelper extends MethodBuildingConversionHelper {
+        public BoxedIntegerHelper(boolean isArrayType) {
+            super(isArrayType);
+        }
+
         @Override
-        public Class<?> getSingletonType() {
+        public Class<?> getScalarType() {
             return Integer.class;
         }
 
         @Override
-        public Class<?> getArrayType() {
+        public Class<?> getCollectionType() {
             return Integer[].class;
         }
 
         @Override
-        public String getSingletonName() {
+        public String getScalarName() {
             return "toBoxedInteger";
         }
 
         @Override
-        public String getArrayName() {
+        public String getCollectionName() {
             return "toBoxedIntegerArray";
         }
 
         @Override
-        protected CodeBlock getSingletonMethodBody(HelperMethodBuilder builder) {
+        protected CodeBlock getScalarMethodBody(HelperMethodBuilder builder) {
             return CodeBlock.builder()
                 .beginControlFlow("try")
                 .addStatement("return value == null ? null : Integer.parseInt(value)")
@@ -1538,12 +1649,12 @@ public final class HelperMethodBuilder {
         }
 
         @Override
-        protected CodeBlock getArrayMethodBody(HelperMethodBuilder builder) {
+        protected CodeBlock getCollectionMethodBody(HelperMethodBuilder builder) {
             return CodeBlock.builder()
-                .addStatement("Integer[] results = new Integer[values.length]")
+                .addStatement("Integer[] results = new Integer[values.size()]")
                 .beginControlFlow("for (int i = 0; i != results.length; ++i)")
                 .beginControlFlow("try")
-                .addStatement("String value = values[i]")
+                .addStatement("String value = values.get(i)")
                 .beginControlFlow("if (value != null)")
                 .addStatement("results[i] = Integer.parseInt(value)")
                 .endControlFlow()
@@ -1555,29 +1666,33 @@ public final class HelperMethodBuilder {
         }
     }
 
-    private static final class BoxedLongHelper extends ConversionHelper {
+    private static final class BoxedLongHelper extends MethodBuildingConversionHelper {
+        public BoxedLongHelper(boolean isArrayType) {
+            super(isArrayType);
+        }
+
         @Override
-        public Class<?> getSingletonType() {
+        public Class<?> getScalarType() {
             return Long.class;
         }
 
         @Override
-        public Class<?> getArrayType() {
+        public Class<?> getCollectionType() {
             return Long[].class;
         }
 
         @Override
-        public String getSingletonName() {
+        public String getScalarName() {
             return "toBoxedLong";
         }
 
         @Override
-        public String getArrayName() {
+        public String getCollectionName() {
             return "toBoxedLongArray";
         }
 
         @Override
-        protected CodeBlock getSingletonMethodBody(HelperMethodBuilder builder) {
+        protected CodeBlock getScalarMethodBody(HelperMethodBuilder builder) {
             return CodeBlock.builder()
                 .beginControlFlow("try")
                 .addStatement("return value == null ? null : Long.parseLong(value)")
@@ -1588,12 +1703,12 @@ public final class HelperMethodBuilder {
         }
 
         @Override
-        protected CodeBlock getArrayMethodBody(HelperMethodBuilder builder) {
+        protected CodeBlock getCollectionMethodBody(HelperMethodBuilder builder) {
             return CodeBlock.builder()
-                .addStatement("Long[] results = new Long[values.length]")
+                .addStatement("Long[] results = new Long[values.size()]")
                 .beginControlFlow("for (int i = 0; i != results.length; ++i)")
                 .beginControlFlow("try")
-                .addStatement("String value = values[i]")
+                .addStatement("String value = values.get(i)")
                 .beginControlFlow("if (value != null)")
                 .addStatement("results[i] = Long.parseLong(value)")
                 .endControlFlow()
@@ -1605,29 +1720,33 @@ public final class HelperMethodBuilder {
         }
     }
 
-    private static final class BoxedFloatHelper extends ConversionHelper {
+    private static final class BoxedFloatHelper extends MethodBuildingConversionHelper {
+        public BoxedFloatHelper(boolean isArrayType) {
+            super(isArrayType);
+        }
+
         @Override
-        public Class<?> getSingletonType() {
+        public Class<?> getScalarType() {
             return Float.class;
         }
 
         @Override
-        public Class<?> getArrayType() {
+        public Class<?> getCollectionType() {
             return Float[].class;
         }
 
         @Override
-        public String getSingletonName() {
+        public String getScalarName() {
             return "toBoxedFloat";
         }
 
         @Override
-        public String getArrayName() {
+        public String getCollectionName() {
             return "toBoxedFloatArray";
         }
 
         @Override
-        protected CodeBlock getSingletonMethodBody(HelperMethodBuilder builder) {
+        protected CodeBlock getScalarMethodBody(HelperMethodBuilder builder) {
             return CodeBlock.builder()
                 .beginControlFlow("try")
                 .addStatement("return value == null ? null : Float.parseFloat(value)")
@@ -1638,12 +1757,12 @@ public final class HelperMethodBuilder {
         }
 
         @Override
-        protected CodeBlock getArrayMethodBody(HelperMethodBuilder builder) {
+        protected CodeBlock getCollectionMethodBody(HelperMethodBuilder builder) {
             return CodeBlock.builder()
-                .addStatement("Float[] results = new Float[values.length]")
+                .addStatement("Float[] results = new Float[values.size()]")
                 .beginControlFlow("for (int i = 0; i != results.length; ++i)")
                 .beginControlFlow("try")
-                .addStatement("String value = values[i]")
+                .addStatement("String value = values.get(i)")
                 .beginControlFlow("if (value != null)")
                 .addStatement("results[i] = Float.parseFloat(value)")
                 .endControlFlow()
@@ -1655,29 +1774,33 @@ public final class HelperMethodBuilder {
         }
     }
 
-    private static final class BoxedDoubleHelper extends ConversionHelper {
+    private static final class BoxedDoubleHelper extends MethodBuildingConversionHelper {
+        public BoxedDoubleHelper(boolean isArrayType) {
+            super(isArrayType);
+        }
+
         @Override
-        public Class<?> getSingletonType() {
+        public Class<?> getScalarType() {
             return Double.class;
         }
 
         @Override
-        public Class<?> getArrayType() {
+        public Class<?> getCollectionType() {
             return Double[].class;
         }
 
         @Override
-        public String getSingletonName() {
+        public String getScalarName() {
             return "toBoxedDouble";
         }
 
         @Override
-        public String getArrayName() {
+        public String getCollectionName() {
             return "toBoxedDoubleArray";
         }
 
         @Override
-        protected CodeBlock getSingletonMethodBody(HelperMethodBuilder builder) {
+        protected CodeBlock getScalarMethodBody(HelperMethodBuilder builder) {
             return CodeBlock.builder()
                 .beginControlFlow("try")
                 .addStatement("return value == null ? null : Double.parseDouble(value)")
@@ -1688,12 +1811,12 @@ public final class HelperMethodBuilder {
         }
 
         @Override
-        protected CodeBlock getArrayMethodBody(HelperMethodBuilder builder) {
+        protected CodeBlock getCollectionMethodBody(HelperMethodBuilder builder) {
             return CodeBlock.builder()
-                .addStatement("Double[] results = new Double[values.length]")
+                .addStatement("Double[] results = new Double[values.size()]")
                 .beginControlFlow("for (int i = 0; i != results.length; ++i)")
                 .beginControlFlow("try")
-                .addStatement("String value = values[i]")
+                .addStatement("String value = values.get(i)")
                 .beginControlFlow("if (value != null)")
                 .addStatement("results[i] = Double.parseDouble(value)")
                 .endControlFlow()
@@ -1705,40 +1828,44 @@ public final class HelperMethodBuilder {
         }
     }
 
-    private static final class BoxedBooleanHelper extends ConversionHelper {
+    private static final class BoxedBooleanHelper extends MethodBuildingConversionHelper {
+        public BoxedBooleanHelper(boolean isArrayType) {
+            super(isArrayType);
+        }
+
         @Override
-        public Class<?> getSingletonType() {
+        public Class<?> getScalarType() {
             return Boolean.class;
         }
 
         @Override
-        public Class<?> getArrayType() {
+        public Class<?> getCollectionType() {
             return Boolean[].class;
         }
 
         @Override
-        public String getSingletonName() {
+        public String getScalarName() {
             return "toBoxedBoolean";
         }
 
         @Override
-        public String getArrayName() {
+        public String getCollectionName() {
             return "toBoxedBooleanArray";
         }
 
         @Override
-        protected CodeBlock getSingletonMethodBody(HelperMethodBuilder builder) {
+        protected CodeBlock getScalarMethodBody(HelperMethodBuilder builder) {
             return CodeBlock.builder()
                 .addStatement("return value == null ? null : Boolean.parseBoolean(value)")
                 .build();
         }
 
         @Override
-        protected CodeBlock getArrayMethodBody(HelperMethodBuilder builder) {
+        protected CodeBlock getCollectionMethodBody(HelperMethodBuilder builder) {
             return CodeBlock.builder()
-                .addStatement("Boolean[] results = new Boolean[values.length]")
+                .addStatement("Boolean[] results = new Boolean[values.size()]")
                 .beginControlFlow("for (int i = 0; i != results.length; ++i)")
-                .addStatement("String value = values[i]")
+                .addStatement("String value = values.get(i)")
                 .beginControlFlow("if (value != null)")
                 .addStatement("results[i] = Boolean.parseBoolean(value)")
                 .endControlFlow()
@@ -1748,40 +1875,44 @@ public final class HelperMethodBuilder {
         }
     }
 
-    private static final class BoxedCharacterHelper extends ConversionHelper {
+    private static final class BoxedCharacterHelper extends MethodBuildingConversionHelper {
+        public BoxedCharacterHelper(boolean isArrayType) {
+            super(isArrayType);
+        }
+
         @Override
-        public Class<?> getSingletonType() {
+        public Class<?> getScalarType() {
             return Character.class;
         }
 
         @Override
-        public Class<?> getArrayType() {
+        public Class<?> getCollectionType() {
             return Character[].class;
         }
 
         @Override
-        public String getSingletonName() {
+        public String getScalarName() {
             return "toBoxedCharacter";
         }
 
         @Override
-        public String getArrayName() {
+        public String getCollectionName() {
             return "toBoxedCharacterArray";
         }
 
         @Override
-        protected CodeBlock getSingletonMethodBody(HelperMethodBuilder builder) {
+        protected CodeBlock getScalarMethodBody(HelperMethodBuilder builder) {
             return CodeBlock.builder()
                 .addStatement("return value != null && value.length() == 1 ? value.charAt(0) : null")
                 .build();
         }
 
         @Override
-        protected CodeBlock getArrayMethodBody(HelperMethodBuilder builder) {
+        protected CodeBlock getCollectionMethodBody(HelperMethodBuilder builder) {
             return CodeBlock.builder()
-                .addStatement("Character[] results = new Character[values.length]")
+                .addStatement("Character[] results = new Character[values.size()]")
                 .beginControlFlow("for (int i = 0; i != results.length; ++i)")
-                .addStatement("String value = values[i]")
+                .addStatement("String value = values.get(i)")
                 .beginControlFlow("if (value != null && value.length() == 1)")
                 .addStatement("results[i] = value.charAt(0)")
                 .endControlFlow()
@@ -1791,71 +1922,79 @@ public final class HelperMethodBuilder {
         }
     }
 
-    private static final class StringHelper extends ConversionHelper {
+    private static final class StringHelper extends MethodBuildingConversionHelper {
+        public StringHelper(boolean isCollectionType) {
+            super(isCollectionType);
+        }
+
         @Override
-        public Class<?> getSingletonType() {
+        public Class<?> getScalarType() {
             return String.class;
         }
 
         @Override
-        public Class<?> getArrayType() {
+        public Class<?> getCollectionType() {
             return String[].class;
         }
 
         @Override
-        public String getSingletonName() {
+        public String getScalarName() {
             return "toString";
         }
 
         @Override
-        public String getArrayName() {
+        public String getCollectionName() {
             return "toStringArray";
         }
 
         @Override
-        protected CodeBlock getSingletonMethodBody(HelperMethodBuilder builder) {
+        protected CodeBlock getScalarMethodBody(HelperMethodBuilder builder) {
             return CodeBlock.builder()
                 .addStatement("return value")
                 .build();
         }
 
         @Override
-        protected CodeBlock getArrayMethodBody(HelperMethodBuilder builder) {
+        protected CodeBlock getCollectionMethodBody(HelperMethodBuilder builder) {
             return CodeBlock.builder()
-                .addStatement("return values")
+                .addStatement("return values.toArray(new $T[0])", String.class)
                 .build();
         }
     }
 
-    private static final class DateHelper extends ConversionHelper {
-        private boolean hasField;
+    private static final class DateHelper extends MethodBuildingConversionHelper {
+        private static final String DATE_FORMATTER_FIELD_NAME = "DATE_FORMATTER";
+
+        public DateHelper(boolean isArrayType) {
+            super(isArrayType);
+        }
 
         @Override
-        public Class<?> getSingletonType() {
+        public Class<?> getScalarType() {
             return Date.class;
         }
 
         @Override
-        public Class<?> getArrayType() {
+        public Class<?> getCollectionType() {
             return Date[].class;
         }
 
         @Override
-        public String getSingletonName() {
+        public String getScalarName() {
             return "toDate";
         }
 
         @Override
-        public String getArrayName() {
+        public String getCollectionName() {
             return "toDateArray";
         }
 
         @Override
-        protected CodeBlock getSingletonMethodBody(HelperMethodBuilder builder) {
-            addFormatterField(builder.typeBuilder);
+        protected CodeBlock getScalarMethodBody(HelperMethodBuilder builder) {
+            addFormatterField(builder);
             return CodeBlock.builder()
                 .beginControlFlow("try")
-                .addStatement("return value == null ? null : DATE_FORMATTER.parse(value)")
+                .addStatement("return value == null ? null : $N.parse(value)", DATE_FORMATTER_FIELD_NAME)
                 .nextControlFlow("catch ($T exception)", ParseException.class)
                 .addStatement("return null")
                 .endControlFlow()
@@ -1863,12 +2002,12 @@ public final class HelperMethodBuilder {
         }
 
         @Override
-        protected CodeBlock getArrayMethodBody(HelperMethodBuilder builder) {
-            addFormatterField(builder.typeBuilder);
+        protected CodeBlock getCollectionMethodBody(HelperMethodBuilder builder) {
+            addFormatterField(builder);
             return CodeBlock.builder()
-                .addStatement("Date[] results = new Date[values.length]")
+                .addStatement("Date[] results = new Date[values.size()]")
                 .beginControlFlow("for (int i = 0; i != results.length; ++i)")
-                    .addStatement("String value = values[i]")
+                    .addStatement("String value = values.get(i)")
                     .beginControlFlow("if (value != null)")
                         .beginControlFlow("try")
                             .addStatement("results[i] = DATE_FORMATTER.parse(value)")
@@ -1880,8 +2019,9 @@ public final class HelperMethodBuilder {
                 .build();
         }
 
-        private void addFormatterField(TypeSpec.Builder typeBuilder) {
-            if (!hasField) {
+        private void addFormatterField(HelperMethodBuilder builder) {
+            if (!builder.addedFields.contains(DATE_FORMATTER_FIELD_NAME)) {
+                TypeSpec.Builder typeBuilder = builder.typeBuilder;
                 MethodSpec method = MethodSpec.methodBuilder("getDateFormatter")
                     .addModifiers(Modifier.PRIVATE, Modifier.STATIC)
                     .returns(SimpleDateFormat.class)
@@ -1894,39 +2034,43 @@ public final class HelperMethodBuilder {
                 typeBuilder.addMethod(method);
                 addField(
                     typeBuilder,
-                    "DATE_FORMATTER",
+                    DATE_FORMATTER_FIELD_NAME,
                     SimpleDateFormat.class,
                     "$N()",
                     method.name
                 );
-                hasField = true;
+                builder.addedFields.add(DATE_FORMATTER_FIELD_NAME);
             }
         }
     }
 
-    private static final class InstantHelper extends ConversionHelper {
+    private static final class InstantHelper extends MethodBuildingConversionHelper {
+        public InstantHelper(boolean isArrayType) {
+            super(isArrayType);
+        }
+
         @Override
-        public Class<?> getSingletonType() {
+        public Class<?> getScalarType() {
             return Instant.class;
         }
 
         @Override
-        public Class<?> getArrayType() {
+        public Class<?> getCollectionType() {
             return Instant[].class;
         }
 
         @Override
-        public String getSingletonName() {
+        public String getScalarName() {
             return "toInstant";
         }
 
         @Override
-        public String getArrayName() {
+        public String getCollectionName() {
             return "toInstantArray";
         }
 
         @Override
-        protected CodeBlock getSingletonMethodBody(HelperMethodBuilder builder) {
+        protected CodeBlock getScalarMethodBody(HelperMethodBuilder builder) {
             return CodeBlock.builder()
                 .beginControlFlow("try")
                 .addStatement("return value == null ? null : Instant.parse(value)")
@@ -1937,11 +2081,11 @@ public final class HelperMethodBuilder {
         }
 
         @Override
-        protected CodeBlock getArrayMethodBody(HelperMethodBuilder builder) {
+        protected CodeBlock getCollectionMethodBody(HelperMethodBuilder builder) {
             return CodeBlock.builder()
-                .addStatement("Instant[] results = new Instant[values.length]")
+                .addStatement("Instant[] results = new Instant[values.size()]")
                 .beginControlFlow("for (int i = 0; i != results.length; ++i)")
-                    .addStatement("String value = values[i]")
+                    .addStatement("String value = values.get(i)")
                     .beginControlFlow("if (value != null)")
                         .beginControlFlow("try")
                             .addStatement("results[i] = Instant.parse(value)")
@@ -1954,29 +2098,33 @@ public final class HelperMethodBuilder {
         }
     }
 
-    private static final class ZonedDateTimeHelper extends ConversionHelper {
+    private static final class ZonedDateTimeHelper extends MethodBuildingConversionHelper {
+        public ZonedDateTimeHelper(boolean isArrayType) {
+            super(isArrayType);
+        }
+
         @Override
-        public Class<?> getSingletonType() {
+        public Class<?> getScalarType() {
             return ZonedDateTime.class;
         }
 
         @Override
-        public Class<?> getArrayType() {
+        public Class<?> getCollectionType() {
             return ZonedDateTime[].class;
         }
 
         @Override
-        public String getSingletonName() {
+        public String getScalarName() {
             return "toZonedDateTime";
         }
 
         @Override
-        public String getArrayName() {
+        public String getCollectionName() {
             return "toZonedDateTimeArray";
         }
 
         @Override
-        protected CodeBlock getSingletonMethodBody(HelperMethodBuilder builder) {
+        protected CodeBlock getScalarMethodBody(HelperMethodBuilder builder) {
             return CodeBlock.builder()
                 .beginControlFlow("try")
                 .addStatement("return value == null ? null : ZonedDateTime.parse(value)")
@@ -1987,11 +2135,11 @@ public final class HelperMethodBuilder {
         }
 
         @Override
-        protected CodeBlock getArrayMethodBody(HelperMethodBuilder builder) {
+        protected CodeBlock getCollectionMethodBody(HelperMethodBuilder builder) {
             return CodeBlock.builder()
-                .addStatement("ZonedDateTime[] results = new ZonedDateTime[values.length]")
+                .addStatement("ZonedDateTime[] results = new ZonedDateTime[values.size()]")
                 .beginControlFlow("for (int i = 0; i != results.length; ++i)")
-                .addStatement("String value = values[i]")
+                .addStatement("String value = values.get(i)")
                 .beginControlFlow("if (value != null)")
                 .beginControlFlow("try")
                 .addStatement("results[i] = ZonedDateTime.parse(value)")
@@ -2004,29 +2152,33 @@ public final class HelperMethodBuilder {
         }
     }
 
-    private static final class OffsetDateTimeHelper extends ConversionHelper {
+    private static final class OffsetDateTimeHelper extends MethodBuildingConversionHelper {
+        public OffsetDateTimeHelper(boolean isArrayType) {
+            super(isArrayType);
+        }
+
         @Override
-        public Class<?> getSingletonType() {
+        public Class<?> getScalarType() {
             return OffsetDateTime.class;
         }
 
         @Override
-        public Class<?> getArrayType() {
+        public Class<?> getCollectionType() {
             return OffsetDateTime[].class;
         }
 
         @Override
-        public String getSingletonName() {
+        public String getScalarName() {
             return "toOffsetDateTime";
         }
 
         @Override
-        public String getArrayName() {
+        public String getCollectionName() {
             return "toOffsetDateTimeArray";
         }
 
         @Override
-        protected CodeBlock getSingletonMethodBody(HelperMethodBuilder builder) {
+        protected CodeBlock getScalarMethodBody(HelperMethodBuilder builder) {
             return CodeBlock.builder()
                 .beginControlFlow("try")
                 .addStatement("return value == null ? null : OffsetDateTime.parse(value)")
@@ -2037,11 +2189,11 @@ public final class HelperMethodBuilder {
         }
 
         @Override
-        protected CodeBlock getArrayMethodBody(HelperMethodBuilder builder) {
+        protected CodeBlock getCollectionMethodBody(HelperMethodBuilder builder) {
             return CodeBlock.builder()
-                .addStatement("OffsetDateTime[] results = new OffsetDateTime[values.length]")
+                .addStatement("OffsetDateTime[] results = new OffsetDateTime[values.size()]")
                 .beginControlFlow("for (int i = 0; i != results.length; ++i)")
-                .addStatement("String value = values[i]")
+                .addStatement("String value = values.get(i)")
                 .beginControlFlow("if (value != null)")
                 .beginControlFlow("try")
                 .addStatement("results[i] = OffsetDateTime.parse(value)")
@@ -2054,32 +2206,36 @@ public final class HelperMethodBuilder {
         }
     }
 
-    private static final class LocalDateTimeHelper extends ConversionHelper {
+    private static final class LocalDateTimeHelper extends MethodBuildingConversionHelper {
+        public LocalDateTimeHelper(boolean isArrayType) {
+            super(isArrayType);
+        }
+
         @Override
-        public Class<?> getSingletonType() {
+        public Class<?> getScalarType() {
             return LocalDateTime.class;
         }
 
         @Override
-        public Class<?> getArrayType() {
+        public Class<?> getCollectionType() {
             return LocalDateTime[].class;
         }
 
         @Override
-        public String getSingletonName() {
+        public String getScalarName() {
             return "toLocalDateTime";
         }
 
         @Override
-        public String getArrayName() {
+        public String getCollectionName() {
             return "toLocalDateTimeArray";
         }
 
         @Override
-        protected CodeBlock getSingletonMethodBody(HelperMethodBuilder builder) {
+        protected CodeBlock getScalarMethodBody(HelperMethodBuilder builder) {
             return CodeBlock.builder()
                 .beginControlFlow("try")
-                .addStatement("return value == null ? null : LocalDateTime.parse(value)")
+                .addStatement("return value == null ? null : $T.parse(value)", LocalDateTime.class)
                 .nextControlFlow("catch ($T exception)", DateTimeParseException.class)
                 .addStatement("return null")
                 .endControlFlow()
@@ -2087,14 +2243,14 @@ public final class HelperMethodBuilder {
         }
 
         @Override
-        protected CodeBlock getArrayMethodBody(HelperMethodBuilder builder) {
+        protected CodeBlock getCollectionMethodBody(HelperMethodBuilder builder) {
             return CodeBlock.builder()
-                .addStatement("LocalDateTime[] results = new LocalDateTime[values.length]")
+                .addStatement("$T[] results = new $T[values.size()]", LocalDateTime.class, LocalDateTime.class)
                 .beginControlFlow("for (int i = 0; i != results.length; ++i)")
-                .addStatement("String value = values[i]")
+                .addStatement("String value = values.get(i)")
                 .beginControlFlow("if (value != null)")
                 .beginControlFlow("try")
-                .addStatement("results[i] = LocalDateTime.parse(value)")
+                .addStatement("results[i] = $T.parse(value)", LocalDateTime.class)
                 .nextControlFlow("catch ($T exception)", DateTimeParseException.class)
                 .endControlFlow()
                 .endControlFlow()
@@ -2104,29 +2260,33 @@ public final class HelperMethodBuilder {
         }
     }
 
-    private static final class LocalDateHelper extends ConversionHelper {
+    private static final class LocalDateHelper extends MethodBuildingConversionHelper {
+        public LocalDateHelper(boolean isArrayType) {
+            super(isArrayType);
+        }
+
         @Override
-        public Class<?> getSingletonType() {
+        public Class<?> getScalarType() {
             return LocalDate.class;
         }
 
         @Override
-        public Class<?> getArrayType() {
+        public Class<?> getCollectionType() {
             return LocalDate[].class;
         }
 
         @Override
-        public String getSingletonName() {
+        public String getScalarName() {
             return "toLocalDate";
         }
 
         @Override
-        public String getArrayName() {
+        public String getCollectionName() {
             return "toLocalDateArray";
         }
 
         @Override
-        protected CodeBlock getSingletonMethodBody(HelperMethodBuilder builder) {
+        protected CodeBlock getScalarMethodBody(HelperMethodBuilder builder) {
             return CodeBlock.builder()
                 .beginControlFlow("try")
                 .addStatement("return value == null ? null : LocalDate.parse(value)")
@@ -2137,11 +2297,11 @@ public final class HelperMethodBuilder {
         }
 
         @Override
-        protected CodeBlock getArrayMethodBody(HelperMethodBuilder builder) {
+        protected CodeBlock getCollectionMethodBody(HelperMethodBuilder builder) {
             return CodeBlock.builder()
-                .addStatement("LocalDate[] results = new LocalDate[values.length]")
+                .addStatement("LocalDate[] results = new LocalDate[values.size()]")
                 .beginControlFlow("for (int i = 0; i != results.length; ++i)")
-                .addStatement("String value = values[i]")
+                .addStatement("String value = values.get(i)")
                 .beginControlFlow("if (value != null)")
                 .beginControlFlow("try")
                 .addStatement("results[i] = LocalDate.parse(value)")
@@ -2154,29 +2314,33 @@ public final class HelperMethodBuilder {
         }
     }
 
-    private static final class YearMonthHelper extends ConversionHelper {
+    private static final class YearMonthHelper extends MethodBuildingConversionHelper {
+        public YearMonthHelper(boolean isArrayType) {
+            super(isArrayType);
+        }
+
         @Override
-        public Class<?> getSingletonType() {
+        public Class<?> getScalarType() {
             return YearMonth.class;
         }
 
         @Override
-        public Class<?> getArrayType() {
+        public Class<?> getCollectionType() {
             return YearMonth[].class;
         }
 
         @Override
-        public String getSingletonName() {
+        public String getScalarName() {
             return "toYearMonth";
         }
 
         @Override
-        public String getArrayName() {
+        public String getCollectionName() {
             return "toYearMonthArray";
         }
 
         @Override
-        protected CodeBlock getSingletonMethodBody(HelperMethodBuilder builder) {
+        protected CodeBlock getScalarMethodBody(HelperMethodBuilder builder) {
             return CodeBlock.builder()
                 .beginControlFlow("try")
                 .addStatement("return value == null ? null : YearMonth.parse(value)")
@@ -2187,11 +2351,11 @@ public final class HelperMethodBuilder {
         }
 
         @Override
-        protected CodeBlock getArrayMethodBody(HelperMethodBuilder builder) {
+        protected CodeBlock getCollectionMethodBody(HelperMethodBuilder builder) {
             return CodeBlock.builder()
-                .addStatement("YearMonth[] results = new YearMonth[values.length]")
+                .addStatement("YearMonth[] results = new YearMonth[values.size()]")
                 .beginControlFlow("for (int i = 0; i != results.length; ++i)")
-                .addStatement("String value = values[i]")
+                .addStatement("String value = values.get(i)")
                 .beginControlFlow("if (value != null)")
                 .beginControlFlow("try")
                 .addStatement("results[i] = YearMonth.parse(value)")
@@ -2204,29 +2368,33 @@ public final class HelperMethodBuilder {
         }
     }
 
-    private static final class YearHelper extends ConversionHelper {
+    private static final class YearHelper extends MethodBuildingConversionHelper {
+        public YearHelper(boolean isArrayType) {
+            super(isArrayType);
+        }
+
         @Override
-        public Class<?> getSingletonType() {
+        public Class<?> getScalarType() {
             return Year.class;
         }
 
         @Override
-        public Class<?> getArrayType() {
+        public Class<?> getCollectionType() {
             return Year[].class;
         }
 
         @Override
-        public String getSingletonName() {
+        public String getScalarName() {
             return "toYear";
         }
 
         @Override
-        public String getArrayName() {
+        public String getCollectionName() {
             return "toYearArray";
         }
 
         @Override
-        protected CodeBlock getSingletonMethodBody(HelperMethodBuilder builder) {
+        protected CodeBlock getScalarMethodBody(HelperMethodBuilder builder) {
             return CodeBlock.builder()
                 .beginControlFlow("try")
                 .addStatement("return value == null ? null : Year.parse(value)")
@@ -2237,11 +2405,11 @@ public final class HelperMethodBuilder {
         }
 
         @Override
-        protected CodeBlock getArrayMethodBody(HelperMethodBuilder builder) {
+        protected CodeBlock getCollectionMethodBody(HelperMethodBuilder builder) {
             return CodeBlock.builder()
-                .addStatement("Year[] results = new Year[values.length]")
+                .addStatement("Year[] results = new Year[values.size()]")
                 .beginControlFlow("for (int i = 0; i != results.length; ++i)")
-                .addStatement("String value = values[i]")
+                .addStatement("String value = values.get(i)")
                 .beginControlFlow("if (value != null)")
                 .beginControlFlow("try")
                 .addStatement("results[i] = Year.parse(value)")
@@ -2254,29 +2422,33 @@ public final class HelperMethodBuilder {
         }
     }
 
-    private static final class BigIntegerHelper extends ConversionHelper {
+    private static final class BigIntegerHelper extends MethodBuildingConversionHelper {
+        public BigIntegerHelper(boolean isArrayType) {
+            super(isArrayType);
+        }
+
         @Override
-        public Class<?> getSingletonType() {
+        public Class<?> getScalarType() {
             return BigInteger.class;
         }
 
         @Override
-        public Class<?> getArrayType() {
+        public Class<?> getCollectionType() {
             return BigInteger[].class;
         }
 
         @Override
-        public String getSingletonName() {
+        public String getScalarName() {
             return "toBigInteger";
         }
 
         @Override
-        public String getArrayName() {
+        public String getCollectionName() {
             return "toBigIntegerArray";
         }
 
         @Override
-        protected CodeBlock getSingletonMethodBody(HelperMethodBuilder builder) {
+        protected CodeBlock getScalarMethodBody(HelperMethodBuilder builder) {
             return CodeBlock.builder()
                 .beginControlFlow("try")
                 .addStatement("return value == null ? null : new BigInteger(value)")
@@ -2287,12 +2459,12 @@ public final class HelperMethodBuilder {
         }
 
         @Override
-        protected CodeBlock getArrayMethodBody(HelperMethodBuilder builder) {
+        protected CodeBlock getCollectionMethodBody(HelperMethodBuilder builder) {
             return CodeBlock.builder()
-                .addStatement("BigInteger[] results = new BigInteger[values.length]")
+                .addStatement("BigInteger[] results = new BigInteger[values.size()]")
                 .beginControlFlow("for (int i = 0; i != results.length; ++i)")
                 .beginControlFlow("try")
-                .addStatement("String value = values[i]")
+                .addStatement("String value = values.get(i)")
                 .beginControlFlow("if (value != null)")
                 .addStatement("results[i] = new BigInteger(value)")
                 .endControlFlow()
@@ -2304,29 +2476,33 @@ public final class HelperMethodBuilder {
         }
     }
 
-    private static final class BigDecimalHelper extends ConversionHelper {
+    private static final class BigDecimalHelper extends MethodBuildingConversionHelper {
+        public BigDecimalHelper(boolean isArrayType) {
+            super(isArrayType);
+        }
+
         @Override
-        public Class<?> getSingletonType() {
+        public Class<?> getScalarType() {
             return BigDecimal.class;
         }
 
         @Override
-        public Class<?> getArrayType() {
+        public Class<?> getCollectionType() {
             return BigDecimal[].class;
         }
 
         @Override
-        public String getSingletonName() {
+        public String getScalarName() {
             return "toBigDecimal";
         }
 
         @Override
-        public String getArrayName() {
+        public String getCollectionName() {
             return "toBigDecimalArray";
         }
 
         @Override
-        protected CodeBlock getSingletonMethodBody(HelperMethodBuilder builder) {
+        protected CodeBlock getScalarMethodBody(HelperMethodBuilder builder) {
             return CodeBlock.builder()
                 .beginControlFlow("try")
                 .addStatement("return value == null ? null : new BigDecimal(value)")
@@ -2337,12 +2513,12 @@ public final class HelperMethodBuilder {
         }
 
         @Override
-        protected CodeBlock getArrayMethodBody(HelperMethodBuilder builder) {
+        protected CodeBlock getCollectionMethodBody(HelperMethodBuilder builder) {
             return CodeBlock.builder()
-                .addStatement("BigDecimal[] results = new BigDecimal[values.length]")
+                .addStatement("BigDecimal[] results = new BigDecimal[values.size()]")
                 .beginControlFlow("for (int i = 0; i != results.length; ++i)")
                 .beginControlFlow("try")
-                .addStatement("String value = values[i]")
+                .addStatement("String value = values.get(i)")
                 .beginControlFlow("if (value != null)")
                 .addStatement("results[i] = new BigDecimal(value)")
                 .endControlFlow()
@@ -2354,29 +2530,33 @@ public final class HelperMethodBuilder {
         }
     }
 
-    private static final class UUIDHelper extends ConversionHelper {
+    private static final class UUIDHelper extends MethodBuildingConversionHelper {
+        public UUIDHelper(boolean isArrayType) {
+            super(isArrayType);
+        }
+
         @Override
-        public Class<?> getSingletonType() {
+        public Class<?> getScalarType() {
             return UUID.class;
         }
 
         @Override
-        public Class<?> getArrayType() {
+        public Class<?> getCollectionType() {
             return UUID[].class;
         }
 
         @Override
-        public String getSingletonName() {
+        public String getScalarName() {
             return "toUUID";
         }
 
         @Override
-        public String getArrayName() {
+        public String getCollectionName() {
             return "toUUIDArray";
         }
 
         @Override
-        protected CodeBlock getSingletonMethodBody(HelperMethodBuilder builder) {
+        protected CodeBlock getScalarMethodBody(HelperMethodBuilder builder) {
             return CodeBlock.builder()
                 .beginControlFlow("try")
                 .addStatement("return value == null ? null : UUID.fromString(value)")
@@ -2387,12 +2567,12 @@ public final class HelperMethodBuilder {
         }
 
         @Override
-        protected CodeBlock getArrayMethodBody(HelperMethodBuilder builder) {
+        protected CodeBlock getCollectionMethodBody(HelperMethodBuilder builder) {
             return CodeBlock.builder()
-                .addStatement("UUID[] results = new UUID[values.length]")
+                .addStatement("UUID[] results = new UUID[values.size()]")
                 .beginControlFlow("for (int i = 0; i != results.length; ++i)")
                 .beginControlFlow("try")
-                .addStatement("String value = values[i]")
+                .addStatement("String value = values.get(i)")
                 .beginControlFlow("if (value != null)")
                 .addStatement("results[i] = UUID.fromString(value)")
                 .endControlFlow()
@@ -2401,6 +2581,227 @@ public final class HelperMethodBuilder {
                 .endControlFlow()
                 .addStatement("return results")
                 .build();
+        }
+    }
+
+    private static abstract class CollectionConversionHelper implements ConversionHelper {
+        private final ConversionHelper conversionHelper;
+
+        protected CollectionConversionHelper(ConversionHelper conversionHelper) {
+            this.conversionHelper = conversionHelper;
+        }
+
+        @Override
+        public boolean isCollectionType() {
+            return true;
+        }
+
+        @Override
+        public Class<?> getScalarType() {
+            return conversionHelper.getScalarType();
+        }
+
+        protected abstract Class<?> getCollectionClass();
+
+        protected abstract Class<?> getImplementationClass();
+
+        protected boolean acceptsCapacity() {
+            return true;
+        }
+
+        @Override
+        public void addConversionMethod(HelperMethodBuilder builder) {
+            conversionHelper.addConversionMethod(builder);
+
+            if (isArrayListString()) {
+                return;
+            }
+
+            String converterName = getConverterName();
+            if (builder.addedCollectionConversionHelpers.contains(converterName)) {
+                return;
+            }
+            MethodSpec method = MethodSpec.methodBuilder(converterName)
+                .addModifiers(Modifier.PRIVATE, Modifier.STATIC)
+                .returns(ParameterizedTypeName.get(getImplementationClass(), conversionHelper.getScalarType()))
+                .addParameter(ParameterizedTypeName.get(List.class, String.class), "values")
+                .addCode(getCollectionMethodBody(builder))
+                .build();
+            builder.typeBuilder.addMethod(method);
+            builder.addedCollectionConversionHelpers.add(converterName);
+        }
+
+        private CodeBlock getCollectionMethodBody(HelperMethodBuilder builder) {
+            Class<?> collectionType = getImplementationClass();
+            Class<?> componentType = conversionHelper.getScalarType();
+            TypeName typeName = ParameterizedTypeName.get(collectionType, componentType);
+            String conversionCall = conversionHelper.getConversionCall("value");
+            CodeBlock.Builder bodyBuilder = CodeBlock.builder();
+            if (acceptsCapacity()) {
+                bodyBuilder.addStatement("$T results = new $T<>(values.size())", typeName, collectionType);
+            } else {
+                bodyBuilder.addStatement("$T results = new $T<>()", typeName, collectionType);
+            }
+            return bodyBuilder.beginControlFlow("for (int i = 0, length = values.size(); i != length; ++i)")
+                .addStatement("String value = values.get(i)")
+                .addStatement("results.add($L)", conversionCall)
+                .endControlFlow()
+                .addStatement("return results")
+                .build();
+        }
+
+        @Override
+        public String getConversionCall(String sourceCall) {
+            if (isArrayListString()) {
+                return CodeBlock.of("new $T<>($L)", ArrayList.class, sourceCall).toString();
+            }
+            String converterName = getConverterName();
+            return CodeBlock.of("$N($L)", converterName, sourceCall).toString();
+        }
+
+        private String getConverterName() {
+            Class<?> collectionType = getImplementationClass();
+            Class<?> componentType = conversionHelper.getScalarType();
+            return "to" + componentType.getSimpleName() + collectionType.getSimpleName();
+        }
+
+        private boolean isArrayListString() {
+            // As an optimization, we do not create a helper method for ArrayList<String>
+            return ArrayList.class.equals(getImplementationClass())
+                && String.class.equals(conversionHelper.getScalarType());
+        }
+    }
+
+    private static final class IterableHelper extends CollectionConversionHelper {
+        public IterableHelper(ConversionHelper conversionHelper) {
+            super(conversionHelper);
+        }
+
+        @Override
+        protected Class<?> getCollectionClass() {
+            return Iterable.class;
+        }
+
+        @Override
+        protected Class<?> getImplementationClass() {
+            return ArrayList.class;
+        }
+    }
+
+    private static final class CollectionHelper extends CollectionConversionHelper {
+        public CollectionHelper(ConversionHelper conversionHelper) {
+            super(conversionHelper);
+        }
+
+        @Override
+        protected Class<?> getCollectionClass() {
+            return Collection.class;
+        }
+
+        @Override
+        protected Class<?> getImplementationClass() {
+            return ArrayList.class;
+        }
+    }
+
+    private static final class ListHelper extends CollectionConversionHelper {
+        public ListHelper(ConversionHelper conversionHelper) {
+            super(conversionHelper);
+        }
+
+        @Override
+        protected Class<?> getCollectionClass() {
+            return List.class;
+        }
+
+        @Override
+        protected Class<?> getImplementationClass() {
+            return ArrayList.class;
+        }
+    }
+
+    private static final class SetHelper extends CollectionConversionHelper {
+        public SetHelper(ConversionHelper conversionHelper) {
+            super(conversionHelper);
+        }
+
+        @Override
+        protected Class<?> getCollectionClass() {
+            return Set.class;
+        }
+
+        @Override
+        protected Class<?> getImplementationClass() {
+            return LinkedHashSet.class;
+        }
+    }
+
+    private static final class ArrayListHelper extends CollectionConversionHelper {
+        public ArrayListHelper(ConversionHelper conversionHelper) {
+            super(conversionHelper);
+        }
+
+        @Override
+        protected Class<?> getCollectionClass() {
+            return ArrayList.class;
+        }
+
+        @Override
+        protected Class<?> getImplementationClass() {
+            return ArrayList.class;
+        }
+    }
+
+    private static final class LinkedListHelper extends CollectionConversionHelper {
+        public LinkedListHelper(ConversionHelper conversionHelper) {
+            super(conversionHelper);
+        }
+
+        @Override
+        protected Class<?> getCollectionClass() {
+            return LinkedList.class;
+        }
+
+        @Override
+        protected Class<?> getImplementationClass() {
+            return LinkedList.class;
+        }
+
+        @Override
+        protected boolean acceptsCapacity() {
+            return false;
+        }
+    }
+
+    private static final class HashSetHelper extends CollectionConversionHelper {
+        public HashSetHelper(ConversionHelper conversionHelper) {
+            super(conversionHelper);
+        }
+
+        @Override
+        protected Class<?> getCollectionClass() {
+            return HashSet.class;
+        }
+
+        @Override
+        protected Class<?> getImplementationClass() {
+            return HashSet.class;
+        }
+    }
+
+    private static final class LinkedHashSetHelper extends CollectionConversionHelper {
+        public LinkedHashSetHelper(ConversionHelper conversionHelper) {
+            super(conversionHelper);
+        }
+
+        @Override
+        protected Class<?> getCollectionClass() {
+            return LinkedHashSet.class;
+        }
+
+        @Override
+        protected Class<?> getImplementationClass() {
+            return LinkedHashSet.class;
         }
     }
 
@@ -2413,7 +2814,7 @@ public final class HelperMethodBuilder {
         public abstract String getSingletonName();
         public abstract String getArrayName();
 
-        public void buildSingletonHelper(HelperMethodBuilder builder) {
+        public void buildScalarHelper(HelperMethodBuilder builder) {
             if (builder.addedSingletonSourceHelpers.contains(getValueSource())) {
                 return;
             }
@@ -2430,13 +2831,13 @@ public final class HelperMethodBuilder {
 
         protected abstract CodeBlock getSingletonMethodBody(HelperMethodBuilder builder, String context, String key);
 
-        public void buildArrayHelper(HelperMethodBuilder builder) {
+        public void buildCollectionHelper(HelperMethodBuilder builder) {
             if (builder.addedArraySourceHelpers.contains(getValueSource())) {
                 return;
             }
             MethodSpec method = MethodSpec.methodBuilder(getArrayName())
                 .addModifiers(Modifier.PRIVATE, Modifier.STATIC)
-                .returns(String[].class)
+                .returns(ParameterizedTypeName.get(List.class, String.class))
                 .addParameter(HttpContext.class, "context")
                 .addParameter(String.class, "key")
                 .addCode(getArrayMethodBody(builder,"context", "key"))
@@ -2479,8 +2880,8 @@ public final class HelperMethodBuilder {
         protected CodeBlock getArrayMethodBody(HelperMethodBuilder builder, String wrapper, String key) {
             return CodeBlock.builder()
                 .addStatement("$T request = $N.getRequest()", HttpRequest.class, wrapper)
-                .addStatement("$T<String> values = request.getPathLookup().get($N)", Collection.class, key)
-                .addStatement("return values == null ? new String[0] : values.toArray(new String[0])")
+                .addStatement("$T<String> values = request.getPathLookup().get($N)", List.class, key)
+                .addStatement("return values == null ? $T.$N() : values", Collections.class, "emptyList")
                 .build();
         }
 
@@ -2520,8 +2921,8 @@ public final class HelperMethodBuilder {
         protected CodeBlock getArrayMethodBody(HelperMethodBuilder builder, String wrapper, String key) {
             return CodeBlock.builder()
                 .addStatement("$T request = $N.getRequest()", HttpRequest.class, wrapper)
-                .addStatement("$T<String> values = request.getQueryLookup().get($N)", Collection.class, key)
-                .addStatement("return values == null ? new String[0] : values.toArray(new String[0])")
+                .addStatement("$T<String> values = request.getQueryLookup().get($N)", List.class, key)
+                .addStatement("return values == null ? $T.$N() : values", Collections.class, "emptyList")
                 .build();
         }
 
@@ -2561,8 +2962,8 @@ public final class HelperMethodBuilder {
         protected CodeBlock getArrayMethodBody(HelperMethodBuilder builder, String wrapper, String key) {
             return CodeBlock.builder()
                 .addStatement("$T request = $N.getRequest()", HttpRequest.class, wrapper)
-                .addStatement("$T<String> values = request.getHeaderLookup().get($N)", Collection.class, key)
-                .addStatement("return values == null ? new String[0] : values.toArray(new String[0])")
+                .addStatement("$T<String> values = request.getHeaderLookup().get($N)", List.class, key)
+                .addStatement("return values == null ? $T.$N() : values", Collections.class, "emptyList")
                 .build();
         }
 
@@ -2602,8 +3003,8 @@ public final class HelperMethodBuilder {
         protected CodeBlock getArrayMethodBody(HelperMethodBuilder builder, String wrapper, String key) {
             return CodeBlock.builder()
                 .addStatement("$T request = $N.getRequest()", HttpRequest.class, wrapper)
-                .addStatement("$T<String> values = request.getCookieLookup().get($N)", Collection.class, key)
-                .addStatement("return values == null ? new String[0] : values.toArray(new String[0])")
+                .addStatement("$T<String> values = request.getCookieLookup().get($N)", List.class, key)
+                .addStatement("return values == null ? $T.$N() : values", Collections.class, "emptyList")
                 .build();
         }
 
@@ -2643,8 +3044,8 @@ public final class HelperMethodBuilder {
         protected CodeBlock getArrayMethodBody(HelperMethodBuilder builder, String wrapper, String key) {
             return CodeBlock.builder()
                 .addStatement("$T request = $N.getRequest()", HttpRequest.class, wrapper)
-                .addStatement("$T<String> values = request.getFormLookup().get($N)", Collection.class, key)
-                .addStatement("return values == null ? new String[0] : values.toArray(new String[0])")
+                .addStatement("$T<String> values = request.getFormLookup().get($N)", List.class, key)
+                .addStatement("return values == null ? $T.$N() : values", Collections.class, "emptyList")
                 .build();
         }
 
@@ -2679,7 +3080,7 @@ public final class HelperMethodBuilder {
                 ValueSource source = entry.getKey();
                 if (source != ValueSource.Any) {
                     SourceHelper helper = entry.getValue();
-                    helper.buildSingletonHelper(builder);
+                    helper.buildScalarHelper(builder);
                 }
             }
 
@@ -2708,7 +3109,7 @@ public final class HelperMethodBuilder {
                 ValueSource source = entry.getKey();
                 if (source != ValueSource.Any) {
                     SourceHelper helper = entry.getValue();
-                    helper.buildArrayHelper(builder);
+                    helper.buildCollectionHelper(builder);
                 }
             }
 
@@ -2726,7 +3127,7 @@ public final class HelperMethodBuilder {
                     }
                 }
             }
-            codeBuilder.addStatement("return new String[0]");
+            codeBuilder.addStatement("return $T.$N()", Collections.class, "emptyList");
             return codeBuilder.build();
         }
 
@@ -2742,15 +3143,15 @@ public final class HelperMethodBuilder {
 
     private static abstract class WsSourceHelper {
         public abstract WsValueSource getValueSource();
-        public abstract String getSingletonName();
-        public abstract String getArrayName();
+        public abstract String getScalarName();
+        public abstract String getCollectionName();
 
-        public void buildSingletonHelper(HelperMethodBuilder builder, Class<?> wrapperType) {
+        public void buildScalarHelper(HelperMethodBuilder builder, Class<?> wrapperType) {
             ImmutablePair<WsValueSource, Class<?>> key = ImmutablePair.of(getValueSource(), wrapperType);
             if (builder.addedSingletonWsSourceHelpers.contains(key)) {
                 return;
             }
-            MethodSpec method = MethodSpec.methodBuilder(getSingletonName())
+            MethodSpec method = MethodSpec.methodBuilder(getScalarName())
                 .addModifiers(Modifier.PRIVATE, Modifier.STATIC)
                 .returns(String.class)
                 .addParameter(wrapperType, "context")
@@ -2767,12 +3168,12 @@ public final class HelperMethodBuilder {
             String context,
             String key);
 
-        public void buildArrayHelper(HelperMethodBuilder builder, Class<?> wrapperType) {
+        public void buildCollectionHelper(HelperMethodBuilder builder, Class<?> wrapperType) {
             ImmutablePair<WsValueSource, Class<?>> key = ImmutablePair.of(getValueSource(), wrapperType);
             if (builder.addedArrayWsSourceHelpers.contains(key)) {
                 return;
             }
-            MethodSpec method = MethodSpec.methodBuilder(getArrayName())
+            MethodSpec method = MethodSpec.methodBuilder(getCollectionName())
                 .addModifiers(Modifier.PRIVATE, Modifier.STATIC)
                 .returns(String[].class)
                 .addParameter(wrapperType, "context")
@@ -2799,12 +3200,12 @@ public final class HelperMethodBuilder {
         }
 
         @Override
-        public String getSingletonName() {
+        public String getScalarName() {
             return "getWsPathValue";
         }
 
         @Override
-        public String getArrayName() {
+        public String getCollectionName() {
             return "getWsPathValues";
         }
 
@@ -2848,12 +3249,12 @@ public final class HelperMethodBuilder {
         }
 
         @Override
-        public String getSingletonName() {
+        public String getScalarName() {
             return "getWsQueryValue";
         }
 
         @Override
-        public String getArrayName() {
+        public String getCollectionName() {
             return "getWsQueryValues";
         }
 
@@ -2897,12 +3298,12 @@ public final class HelperMethodBuilder {
         }
 
         @Override
-        public String getSingletonName() {
+        public String getScalarName() {
             return "getWsHeaderValue";
         }
 
         @Override
-        public String getArrayName() {
+        public String getCollectionName() {
             return "getWsHeaderValues";
         }
 
@@ -2946,12 +3347,12 @@ public final class HelperMethodBuilder {
         }
 
         @Override
-        public String getSingletonName() {
+        public String getScalarName() {
             return "getWsCookieValue";
         }
 
         @Override
-        public String getArrayName() {
+        public String getCollectionName() {
             return "getWsCookieValues";
         }
 
@@ -2995,12 +3396,12 @@ public final class HelperMethodBuilder {
         }
 
         @Override
-        public String getSingletonName() {
+        public String getScalarName() {
             return "getWsMessageValue";
         }
 
         @Override
-        public String getArrayName() {
+        public String getCollectionName() {
             return "getWsMessageValues";
         }
 
@@ -3045,12 +3446,12 @@ public final class HelperMethodBuilder {
         }
 
         @Override
-        public String getSingletonName() {
+        public String getScalarName() {
             return "getWsValue";
         }
 
         @Override
-        public String getArrayName() {
+        public String getCollectionName() {
             return "getWsValues";
         }
 
@@ -3065,7 +3466,7 @@ public final class HelperMethodBuilder {
                 WsValueSource source = entry.getKey();
                 if (source != WsValueSource.Any) {
                     WsSourceHelper helper = entry.getValue();
-                    helper.buildSingletonHelper(builder, wrapperType);
+                    helper.buildScalarHelper(builder, wrapperType);
                 }
             }
 
@@ -3078,13 +3479,13 @@ public final class HelperMethodBuilder {
                     CodeBlock check = helper.getPresenceCheck("request", key);
                     if (check != null) {
                         codeBuilder.beginControlFlow("if (" + check.toString() + ")");
-                        codeBuilder.addStatement("return $N($N, $N)", helper.getSingletonName(), wrapper, key);
+                        codeBuilder.addStatement("return $N($N, $N)", helper.getScalarName(), wrapper, key);
                         codeBuilder.endControlFlow();
                     }
                 }
             }
             WsSourceHelper messageHelper = WS_SOURCE_HELPER_LOOKUP.get(WsValueSource.Message);
-            codeBuilder.addStatement("return $N($N, $N)", messageHelper.getSingletonName(), wrapper, key);
+            codeBuilder.addStatement("return $N($N, $N)", messageHelper.getScalarName(), wrapper, key);
             return codeBuilder.build();
         }
 
@@ -3099,7 +3500,7 @@ public final class HelperMethodBuilder {
                 WsValueSource source = entry.getKey();
                 if (source != WsValueSource.Any) {
                     WsSourceHelper helper = entry.getValue();
-                    helper.buildArrayHelper(builder, wrapperType);
+                    helper.buildCollectionHelper(builder, wrapperType);
                 }
             }
 
@@ -3112,13 +3513,13 @@ public final class HelperMethodBuilder {
                     CodeBlock check = helper.getPresenceCheck("request", key);
                     if (check != null) {
                         codeBuilder.beginControlFlow("if (" + check.toString() + ")");
-                        codeBuilder.addStatement("return $N($N, $N)", helper.getArrayName(), wrapper, key);
+                        codeBuilder.addStatement("return $N($N, $N)", helper.getCollectionName(), wrapper, key);
                         codeBuilder.endControlFlow();
                     }
                 }
             }
             WsSourceHelper messageHelper = WS_SOURCE_HELPER_LOOKUP.get(WsValueSource.Message);
-            codeBuilder.addStatement("return $N($N, $N)", messageHelper.getArrayName(), wrapper, key);
+            codeBuilder.addStatement("return $N($N, $N)", messageHelper.getCollectionName(), wrapper, key);
             return codeBuilder.build();
         }
 

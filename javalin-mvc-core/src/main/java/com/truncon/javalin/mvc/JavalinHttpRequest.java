@@ -6,8 +6,7 @@ import io.javalin.http.UploadedFile;
 import com.truncon.javalin.mvc.api.FileUpload;
 import com.truncon.javalin.mvc.api.HttpRequest;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 
@@ -34,7 +33,7 @@ final class JavalinHttpRequest implements HttpRequest {
 
     @Override
     public Map<String, List<String>> getPathLookup() {
-        return explode(context.pathParamMap());
+        return LookupUtils.explode(context.pathParamMap());
     }
 
     @Override
@@ -49,7 +48,7 @@ final class JavalinHttpRequest implements HttpRequest {
 
     @Override
     public Map<String, List<String>> getQueryLookup() {
-        return copy(context.queryParamMap());
+        return LookupUtils.copy(context.queryParamMap());
     }
 
     @Override
@@ -64,7 +63,7 @@ final class JavalinHttpRequest implements HttpRequest {
 
     @Override
     public Map<String, List<String>> getFormLookup() {
-        return copy(context.formParamMap());
+        return LookupUtils.copy(context.formParamMap());
     }
 
     @Override
@@ -79,7 +78,7 @@ final class JavalinHttpRequest implements HttpRequest {
 
     @Override
     public Map<String, List<String>> getHeaderLookup() {
-        return explode(context.headerMap());
+        return LookupUtils.explode(context.headerMap());
     }
 
     @Override
@@ -105,6 +104,16 @@ final class JavalinHttpRequest implements HttpRequest {
     @Override
     public <T> T getBodyFromJson(Class<T> bodyCls) {
         return context.bodyAsClass(bodyCls);
+    }
+
+    @Override
+    public <T> T getBodyFromJsonStream(Class<T> bodyCls) {
+        return context.bodyStreamAsClass(bodyCls);
+    }
+
+    @Override
+    public InputStream getBodyAsInputStream() {
+        return context.bodyAsInputStream();
     }
 
     @Override
@@ -139,7 +148,7 @@ final class JavalinHttpRequest implements HttpRequest {
 
     @Override
     public Map<String, List<String>> getCookieLookup() {
-        return explode(context.cookieMap());
+        return LookupUtils.explode(context.cookieMap());
     }
 
     @Override
@@ -154,39 +163,5 @@ final class JavalinHttpRequest implements HttpRequest {
             return null;
         }
         return new FileUpload(file.getContent(), file.getContentType(), file.getFilename());
-    }
-
-    private static Map<String, List<String>> explode(Map<String, String> map) {
-        Map<String, List<String>> exploded = new LinkedHashMap<>(map.size());
-        for (Map.Entry<String, String> entry : map.entrySet()) {
-            List<String> values = listOf(entry.getValue());
-            exploded.put(entry.getKey(), values);
-        }
-        return exploded;
-    }
-
-    private static List<String> listOf(String item) {
-        List<String> list = new ArrayList<>();
-        list.add(trimToNull(item));
-        return list;
-    }
-
-    private static String trimToNull(String value) {
-        if (value == null) {
-            return null;
-        }
-        String trimmed = value.trim();
-        return trimmed.isEmpty() ? null : trimmed;
-    }
-
-    private static Map<String, List<String>> copy(Map<String, List<String>> map) {
-        Map<String, List<String>> copy = new LinkedHashMap<>(map.size());
-        for (Map.Entry<String, List<String>> entry : map.entrySet()) {
-            List<String> values = copy.computeIfAbsent(entry.getKey(), k -> new ArrayList<>(entry.getValue().size()));
-            for (String value : entry.getValue()) {
-                values.add(value.isEmpty() ? null : value);
-            }
-        }
-        return copy;
     }
 }

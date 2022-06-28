@@ -45,7 +45,7 @@ public final class TypeUtils {
             Class<?> primitiveType = getPrimitiveType(parameterType);
             return primitiveType == type;
         } else if (!type.isArray()) {
-            TypeElement typeElement = toElement(type);;
+            TypeElement typeElement = toElement(type);
             if (typeElement == null) {
                 return false;
             }
@@ -79,51 +79,8 @@ public final class TypeUtils {
         }
     }
 
-    public static Class<?> getArrayClass(Class<?> type) {
-        try {
-            String name = getArrayClassName(type);
-            ClassLoader classLoader = type.getClassLoader();
-            if (classLoader == null) {
-                return Class.forName(name);
-            } else {
-                return classLoader.loadClass(name);
-            }
-        } catch (ClassNotFoundException exception) {
-            return null;
-        }
-    }
-
-    private static String getArrayClassName(Class<?> type) {
-        if (type.isArray()) {
-            return "[" + type.getName();
-        }
-        if (type == boolean.class) {
-            return "[Z";
-        } else if (type == byte.class) {
-            return "[B";
-        } else if (type == char.class) {
-            return "[C";
-        } else if (type == double.class) {
-            return "[D";
-        } else if (type == float.class) {
-            return "[F";
-        } else if (type == int.class) {
-            return "[I";
-        } else if (type == long.class) {
-            return "[J";
-        } else if (type == short.class) {
-            return "[S";
-        } else {
-            return "[L" + type.getName() + ";";
-        }
-    }
-
     public boolean isSubtype(TypeMirror type1, TypeMirror type2) {
         return typeUtils.isSubtype(type1, type2);
-    }
-
-    public DeclaredType getDeclaredType(TypeElement element, TypeMirror... types) {
-        return typeUtils.getDeclaredType(element, types);
     }
 
     public TypeMirror erasure(TypeMirror type) {
@@ -134,12 +91,6 @@ public final class TypeUtils {
         return typeUtils.asElement(type);
     }
 
-    public boolean isAssignableTo(TypeMirror type, Class<?> clz) {
-        TypeElement element = toElement(clz);
-        TypeMirror otherType = element == null ? null : element.asType();
-        return otherType != null && typeUtils.isAssignable(type, otherType);
-    }
-
     private TypeElement toElement(Class<?> clz) {
         return elementUtils.getTypeElement(clz.getCanonicalName());
     }
@@ -147,5 +98,28 @@ public final class TypeUtils {
     public TypeMirror toType(Class<?> clz) {
         TypeElement element = toElement(clz);
         return element == null ? null : element.asType();
+    }
+
+    public TypeMirror getCollectionComponentType(TypeMirror collectionType) {
+        TypeElement iterableType = toElement(Iterable.class);
+        if (!typeUtils.isAssignable(typeUtils.erasure(collectionType), iterableType.asType())) {
+            return null; // This is not a collection type
+        }
+        if (!(collectionType instanceof DeclaredType)) {
+            return null; // Not a declared type
+        }
+        DeclaredType declaredType = (DeclaredType) collectionType;
+        if (declaredType.getTypeArguments().size() != 1) {
+            return null; // Maybe a Map? or custom collection type?
+        }
+        return declaredType.getTypeArguments().get(0);
+    }
+
+    public TypeMirror getArrayComponentType(TypeMirror type) {
+        if (type.getKind() != TypeKind.ARRAY) {
+            return null;
+        }
+        ArrayType arrayType = (ArrayType) type;
+        return arrayType.getComponentType();
     }
 }

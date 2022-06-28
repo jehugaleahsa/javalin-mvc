@@ -161,7 +161,8 @@ final class ContainerSource {
             } else if (this.type == ContainerSource.Type.RUNTIME) {
                 boolean hasInjectConstructor = isInjectedClass(type);
                 if (hasInjectConstructor) {
-                    CodeBlock call = CodeBlock.of("$N.getInstance($T.class)", injectorName, type);
+                    TypeMirror erased = typeUtils.erasure(type);
+                    CodeBlock call = CodeBlock.of("$N.getInstance($T.class)", injectorName, erased);
                     return new InjectionResult(call, true);
                 }
             }
