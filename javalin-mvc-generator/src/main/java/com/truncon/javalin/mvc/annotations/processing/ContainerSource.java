@@ -7,20 +7,27 @@ import dagger.Component;
 import com.truncon.javalin.mvc.api.MvcComponent;
 
 import javax.annotation.processing.RoundEnvironment;
-import javax.inject.Inject;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
+import java.lang.annotation.Annotation;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 final class ContainerSource {
+    private static final Set<Class<? extends Annotation>> INJECT_ANNOTATIONS = new HashSet<>(Arrays.asList(
+        javax.inject.Inject.class,
+        jakarta.inject.Inject.class
+    ));
     private final TypeUtils typeUtils;
     private final Type type;
     private final TypeElement containerElement;
@@ -174,8 +181,7 @@ final class ContainerSource {
     private boolean isInjectedClass(TypeMirror type) {
         TypeElement element = typeUtils.getTypeElement(type);
         return element.getEnclosedElements().stream()
-            .filter(e -> e.getKind() == ElementKind.CONSTRUCTOR)
-            .anyMatch(e -> e.getAnnotation(Inject.class) != null);
+            .anyMatch(e -> INJECT_ANNOTATIONS.stream().anyMatch(c -> e.getAnnotation(c) != null));
     }
 
     private Name getDependencyName(TypeMirror searchType) {
