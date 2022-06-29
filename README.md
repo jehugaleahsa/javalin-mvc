@@ -24,12 +24,12 @@ The following dependencies are needed in your web project:
   <dependency>
     <groupId>com.truncon</groupId>
     <artifactId>javalin-mvc-api</artifactId>
-    <version>4.1.0</version>
+    <version>4.2.0</version>
   </dependency>
   <dependency>
     <groupId>com.truncon</groupId>
     <artifactId>javalin-mvc-core</artifactId>
-    <version>4.1.0</version>
+    <version>4.2.0</version>
   </dependency>
 </dependencies>
 ```
@@ -49,7 +49,7 @@ Javalin MVC uses annotation processing, so must be setup in your web project's `
                     <path>
                         <groupId>com.truncon</groupId>
                         <artifactId>javalin-mvc-generator</artifactId>
-                        <version>4.1.0</version>
+                        <version>4.2.0</version>
                     </path>
                 </annotationProcessorPaths>
             </configuration>
@@ -195,7 +195,15 @@ Here is a list of supported and/or desired features. An `x` means it is already 
         * [x] `Year`
     * [x] `UUID`
     * [x] Arrays
-    * [x] Collection types (`List<T>`, `Set<T>`, etc.) 
+    * [x] Collection types
+      * [x] `Iterable<T>`
+      * [x] `Collection<T>`
+      * [x] `List<T>`
+      * [x] `Set<T>`
+      * [x] `ArrayList<T>`
+      * [x] `LinkedList<T>`
+      * [x] `HashSet<T>`
+      * [x] `LinkedHashSet<T>`
     * [x] File uploads
 * [x] Bind Java object from request body (JSON)
 * [x] Bind Java object from other sources
@@ -267,7 +275,7 @@ There is direct support for [Dagger](https://dagger.dev). To use it, you must co
             <path>
                 <groupId>com.truncon</groupId>
                 <artifactId>javalin-mvc-generator</artifactId>
-                <version>4.0.1</version>
+                <version>4.2.0</version>
             </path>
         </annotationProcessorPaths>
     </configuration>
@@ -744,7 +752,9 @@ public final class UserSearch {
 Javalin MVC is smart enough to look at inherited members as well as search recursively within class model members for `@From*` annotations. This allows you to nest your models however you see fit. Note: in the second example above, you can mark the `setPagination` method with a `@From*` annotation to overwrite the default binding source, similar to the `@From*` annotation on the action method parameter.
 
 ### Dependency Injection
-By default, Javalin MVC will try to initialize your models using the default constructor; however, if you registered your model with Dagger, Javalin MVC will use it to initialize your model.
+By default, Javalin MVC will try to initialize your models using the default constructor; 
+however, if you registered your model with DI container, Javalin MVC will use it to initialize your 
+model.
 
 ### JSON and binary binding
 Javalin MVC also allows you to use the `@FromJson` and `@FromBinary` annotations on model members. Just be aware that binding the same binary data multiple times can result in unexpected behavior.
@@ -796,7 +806,9 @@ public final class Pair {
 Javalin MVC always checks for `@UseConverter` first before trying to perform any other built-in conversion.
 
 ### Dependency Injection
-For instance method converters (a.k.a, non-`static`), Javalin MVC will try to create the converter objects using the default constructor, by default. However, if you register your class with Dagger, Javalin MVC will use Dagger to instantiate the converter.
+For instance method converters (a.k.a, non-`static`), Javalin MVC will try to create the 
+converter objects using the default constructor, by default. However, if you register your class 
+with a DI container, Javalin MVC will use it to instantiate the converter.
 
 ### Incremental Compilation Support
 As of Javalin MVC 4.x, there is very early, basic support for incremental builds. In IDE environments, like IntelliJ, compile times are improved by only compiling files that changed. However, the sources that are generated at compile-time by Javalin MVC require looking at every decorated controller class, etc. Javalin MVC solves this by keeping track of which files were previously used so the full output can be generated. Keep in mind that this is very experimental, and if you encounter any issues, please let me know. My expectation is that support for incremental builds will eliminate some of the more mystifying errors reported in the past.
