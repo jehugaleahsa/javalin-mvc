@@ -65,7 +65,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TimeZone;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -1068,7 +1067,7 @@ public final class HelperMethodBuilder {
         protected static void addField(
                 TypeSpec.Builder typeBuilder,
                 String name,
-                Class<?> type,
+                TypeName type,
                 String initializer,
                 Object... args) {
             FieldSpec field = FieldSpec.builder(type, name, Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL)
@@ -1963,7 +1962,7 @@ public final class HelperMethodBuilder {
     }
 
     private static final class DateHelper extends MethodBuildingConversionHelper {
-        private static final String DATE_FORMATTER_FIELD_NAME = "DATE_FORMATTER";
+        private static final String FORMATTER_FIELD_NAME = "SIMPLE_DATE_FORMATTER";
 
         public DateHelper(boolean isArrayType) {
             super(isArrayType);
@@ -1993,11 +1992,15 @@ public final class HelperMethodBuilder {
         protected CodeBlock getScalarMethodBody(HelperMethodBuilder builder) {
             addFormatterField(builder);
             return CodeBlock.builder()
-                .beginControlFlow("try")
-                .addStatement("return value == null ? null : $N.parse(value)", DATE_FORMATTER_FIELD_NAME)
-                .nextControlFlow("catch ($T exception)", ParseException.class)
+                .beginControlFlow("if (value == null)")
                 .addStatement("return null")
                 .endControlFlow()
+                .beginControlFlow("try")
+                .addStatement("return $N.get().parse(value)", FORMATTER_FIELD_NAME)
+                .nextControlFlow("catch ($T exception)", ParseException.class)
+                .addStatement("// SWALLOW")
+                .endControlFlow()
+                .addStatement("return null")
                 .build();
         }
 
@@ -2006,40 +2009,44 @@ public final class HelperMethodBuilder {
             addFormatterField(builder);
             return CodeBlock.builder()
                 .addStatement("Date[] results = new Date[values.size()]")
+                .addStatement("$T formatter = $N.get()", SimpleDateFormat.class, FORMATTER_FIELD_NAME)
                 .beginControlFlow("for (int i = 0; i != results.length; ++i)")
-                    .addStatement("String value = values.get(i)")
-                    .beginControlFlow("if (value != null)")
-                        .beginControlFlow("try")
-                            .addStatement("results[i] = DATE_FORMATTER.parse(value)")
-                        .nextControlFlow("catch ($T exception)", ParseException.class)
-                        .endControlFlow()
-                    .endControlFlow()
+                .addStatement("String value = values.get(i)")
+                .beginControlFlow("if (value == null)")
+                .addStatement("continue")
+                .endControlFlow()
+                .beginControlFlow("try")
+                .addStatement("results[i] = $N.parse(value)", "formatter")
+                .nextControlFlow("catch ($T exception)", ParseException.class)
+                .addStatement("// SWALLOW")
+                .endControlFlow()
                 .endControlFlow()
                 .addStatement("return results")
                 .build();
         }
 
         private void addFormatterField(HelperMethodBuilder builder) {
-            if (!builder.addedFields.contains(DATE_FORMATTER_FIELD_NAME)) {
+            if (!builder.addedFields.contains(FORMATTER_FIELD_NAME)) {
                 TypeSpec.Builder typeBuilder = builder.typeBuilder;
-                MethodSpec method = MethodSpec.methodBuilder("getDateFormatter")
+                MethodSpec method = MethodSpec.methodBuilder("getSimpleDateFormatter")
                     .addModifiers(Modifier.PRIVATE, Modifier.STATIC)
                     .returns(SimpleDateFormat.class)
                     .addCode(CodeBlock.builder()
-                        .addStatement("$T formatter = new $T($S)", SimpleDateFormat.class, SimpleDateFormat.class, "yyyy-MM-dd'T'HH:mm:ss'Z'")
-                        .addStatement("formatter.setTimeZone($T.getTimeZone($S))", TimeZone.class, "UTC")
+                        .addStatement("$T formatter = new $T($S)", SimpleDateFormat.class, SimpleDateFormat.class, "yyyy-MM-dd'T'HH:mm:ssXX")
+                        //.addStatement("formatter.setTimeZone($T.getDefault())", TimeZone.class)
                         .addStatement("return formatter")
                         .build())
-                    .build();
+                    .build();;
                 typeBuilder.addMethod(method);
                 addField(
                     typeBuilder,
-                    DATE_FORMATTER_FIELD_NAME,
-                    SimpleDateFormat.class,
-                    "$N()",
+                    FORMATTER_FIELD_NAME,
+                    ParameterizedTypeName.get(ThreadLocal.class, SimpleDateFormat.class),
+                    "$T.withInitial(JavalinControllerRegistry::$N)",
+                    ThreadLocal.class,
                     method.name
                 );
-                builder.addedFields.add(DATE_FORMATTER_FIELD_NAME);
+                builder.addedFields.add(FORMATTER_FIELD_NAME);
             }
         }
     }

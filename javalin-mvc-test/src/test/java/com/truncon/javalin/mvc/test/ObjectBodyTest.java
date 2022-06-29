@@ -120,7 +120,7 @@ public final class ObjectBodyTest {
         model.setInstant(Instant.now());
         // It appears Jackson normalizes all dates to UTC when round-tripping.
         // For now, I am just converting now to UTC to verify the behavior.
-        model.setZonedDateTime(ZonedDateTime.ofInstant(ZonedDateTime.now().toInstant(), ZoneId.of("UTC")));
+        model.setZonedDateTime(ZonedDateTime.ofInstant(ZonedDateTime.now().toInstant(), ZoneOffset.UTC));
         model.setOffsetDateTime(OffsetDateTime.ofInstant(OffsetDateTime.now().toInstant(), ZoneOffset.UTC));
         model.setLocalDateTime(LocalDateTime.now());
         model.setLocalDate(LocalDate.now());

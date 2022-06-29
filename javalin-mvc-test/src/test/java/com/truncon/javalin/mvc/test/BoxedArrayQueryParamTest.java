@@ -175,7 +175,7 @@ public final class BoxedArrayQueryParamTest {
         AsyncTestUtils.runTest(app -> {
             // It appears Jackson normalizes all dates to UTC when round-tripping.
             // For now, I am just converting now to UTC to verify the behavior.
-            ZonedDateTime value = ZonedDateTime.ofInstant(ZonedDateTime.now().toInstant(), ZoneId.of("UTC"));
+            ZonedDateTime value = ZonedDateTime.of(2022, 6, 28, 22, 8, 0, 0, ZoneOffset.UTC);
             String route = RouteBuilder.buildRouteWithQueryParams(
                 BoxedArrayParameterController.ZONED_DATETIME_ROUTE,
                 queryParams(

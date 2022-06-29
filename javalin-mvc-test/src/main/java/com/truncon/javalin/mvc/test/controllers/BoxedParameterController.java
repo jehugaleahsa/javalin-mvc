@@ -94,7 +94,7 @@ public class BoxedParameterController {
     }
 
     public static final String ZONED_DATETIME_ROUTE = "/api/boxed/zoned-date-time/{value}";
-    public static final DateTimeFormatter ZONED_DATETIME_FORMAT = DateTimeFormatter.ISO_ZONED_DATE_TIME;
+    public static final DateTimeFormatter ZONED_DATETIME_FORMAT = DateTimeFormatter.ISO_INSTANT;
     @HttpGet(route = ZONED_DATETIME_ROUTE)
     public ActionResult getZonedDateTime(ZonedDateTime value) {
         return new ContentResult(ZONED_DATETIME_FORMAT.format(value));

@@ -1,6 +1,8 @@
 package com.truncon.javalin.mvc.test;
 
 import com.truncon.javalin.mvc.test.controllers.BindModelController;
+import com.truncon.javalin.mvc.test.models.ArrayModel;
+import com.truncon.javalin.mvc.test.models.CollectionModel;
 import com.truncon.javalin.mvc.test.models.ContainerModel;
 import com.truncon.javalin.mvc.test.models.NestedJsonModel;
 import com.truncon.javalin.mvc.test.models.PrimitiveModel;
@@ -14,6 +16,22 @@ import com.truncon.javalin.mvc.test.models.PrimitiveQueryParamMethodModel;
 import com.truncon.javalin.mvc.test.models.PrimitiveQueryParamMethodNamedModel;
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.Year;
+import java.time.YearMonth;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.UUID;
 
 import static com.truncon.javalin.mvc.test.QueryUtils.getJsonResponseForGet;
 import static com.truncon.javalin.mvc.test.QueryUtils.getJsonResponseForPost;
@@ -297,6 +315,170 @@ public final class BindModelTest {
             String route = buildRoute(BindModelController.POST_NO_BINDING_ROUTE);
             PrimitiveModel actual = getJsonResponseForPost(route, model, PrimitiveModel.class);
             Assert.assertNull(actual);
+        });
+    }
+
+    @Test
+    public void testGet_arrayModel() {
+        AsyncTestUtils.runTest(app -> {
+            UUID uuid = UUID.randomUUID();
+            String route = buildRouteWithQueryParams(BindModelController.GET_ARRAY_VALUES, queryParams(
+                param("boolean", "true"),
+                param("boolean", "false"),
+                param("int", "1"),
+                param("int", "2"),
+                param("double", "3.14"),
+                param("double", "4.25"),
+                param("byte", "3"),
+                param("byte", "4"),
+                param("short", "5"),
+                param("short", "6"),
+                param("float", "5.36"),
+                param("float", "6.47"),
+                param("char", "a"),
+                param("char", "b"),
+                param("long", "7"),
+                param("long", "8"),
+                param("String", "hello"),
+                param("String", null),
+                param("Boolean", "true"),
+                param("Boolean", null),
+                param("Integer", "9"),
+                param("Integer", null),
+                param("Double", "7.58"),
+                param("Double", null),
+                param("Byte", "10"),
+                param("Byte", null),
+                param("Short", "11"),
+                param("Short", null),
+                param("Float", "8.69"),
+                param("Float", null),
+                param("Character", "c"),
+                param("Character", null),
+                param("Long", "12"),
+                param("Long", null),
+                param("Date", "2022-06-28T19:27:00Z"),
+                param("Date", null),
+                param("Instant", "2022-06-28T19:27:59Z"),
+                param("Instant", null),
+                param("ZonedDateTime", "2022-06-28T19:28:00Z"),
+                param("ZonedDateTime", null),
+                param("OffsetDateTime", "2022-06-28T19:28:59-04:00"),
+                param("OffsetDateTime", null),
+                param("LocalDateTime", "2022-06-28T19:30:00"),
+                param("LocalDateTime", null),
+                param("LocalDate", "2022-06-28"),
+                param("LocalDate", null),
+                param("YearMonth", "2022-06"),
+                param("YearMonth", null),
+                param("Year", "2022"),
+                param("Year", null),
+                param("BigInteger", "13"),
+                param("BigInteger", null),
+                param("BigDecimal", "9.70"),
+                param("BigDecimal", null),
+                param("UUID", uuid.toString()),
+                param("UUID", null)
+            ));
+            ArrayModel model = getJsonResponseForGet(route, ArrayModel.class);
+            Assert.assertArrayEquals(new boolean[] { true, false }, model.getBooleanValues());
+            Assert.assertArrayEquals(new int[] { 1, 2 }, model.getIntValues());
+            Assert.assertArrayEquals(new double[] { 3.14, 4.25 }, model.getDoubleValues(), 0.0);
+            Assert.assertArrayEquals(new byte[] { 3, 4 }, model.getByteValues());
+            Assert.assertArrayEquals(new short[] { 5, 6 }, model.getShortValues());
+            Assert.assertArrayEquals(new float[] { 5.36f, 6.47f }, model.getFloatValues(), 0.0f);
+            Assert.assertArrayEquals(new char[] { 'a', 'b' }, model.getCharValues());
+            Assert.assertArrayEquals(new long[] { 7L, 8L }, model.getLongValues());
+            Assert.assertArrayEquals(new String[] { "hello", null }, model.getStringValues());
+            Assert.assertArrayEquals(new Boolean[] { true, null }, model.getBoxedBooleanValues());
+            Assert.assertArrayEquals(new Integer[] { 9, null }, model.getBoxedIntegerValues());
+            Assert.assertArrayEquals(new Double[] { 7.58, null }, model.getBoxedDoubleValues());
+            Assert.assertArrayEquals(new Byte[] { (byte) 10, null }, model.getBoxedByteValues());
+            Assert.assertArrayEquals(new Short[] { (short) 11, null }, model.getBoxedShortValues());
+            Assert.assertArrayEquals(new Float[] { 8.69f, null }, model.getBoxedFloatValues());
+            Assert.assertArrayEquals(new Character[] { 'c', null }, model.getBoxedCharacterValues());
+            Assert.assertArrayEquals(new Long[] { 12L, null }, model.getBoxedLongValues());
+            Assert.assertArrayEquals(new Date[] { Date.from(Instant.parse("2022-06-28T19:27:00Z")), null }, model.getDateValues());
+            Assert.assertArrayEquals(new Instant[] { Instant.parse("2022-06-28T19:27:59Z"), null }, model.getInstantValues());
+            Assert.assertArrayEquals(new ZonedDateTime[] { ZonedDateTime.of(2022, 6, 28, 19, 28, 0, 0, ZoneOffset.UTC), null }, model.getZonedDateTimeValues());
+            Assert.assertArrayEquals(new OffsetDateTime[] { OffsetDateTime.of(2022, 6, 28, 19, 28, 59, 0, ZoneOffset.ofHours(-4)), null }, model.getOffsetDateTimeValues());
+            Assert.assertArrayEquals(new LocalDateTime[] { LocalDateTime.of(2022, 6, 28, 19, 30, 0), null }, model.getLocalDateTimeValues());
+            Assert.assertArrayEquals(new LocalDate[] { LocalDate.of(2022, 6, 28), null }, model.getLocalDateValues());
+            Assert.assertArrayEquals(new YearMonth[] { YearMonth.of(2022, 6), null }, model.getYearMonthValues());
+            Assert.assertArrayEquals(new Year[] { Year.of(2022), null }, model.getYearValues());
+            Assert.assertArrayEquals(new BigInteger[] { new BigInteger("13"), null }, model.getBigIntegerValues());
+            Assert.assertArrayEquals(new BigDecimal[] { new BigDecimal("9.70"), null }, model.getBigDecimalValues());
+            Assert.assertArrayEquals(new UUID[] { uuid, null }, model.getUuidValues());
+        });
+    }
+
+    @Test
+    public void testGet_collectionModel() {
+        AsyncTestUtils.runTest(app -> {
+            UUID uuid = UUID.randomUUID();
+            String route = buildRouteWithQueryParams(BindModelController.GET_COLLECTION_VALUES, queryParams(
+                param("String", "hello"),
+                param("String", null),
+                param("Boolean", "true"),
+                param("Boolean", null),
+                param("Integer", "9"),
+                param("Integer", null),
+                param("Double", "7.58"),
+                param("Double", null),
+                param("Byte", "10"),
+                param("Byte", null),
+                param("Short", "11"),
+                param("Short", null),
+                param("Float", "8.69"),
+                param("Float", null),
+                param("Character", "c"),
+                param("Character", null),
+                param("Long", "12"),
+                param("Long", null),
+                param("Date", "2022-06-28T19:27:00Z"),
+                param("Date", null),
+                param("Instant", "2022-06-28T19:27:59Z"),
+                param("Instant", null),
+                param("ZonedDateTime", "2022-06-28T19:28:00Z"),
+                param("ZonedDateTime", null),
+                param("OffsetDateTime", "2022-06-28T19:28:59-04:00"),
+                param("OffsetDateTime", null),
+                param("LocalDateTime", "2022-06-28T19:30:00"),
+                param("LocalDateTime", null),
+                param("LocalDate", "2022-06-28"),
+                param("LocalDate", null),
+                param("YearMonth", "2022-06"),
+                param("YearMonth", null),
+                param("Year", "2022"),
+                param("Year", null),
+                param("BigInteger", "13"),
+                param("BigInteger", null),
+                param("BigDecimal", "9.70"),
+                param("BigDecimal", null),
+                param("UUID", uuid.toString()),
+                param("UUID", null)
+            ));
+            CollectionModel model = getJsonResponseForGet(route, CollectionModel.class);
+            Assert.assertEquals(Arrays.asList("hello", null), model.getStringValues());
+            Assert.assertEquals(Arrays.asList(true, null), model.getBooleanValues());
+            Assert.assertEquals(Arrays.asList(9, null), model.getIntegerValues());
+            Assert.assertEquals(new LinkedHashSet<>(Arrays.asList(7.58, null)), model.getDoubleValues());
+            Assert.assertEquals(Arrays.asList((byte) 10, null), model.getByteValues());
+            Assert.assertEquals(Arrays.asList((short) 11, null), model.getShortValues());
+            Assert.assertEquals(new HashSet<>(Arrays.asList(8.69f, null)), model.getFloatValues());
+            Assert.assertEquals(new LinkedHashSet<>(Arrays.asList('c', null)), model.getCharacterValues());
+            Assert.assertEquals(Arrays.asList(12L, null), model.getBoxedLongValues());
+            Assert.assertEquals(Arrays.asList(Date.from(Instant.parse("2022-06-28T19:27:00Z")), null), model.getDateValues());
+            Assert.assertEquals(Arrays.asList(Instant.parse("2022-06-28T19:27:59Z"), null), model.getInstantValues());
+            Assert.assertEquals(new LinkedHashSet<>(Arrays.asList(ZonedDateTime.of(2022, 6, 28, 19, 28, 0, 0, ZoneOffset.UTC), null)), model.getZonedDateTimeValues());
+            Assert.assertEquals(Arrays.asList(OffsetDateTime.of(2022, 6, 28, 19, 28, 59, 0, ZoneOffset.ofHours(-4)), null), model.getOffsetDateTimeValues());
+            Assert.assertEquals(Arrays.asList(LocalDateTime.of(2022, 6, 28, 19, 30, 0), null), model.getLocalDateTimeValues());
+            Assert.assertEquals(new HashSet<>(Arrays.asList(LocalDate.of(2022, 6, 28), null)), model.getLocalDateValues());
+            Assert.assertEquals(new LinkedHashSet<>(Arrays.asList(YearMonth.of(2022, 6), null)), model.getYearMonthValues());
+            Assert.assertEquals(Arrays.asList(Year.of(2022), null), model.getYearValues());
+            Assert.assertEquals(Arrays.asList(new BigInteger("13"), null), model.getBigIntegerValues());
+            Assert.assertEquals(Arrays.asList(new BigDecimal("9.70"), null), model.getBigDecimalValues());
+            Assert.assertEquals(new LinkedHashSet<>(Arrays.asList(uuid, null)), model.getUuidValues());
         });
     }
 }

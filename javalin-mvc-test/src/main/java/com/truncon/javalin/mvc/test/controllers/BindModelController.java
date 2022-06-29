@@ -10,6 +10,8 @@ import com.truncon.javalin.mvc.api.HttpPost;
 import com.truncon.javalin.mvc.api.JsonResult;
 import com.truncon.javalin.mvc.api.NoBinding;
 import com.truncon.javalin.mvc.api.StatusCodeResult;
+import com.truncon.javalin.mvc.test.models.ArrayModel;
+import com.truncon.javalin.mvc.test.models.CollectionModel;
 import com.truncon.javalin.mvc.test.models.ContainerModel;
 import com.truncon.javalin.mvc.test.models.DerivedModel;
 import com.truncon.javalin.mvc.test.models.NestedJsonModel;
@@ -97,6 +99,18 @@ public final class BindModelController {
         if (context != null) {
             return new StatusCodeResult(500);
         }
+        return new JsonResult(model);
+    }
+
+    public static final String GET_ARRAY_VALUES = "/api/bind/models/arrays";
+    @HttpGet(route = GET_ARRAY_VALUES)
+    public ActionResult getArrayModel(@FromQuery ArrayModel model) {
+        return new JsonResult(model);
+    }
+
+    public static final String GET_COLLECTION_VALUES = "/api/bind/models/collections";
+    @HttpGet(route = GET_COLLECTION_VALUES)
+    public ActionResult getCollectionModel(@FromQuery CollectionModel model) {
         return new JsonResult(model);
     }
 }

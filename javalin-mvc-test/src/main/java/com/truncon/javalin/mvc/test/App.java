@@ -1,5 +1,6 @@
 package com.truncon.javalin.mvc.test;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
@@ -35,7 +36,9 @@ public final class App {
                 .registerModule(new ParameterNamesModule())
                 .registerModule(new Jdk8Module())
                 .registerModule(new JavaTimeModule())
-                .configure(SerializationFeature.WRITE_DATES_WITH_ZONE_ID, true);
+                .disable(SerializationFeature.WRITE_DATES_WITH_ZONE_ID)
+                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+                .disable(DeserializationFeature.ADJUST_DATES_TO_CONTEXT_TIME_ZONE);
             JsonMapper jsonMapper = new JavalinJackson(mapper);
             config.jsonMapper(jsonMapper);
 
