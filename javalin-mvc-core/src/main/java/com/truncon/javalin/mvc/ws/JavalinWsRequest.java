@@ -4,6 +4,7 @@ import com.truncon.javalin.mvc.LookupUtils;
 import com.truncon.javalin.mvc.api.ws.WsRequest;
 import io.javalin.websocket.WsContext;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -37,6 +38,11 @@ public final class JavalinWsRequest implements WsRequest {
     @Override
     public String getQueryParameter(String name) {
         return context.queryParam(name);
+    }
+
+    @Override
+    public List<String> getQueryParameters(String name) {
+        return Collections.unmodifiableList(context.queryParams(name));
     }
 
     @Override

@@ -45,6 +45,13 @@ public interface HttpRequest {
     String getQueryParameter(String name);
 
     /**
+     * Gets the values of the parameter in the query string.
+     * @param name The name of the parameter to search for.
+     * @return The value of the parameter or an empty list if it does not exist.
+     */
+    List<String> getQueryParameters(String name);
+
+    /**
      * Gets the key/value pairs for any query string parameters in the URL.
      * @return the key/value pair lookup of the parameters.
      */
@@ -63,6 +70,13 @@ public interface HttpRequest {
      * @return the value of the form field or null if it does not exist.
      */
     String getFormValue(String name);
+
+    /**
+     * Gets the values of the form field (URL encoded).
+     * @param name The name of the form field to search for.
+     * @return The values of the form field or an empty list if it does not exist.
+     */
+    List<String> getFormValues(String name);
 
     /**
      * Gets the key/value pairs for any form fields.

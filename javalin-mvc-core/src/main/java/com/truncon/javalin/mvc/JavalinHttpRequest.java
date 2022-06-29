@@ -7,6 +7,7 @@ import com.truncon.javalin.mvc.api.FileUpload;
 import com.truncon.javalin.mvc.api.HttpRequest;
 
 import java.io.InputStream;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -47,6 +48,11 @@ final class JavalinHttpRequest implements HttpRequest {
     }
 
     @Override
+    public List<String> getQueryParameters(String name) {
+        return Collections.unmodifiableList(context.queryParams(name));
+    }
+
+    @Override
     public Map<String, List<String>> getQueryLookup() {
         return LookupUtils.copy(context.queryParamMap());
     }
@@ -59,6 +65,11 @@ final class JavalinHttpRequest implements HttpRequest {
     @Override
     public String getFormValue(String name) {
         return context.formParam(name);
+    }
+
+    @Override
+    public List<String> getFormValues(String name) {
+        return Collections.unmodifiableList(context.formParams(name));
     }
 
     @Override
