@@ -3007,7 +3007,7 @@ public final class HelperMethodBuilder {
             HttpRequest request;
             return CodeBlock.builder()
                 .addStatement("$T request = $N.getRequest()", HttpRequest.class, wrapper)
-                .addStatement("return request.hasPathParameter($N) ? request.getPathParameter($N) : null", key, key)
+                .addStatement("return request.getPathValue($N)", key)
                 .build();
         }
 
@@ -3015,15 +3015,14 @@ public final class HelperMethodBuilder {
         protected CodeBlock getArrayMethodBody(HelperMethodBuilder builder, String wrapper, String key) {
             return CodeBlock.builder()
                 .addStatement("$T request = $N.getRequest()", HttpRequest.class, wrapper)
-                .addStatement("$T<String> values = request.getPathLookup().get($N)", List.class, key)
-                .addStatement("return values == null ? $T.emptyList() : values", Collections.class)
+                .addStatement("return request.getPathValues($N)", key)
                 .build();
         }
 
         @Override
         public CodeBlock getPresenceCheck(String request, String key) {
             return CodeBlock.builder()
-                .add("$N.hasPathParameter($N)", request, key)
+                .add("$N.hasPathValue($N)", request, key)
                 .build();
         }
     }
@@ -3048,7 +3047,7 @@ public final class HelperMethodBuilder {
         protected CodeBlock getSingletonMethodBody(HelperMethodBuilder builder, String wrapper, String key) {
             return CodeBlock.builder()
                 .addStatement("$T request = $N.getRequest()", HttpRequest.class, wrapper)
-                .addStatement("return request.getQueryParameter($N)", key)
+                .addStatement("return request.getQueryValue($N)", key)
                 .build();
         }
 
@@ -3056,15 +3055,14 @@ public final class HelperMethodBuilder {
         protected CodeBlock getArrayMethodBody(HelperMethodBuilder builder, String wrapper, String key) {
             return CodeBlock.builder()
                 .addStatement("$T request = $N.getRequest()", HttpRequest.class, wrapper)
-                .addStatement("$T<String> values = request.getQueryLookup().get($N)", List.class, key)
-                .addStatement("return values == null ? $T.emptyList() : values", Collections.class)
+                .addStatement("return request.getQueryValues($N)", key)
                 .build();
         }
 
         @Override
         public CodeBlock getPresenceCheck(String request, String key) {
             return CodeBlock.builder()
-                .add("$N.hasQueryParameter($N)", request, key)
+                .add("$N.hasQueryValue($N)", request, key)
                 .build();
         }
     }
@@ -3097,15 +3095,14 @@ public final class HelperMethodBuilder {
         protected CodeBlock getArrayMethodBody(HelperMethodBuilder builder, String wrapper, String key) {
             return CodeBlock.builder()
                 .addStatement("$T request = $N.getRequest()", HttpRequest.class, wrapper)
-                .addStatement("$T<String> values = request.getHeaderLookup().get($N)", List.class, key)
-                .addStatement("return values == null ? $T.emptyList() : values", Collections.class)
+                .addStatement("return request.getHeaderValues($N)", key)
                 .build();
         }
 
         @Override
         public CodeBlock getPresenceCheck(String request, String key) {
             return CodeBlock.builder()
-                .add("$N.hasHeader($N)", request, key)
+                .add("$N.hasHeaderValue($N)", request, key)
                 .build();
         }
     }
@@ -3138,15 +3135,14 @@ public final class HelperMethodBuilder {
         protected CodeBlock getArrayMethodBody(HelperMethodBuilder builder, String wrapper, String key) {
             return CodeBlock.builder()
                 .addStatement("$T request = $N.getRequest()", HttpRequest.class, wrapper)
-                .addStatement("$T<String> values = request.getCookieLookup().get($N)", List.class, key)
-                .addStatement("return values == null ? $T.emptyList() : values", Collections.class)
+                .addStatement("return request.getCookieValues($N)", key)
                 .build();
         }
 
         @Override
         public CodeBlock getPresenceCheck(String request, String key) {
             return CodeBlock.builder()
-                .add("$N.hasCookie($N)", request, key)
+                .add("$N.hasCookieValue($N)", request, key)
                 .build();
         }
     }
@@ -3179,15 +3175,14 @@ public final class HelperMethodBuilder {
         protected CodeBlock getArrayMethodBody(HelperMethodBuilder builder, String wrapper, String key) {
             return CodeBlock.builder()
                 .addStatement("$T request = $N.getRequest()", HttpRequest.class, wrapper)
-                .addStatement("$T<String> values = request.getFormLookup().get($N)", List.class, key)
-                .addStatement("return values == null ? $T.emptyList() : values", Collections.class)
+                .addStatement("return request.getFormValues($N)", key)
                 .build();
         }
 
         @Override
         public CodeBlock getPresenceCheck(String request, String key) {
             return CodeBlock.builder()
-                .add("$N.hasFormParameter($N)", request, key)
+                .add("$N.hasFormValue($N)", request, key)
                 .build();
         }
     }
@@ -3352,7 +3347,7 @@ public final class HelperMethodBuilder {
                 String key) {
             return CodeBlock.builder()
                 .addStatement("$T request = $N.getRequest()", WsRequest.class, wrapper)
-                .addStatement("return request.hasPathParameter($N) ? request.getPathParameter($N) : null", key, key)
+                .addStatement("return request.getPathValue($N)", key)
                 .build();
         }
 
@@ -3364,15 +3359,14 @@ public final class HelperMethodBuilder {
                 String key) {
             return CodeBlock.builder()
                 .addStatement("$T request = $N.getRequest()", WsRequest.class, wrapper)
-                .addStatement("$T<String> values = request.getPathLookup().get($N)", List.class, key)
-                .addStatement("return values == null ? $T.emptyList() : values", Collections.class)
+                .addStatement("return request.getPathValues($N)", key)
                 .build();
         }
 
         @Override
         public CodeBlock getPresenceCheck(String request, String key) {
             return CodeBlock.builder()
-                .add("$N.hasPathParameter($N)", request, key)
+                .add("$N.hasPathValue($N)", request, key)
                 .build();
         }
     }
@@ -3401,7 +3395,7 @@ public final class HelperMethodBuilder {
                 String key) {
             return CodeBlock.builder()
                 .addStatement("$T request = $N.getRequest()", WsRequest.class, wrapper)
-                .addStatement("return request.getQueryParameter($N)", key)
+                .addStatement("return request.getQueryValue($N)", key)
                 .build();
         }
 
@@ -3413,15 +3407,14 @@ public final class HelperMethodBuilder {
                 String key) {
             return CodeBlock.builder()
                 .addStatement("$T request = $N.getRequest()", WsRequest.class, wrapper)
-                .addStatement("$T<String> values = request.getQueryLookup().get($N)", List.class, key)
-                .addStatement("return values == null ? $T.emptyList() : values", Collections.class)
+                .addStatement("return request.getQueryValues($N)", key)
                 .build();
         }
 
         @Override
         public CodeBlock getPresenceCheck(String request, String key) {
             return CodeBlock.builder()
-                .add("$N.hasQueryParameter($N)", request, key)
+                .add("$N.hasQueryValue($N)", request, key)
                 .build();
         }
     }
@@ -3462,15 +3455,14 @@ public final class HelperMethodBuilder {
                 String key) {
             return CodeBlock.builder()
                 .addStatement("$T request = $N.getRequest()", WsRequest.class, wrapper)
-                .addStatement("$T<String> values = request.getHeaderLookup().get($N)", List.class, key)
-                .addStatement("return values == null ? $T.emptyList() : values", Collections.class)
+                .addStatement("return request.getHeaderValues($N)", key)
                 .build();
         }
 
         @Override
         public CodeBlock getPresenceCheck(String request, String key) {
             return CodeBlock.builder()
-                .add("$N.hasHeader($N)", request, key)
+                .add("$N.hasHeaderValue($N)", request, key)
                 .build();
         }
     }
@@ -3511,15 +3503,14 @@ public final class HelperMethodBuilder {
                 String key) {
             return CodeBlock.builder()
                 .addStatement("$T request = $N.getRequest()", WsRequest.class, wrapper)
-                .addStatement("$T<String> values = request.getCookieLookup().get($N)", List.class, key)
-                .addStatement("return values == null ? $T.emptyList() : values", Collections.class)
+                .addStatement("return request.getCookieValues($N)", key)
                 .build();
         }
 
         @Override
         public CodeBlock getPresenceCheck(String request, String key) {
             return CodeBlock.builder()
-                .add("$N.hasCookie($N)", request, key)
+                .add("$N.hasCookieValue($N)", request, key)
                 .build();
         }
     }

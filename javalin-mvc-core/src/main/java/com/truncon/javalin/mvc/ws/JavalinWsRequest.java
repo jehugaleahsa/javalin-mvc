@@ -16,12 +16,12 @@ public final class JavalinWsRequest implements WsRequest {
     }
 
     @Override
-    public boolean hasPathParameter(String name) {
+    public boolean hasPathValue(String name) {
         return context.pathParamMap().containsKey(name);
     }
 
     @Override
-    public String getPathParameter(String name) {
+    public String getPathValue(String name) {
         return context.pathParam(name);
     }
 
@@ -31,17 +31,17 @@ public final class JavalinWsRequest implements WsRequest {
     }
 
     @Override
-    public boolean hasQueryParameter(String name) {
+    public boolean hasQueryValue(String name) {
         return context.queryParamMap().containsKey(name);
     }
 
     @Override
-    public String getQueryParameter(String name) {
+    public String getQueryValue(String name) {
         return context.queryParam(name);
     }
 
     @Override
-    public List<String> getQueryParameters(String name) {
+    public List<String> getQueryValues(String name) {
         return Collections.unmodifiableList(context.queryParams(name));
     }
 
@@ -51,7 +51,7 @@ public final class JavalinWsRequest implements WsRequest {
     }
 
     @Override
-    public boolean hasHeader(String name) {
+    public boolean hasHeaderValue(String name) {
         return context.headerMap().containsKey(name);
     }
 
@@ -66,7 +66,7 @@ public final class JavalinWsRequest implements WsRequest {
     }
 
     @Override
-    public boolean hasCookie(String name) {
+    public boolean hasCookieValue(String name) {
         return context.cookieMap().containsKey(name);
     }
 

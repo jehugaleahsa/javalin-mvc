@@ -23,12 +23,12 @@ final class JavalinHttpRequest implements HttpRequest {
     }
 
     @Override
-    public boolean hasPathParameter(String name) {
+    public boolean hasPathValue(String name) {
         return context.pathParamMap().containsKey(name);
     }
 
     @Override
-    public String getPathParameter(String name) {
+    public String getPathValue(String name) {
         return context.pathParam(name);
     }
 
@@ -38,17 +38,17 @@ final class JavalinHttpRequest implements HttpRequest {
     }
 
     @Override
-    public boolean hasQueryParameter(String name) {
+    public boolean hasQueryValue(String name) {
         return context.queryParamMap().containsKey(name);
     }
 
     @Override
-    public String getQueryParameter(String name) {
+    public String getQueryValue(String name) {
         return context.queryParam(name);
     }
 
     @Override
-    public List<String> getQueryParameters(String name) {
+    public List<String> getQueryValues(String name) {
         return Collections.unmodifiableList(context.queryParams(name));
     }
 
@@ -58,7 +58,7 @@ final class JavalinHttpRequest implements HttpRequest {
     }
 
     @Override
-    public boolean hasFormParameter(String name) {
+    public boolean hasFormValue(String name) {
         return context.formParamMap().containsKey(name);
     }
 
@@ -78,7 +78,7 @@ final class JavalinHttpRequest implements HttpRequest {
     }
 
     @Override
-    public boolean hasHeader(String name) {
+    public boolean hasHeaderValue(String name) {
         return context.headerMap().containsKey(name);
     }
 
@@ -90,6 +90,21 @@ final class JavalinHttpRequest implements HttpRequest {
     @Override
     public Map<String, List<String>> getHeaderLookup() {
         return LookupUtils.explode(context.headerMap());
+    }
+
+    @Override
+    public boolean hasCookieValue(String name) {
+        return context.cookieMap().containsKey(name);
+    }
+
+    @Override
+    public String getCookieValue(String name) {
+        return context.cookie(name);
+    }
+
+    @Override
+    public Map<String, List<String>> getCookieLookup() {
+        return LookupUtils.explode(context.cookieMap());
     }
 
     @Override
@@ -145,21 +160,6 @@ final class JavalinHttpRequest implements HttpRequest {
     @Override
     public String getUserAgent() {
         return context.userAgent();
-    }
-
-    @Override
-    public boolean hasCookie(String name) {
-        return context.cookieMap().containsKey(name);
-    }
-
-    @Override
-    public String getCookieValue(String name) {
-        return context.cookie(name);
-    }
-
-    @Override
-    public Map<String, List<String>> getCookieLookup() {
-        return LookupUtils.explode(context.cookieMap());
     }
 
     @Override
