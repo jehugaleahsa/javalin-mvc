@@ -7,7 +7,6 @@ import com.truncon.javalin.mvc.api.FileUpload;
 import com.truncon.javalin.mvc.api.HttpRequest;
 
 import java.io.InputStream;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -29,12 +28,16 @@ final class JavalinHttpRequest implements HttpRequest {
 
     @Override
     public String getPathValue(String name) {
-        return context.pathParam(name);
+        if (context.pathParamMap().containsKey(name)) {
+            return ValueSourceUtils.emptyToNull(context.pathParam(name));
+        } else {
+            return null;
+        }
     }
 
     @Override
     public Map<String, List<String>> getPathLookup() {
-        return LookupUtils.explode(context.pathParamMap());
+        return ValueSourceUtils.explode(context.pathParamMap());
     }
 
     @Override
@@ -44,17 +47,17 @@ final class JavalinHttpRequest implements HttpRequest {
 
     @Override
     public String getQueryValue(String name) {
-        return context.queryParam(name);
+        return ValueSourceUtils.emptyToNull(context.queryParam(name));
     }
 
     @Override
     public List<String> getQueryValues(String name) {
-        return Collections.unmodifiableList(context.queryParams(name));
+        return ValueSourceUtils.copy(context.queryParams(name));
     }
 
     @Override
     public Map<String, List<String>> getQueryLookup() {
-        return LookupUtils.copy(context.queryParamMap());
+        return ValueSourceUtils.copy(context.queryParamMap());
     }
 
     @Override
@@ -64,17 +67,17 @@ final class JavalinHttpRequest implements HttpRequest {
 
     @Override
     public String getFormValue(String name) {
-        return context.formParam(name);
+        return ValueSourceUtils.emptyToNull(context.formParam(name));
     }
 
     @Override
     public List<String> getFormValues(String name) {
-        return Collections.unmodifiableList(context.formParams(name));
+        return ValueSourceUtils.copy(context.formParams(name));
     }
 
     @Override
     public Map<String, List<String>> getFormLookup() {
-        return LookupUtils.copy(context.formParamMap());
+        return ValueSourceUtils.copy(context.formParamMap());
     }
 
     @Override
@@ -84,12 +87,12 @@ final class JavalinHttpRequest implements HttpRequest {
 
     @Override
     public String getHeaderValue(String name) {
-        return context.header(name);
+        return ValueSourceUtils.emptyToNull(context.header(name));
     }
 
     @Override
     public Map<String, List<String>> getHeaderLookup() {
-        return LookupUtils.explode(context.headerMap());
+        return ValueSourceUtils.explode(context.headerMap());
     }
 
     @Override
@@ -99,12 +102,12 @@ final class JavalinHttpRequest implements HttpRequest {
 
     @Override
     public String getCookieValue(String name) {
-        return context.cookie(name);
+        return ValueSourceUtils.emptyToNull(context.cookie(name));
     }
 
     @Override
     public Map<String, List<String>> getCookieLookup() {
-        return LookupUtils.explode(context.cookieMap());
+        return ValueSourceUtils.explode(context.cookieMap());
     }
 
     @Override

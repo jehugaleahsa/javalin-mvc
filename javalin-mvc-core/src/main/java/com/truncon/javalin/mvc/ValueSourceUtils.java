@@ -6,8 +6,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-public final class LookupUtils {
-    private LookupUtils() {
+public final class ValueSourceUtils {
+    private ValueSourceUtils() {
     }
 
     public static Map<String, List<String>> explode(Map<String, String> map) {
@@ -34,7 +34,15 @@ public final class LookupUtils {
         return Collections.unmodifiableMap(copy);
     }
 
-    private static String emptyToNull(String value) {
+    public static List<String> copy(List<String> values) {
+        List<String> copy = new ArrayList<>(values.size());
+        for (String value : values) {
+            copy.add(emptyToNull(value));
+        }
+        return Collections.unmodifiableList(copy);
+    }
+
+    public static String emptyToNull(String value) {
         return (value == null || value.isEmpty()) ? null : value;
     }
 }
