@@ -2,7 +2,6 @@ package com.truncon.javalin.mvc.test.models;
 
 import com.truncon.javalin.mvc.api.FromPath;
 import com.truncon.javalin.mvc.api.FromQuery;
-import com.truncon.javalin.mvc.api.Named;
 
 public final class UserSearch {
     private Integer userId;
@@ -24,8 +23,7 @@ public final class UserSearch {
         return searchValue;
     }
 
-    @FromQuery
-    @Named("search-value")
+    @FromQuery("search-value")
     public void setSearchValue(String value) {
         this.searchValue = value;
     }
@@ -43,8 +41,7 @@ public final class UserSearch {
         return pageSize;
     }
 
-    @FromQuery
-    @Named("page-size")
+    @FromQuery("page-size")
     public void setPageSize(int size) {
         this.pageSize = size;
     }
@@ -53,8 +50,7 @@ public final class UserSearch {
         return orderByFields;
     }
 
-    @FromQuery
-    @Named("order-by")
+    @FromQuery("order-by")
     public void setOrderByFields(String[] fields) {
         this.orderByFields = fields;
     }

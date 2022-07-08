@@ -16,5 +16,5 @@ public @interface FromQuery {
      * to use the name of the parameter, field, or setter.
      * @return The name of the query string parameter.
      */
-    String getName() default "";
+    String value() default "";
 }

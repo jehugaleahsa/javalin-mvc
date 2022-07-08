@@ -16,5 +16,5 @@ public @interface FromPath {
      * to use the name of the parameter, field, or setter.
      * @return The name of the path parameter.
      */
-    String getName() default "";
+    String value() default "";
 }

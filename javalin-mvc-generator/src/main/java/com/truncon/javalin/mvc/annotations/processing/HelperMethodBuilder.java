@@ -569,27 +569,27 @@ public final class HelperMethodBuilder {
 
     private static String getNameFromBuiltinAnnotations(Element element) {
         FromCookie cookie = element.getAnnotation(FromCookie.class);
-        String cookieName = cookie == null ? null : StringUtils.stripToNull(cookie.getName());
+        String cookieName = cookie == null ? null : StringUtils.stripToNull(cookie.value());
         if (cookieName != null) {
             return cookieName;
         }
         FromForm form = element.getAnnotation(FromForm.class);
-        String formName = form == null ? null : StringUtils.stripToNull(form.getName());
+        String formName = form == null ? null : StringUtils.stripToNull(form.value());
         if (formName != null) {
             return formName;
         }
         FromHeader header = element.getAnnotation(FromHeader.class);
-        String headerName = header == null ? null : StringUtils.stripToNull(header.getName());
+        String headerName = header == null ? null : StringUtils.stripToNull(header.value());
         if (headerName != null) {
             return headerName;
         }
         FromPath path = element.getAnnotation(FromPath.class);
-        String pathName = path == null ? null : StringUtils.stripToNull(path.getName());
+        String pathName = path == null ? null : StringUtils.stripToNull(path.value());
         if (pathName != null) {
             return pathName;
         }
         FromQuery query = element.getAnnotation(FromQuery.class);
-        return query == null ? null : StringUtils.stripToNull(query.getName());
+        return query == null ? null : StringUtils.stripToNull(query.value());
     }
 
     private static String getNameFromStandardAnnotations(Element element) {

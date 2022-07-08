@@ -16,5 +16,5 @@ public @interface FromForm {
      * to use the name of the parameter, field, or setter.
      * @return The name of the form field.
      */
-    String getName() default "";
+    String value() default "";
 }

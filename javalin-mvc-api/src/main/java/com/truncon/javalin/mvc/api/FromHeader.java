@@ -16,5 +16,5 @@ public @interface FromHeader {
      * to use the name of the parameter, field, or setter.
      * @return The name of the header.
      */
-    String getName() default "";
+    String value() default "";
 }
