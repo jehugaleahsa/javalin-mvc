@@ -1,8 +1,29 @@
 package com.truncon.javalin.mvc.annotations.processing;
 
 import com.squareup.javapoet.CodeBlock;
-import com.truncon.javalin.mvc.api.*;
-import com.truncon.javalin.mvc.api.ws.*;
+import com.truncon.javalin.mvc.api.FileUpload;
+import com.truncon.javalin.mvc.api.FromCookie;
+import com.truncon.javalin.mvc.api.FromForm;
+import com.truncon.javalin.mvc.api.FromHeader;
+import com.truncon.javalin.mvc.api.FromJson;
+import com.truncon.javalin.mvc.api.FromPath;
+import com.truncon.javalin.mvc.api.FromQuery;
+import com.truncon.javalin.mvc.api.HttpContext;
+import com.truncon.javalin.mvc.api.HttpRequest;
+import com.truncon.javalin.mvc.api.HttpResponse;
+import com.truncon.javalin.mvc.api.NoBinding;
+import com.truncon.javalin.mvc.api.UseConverter;
+import com.truncon.javalin.mvc.api.ValueSource;
+import com.truncon.javalin.mvc.api.ws.FromBinary;
+import com.truncon.javalin.mvc.api.ws.WsBinaryMessageContext;
+import com.truncon.javalin.mvc.api.ws.WsConnectContext;
+import com.truncon.javalin.mvc.api.ws.WsContext;
+import com.truncon.javalin.mvc.api.ws.WsDisconnectContext;
+import com.truncon.javalin.mvc.api.ws.WsErrorContext;
+import com.truncon.javalin.mvc.api.ws.WsMessageContext;
+import com.truncon.javalin.mvc.api.ws.WsRequest;
+import com.truncon.javalin.mvc.api.ws.WsResponse;
+import com.truncon.javalin.mvc.api.ws.WsValueSource;
 import io.javalin.http.Context;
 import org.apache.commons.lang3.StringUtils;
 
@@ -391,29 +412,43 @@ final class ParameterGenerator {
         }
     }
 
-    public String getParameterName() {
-        Named annotation = parameter.getAnnotation(Named.class);
-        if (annotation == null) {
-            return parameter.getSimpleName().toString();
+    private String getParameterName() {
+        String specifiedName = HelperMethodBuilder.getSpecifiedName(parameter);
+        if (specifiedName != null) {
+            return specifiedName;
         }
-        String annotatedName = annotation.value();
-        return annotatedName.trim();
+        return parameter.getSimpleName().toString();
     }
 
-    private static ValueSource getValueSource(VariableElement parameter) {
+    private static ValueSource getValueSource(Element parameter) {
         if (parameter.getAnnotation(FromHeader.class) != null) {
+            return ValueSource.Header;
+        }
+        if (parameter.getAnnotation(javax.ws.rs.HeaderParam.class) != null) {
             return ValueSource.Header;
         }
         if (parameter.getAnnotation(FromCookie.class) != null) {
             return ValueSource.Cookie;
         }
+        if (parameter.getAnnotation(javax.ws.rs.CookieParam.class) != null) {
+            return ValueSource.Cookie;
+        }
         if (parameter.getAnnotation(FromPath.class) != null) {
+            return ValueSource.Path;
+        }
+        if (parameter.getAnnotation(javax.ws.rs.PathParam.class) != null) {
             return ValueSource.Path;
         }
         if (parameter.getAnnotation(FromQuery.class) != null) {
             return ValueSource.QueryString;
         }
+        if (parameter.getAnnotation(javax.ws.rs.QueryParam.class) != null) {
+            return ValueSource.QueryString;
+        }
         if (parameter.getAnnotation(FromForm.class) != null) {
+            return ValueSource.FormData;
+        }
+        if (parameter.getAnnotation(javax.ws.rs.FormParam.class) != null) {
             return ValueSource.FormData;
         }
         if (parameter.getAnnotation(FromJson.class) != null) {
@@ -422,7 +457,7 @@ final class ParameterGenerator {
         return ValueSource.Any;
     }
 
-    private static WsValueSource getWsValueSource(VariableElement parameter) {
+    private static WsValueSource getWsValueSource(Element parameter) {
         if (parameter.getAnnotation(FromJson.class) != null) {
             return WsValueSource.Message;
         }
@@ -432,13 +467,25 @@ final class ParameterGenerator {
         if (parameter.getAnnotation(FromHeader.class) != null) {
             return WsValueSource.Header;
         }
+        if (parameter.getAnnotation(javax.ws.rs.HeaderParam.class) != null) {
+            return WsValueSource.Header;
+        }
         if (parameter.getAnnotation(FromCookie.class) != null) {
+            return WsValueSource.Cookie;
+        }
+        if (parameter.getAnnotation(javax.ws.rs.CookieParam.class) != null) {
             return WsValueSource.Cookie;
         }
         if (parameter.getAnnotation(FromPath.class) != null) {
             return WsValueSource.Path;
         }
+        if (parameter.getAnnotation(javax.ws.rs.PathParam.class) != null) {
+            return WsValueSource.Path;
+        }
         if (parameter.getAnnotation(FromQuery.class) != null) {
+            return WsValueSource.QueryString;
+        }
+        if (parameter.getAnnotation(javax.ws.rs.QueryParam.class) != null) {
             return WsValueSource.QueryString;
         }
         return WsValueSource.Any;

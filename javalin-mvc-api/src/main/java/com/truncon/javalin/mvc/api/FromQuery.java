@@ -11,4 +11,10 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
 public @interface FromQuery {
+    /**
+     * Gets the name of the query string parameter to retrieve the value(s) from, or blank
+     * to use the name of the parameter, field, or setter.
+     * @return The name of the query string parameter.
+     */
+    String getName() default "";
 }

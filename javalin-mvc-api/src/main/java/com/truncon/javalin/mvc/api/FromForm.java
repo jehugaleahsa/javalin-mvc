@@ -11,4 +11,10 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
 public @interface FromForm {
+    /**
+     * Gets the name of the form field to retrieve the value(s) from, or blank
+     * to use the name of the parameter, field, or setter.
+     * @return The name of the form field.
+     */
+    String getName() default "";
 }

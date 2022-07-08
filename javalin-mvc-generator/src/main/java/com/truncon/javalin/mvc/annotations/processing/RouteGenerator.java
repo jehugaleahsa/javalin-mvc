@@ -18,7 +18,6 @@ import org.apache.commons.lang3.StringUtils;
 
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.Name;
 import java.lang.annotation.Annotation;
 import java.util.List;
 import java.util.Map;
@@ -75,55 +74,122 @@ final class RouteGenerator {
 
     public static List<RouteGenerator> getGenerators(ControllerSource controller, ExecutableElement method) {
         return Stream.of(
-            getGetCodeBlock(controller, method),
-            getPostCodeBlock(controller, method),
-            getPutCodeBlock(controller, method),
-            getDeleteCodeBlock(controller, method),
-            getPatchCodeBlock(controller, method),
-            getHeadCodeBlock(controller, method),
-            getConnectCodeBlock(controller, method),
-            getOptionsCodeBlock(controller, method)
-        ).filter(Objects::nonNull).collect(Collectors.toList());
+            getGetRouteGenerator(controller, method),
+            getPostRouteGenerator(controller, method),
+            getPutRouteGenerator(controller, method),
+            getDeleteRouteGenerator(controller, method),
+            getPatchRouteGenerator(controller, method),
+            getHeadRouteGenerator(controller, method),
+            getConnectRouteGenerator(controller, method),
+            getOptionsRouteGenerator(controller, method)
+        )
+            .filter(Objects::nonNull)
+            .collect(Collectors.toList());
     }
 
-    private static RouteGenerator getGetCodeBlock(ControllerSource controller, ExecutableElement method) {
-        HttpGet annotation = method.getAnnotation(HttpGet.class);
-        return annotation == null ? null : new RouteGenerator(controller, method, "get", annotation.route());
+    private static RouteGenerator getGetRouteGenerator(ControllerSource controller, ExecutableElement method) {
+        HttpGet builtin = method.getAnnotation(HttpGet.class);
+        if (builtin != null) {
+            return new RouteGenerator(controller, method, "get", builtin.route());
+        }
+        return getRouteGeneratorByStandardAnnotation(
+            controller, method, javax.ws.rs.GET.class, "get", javax.ws.rs.HttpMethod.GET);
     }
 
-    private static RouteGenerator getPostCodeBlock(ControllerSource controller, ExecutableElement method) {
-        HttpPost annotation = method.getAnnotation(HttpPost.class);
-        return annotation == null ? null : new RouteGenerator(controller, method, "post", annotation.route());
+    private static RouteGenerator getPostRouteGenerator(ControllerSource controller, ExecutableElement method) {
+        HttpPost builtin = method.getAnnotation(HttpPost.class);
+        if (builtin != null) {
+            return new RouteGenerator(controller, method, "post", builtin.route());
+        }
+        return getRouteGeneratorByStandardAnnotation(
+            controller, method, javax.ws.rs.POST.class, "post", javax.ws.rs.HttpMethod.POST);
     }
 
-    private static RouteGenerator getPutCodeBlock(ControllerSource controller, ExecutableElement method) {
-        HttpPut annotation = method.getAnnotation(HttpPut.class);
-        return annotation == null ? null : new RouteGenerator(controller, method, "put", annotation.route());
+    private static RouteGenerator getPutRouteGenerator(ControllerSource controller, ExecutableElement method) {
+        HttpPut builtin = method.getAnnotation(HttpPut.class);
+        if (builtin != null) {
+            return new RouteGenerator(controller, method, "put", builtin.route());
+        }
+        return getRouteGeneratorByStandardAnnotation(
+            controller, method, javax.ws.rs.PUT.class, "put", javax.ws.rs.HttpMethod.PUT);
     }
 
-    private static RouteGenerator getConnectCodeBlock(ControllerSource controller, ExecutableElement method) {
-        HttpConnect annotation = method.getAnnotation(HttpConnect.class);
-        return annotation == null ? null : new RouteGenerator(controller, method, "connect", annotation.route());
+    private static RouteGenerator getDeleteRouteGenerator(ControllerSource controller, ExecutableElement method) {
+        HttpDelete builtin = method.getAnnotation(HttpDelete.class);
+        if (builtin != null) {
+            return new RouteGenerator(controller, method, "delete", builtin.route());
+        }
+        return getRouteGeneratorByStandardAnnotation(
+            controller, method, javax.ws.rs.DELETE.class, "delete", javax.ws.rs.HttpMethod.DELETE);
     }
 
-    private static RouteGenerator getDeleteCodeBlock(ControllerSource controller, ExecutableElement method) {
-        HttpDelete annotation = method.getAnnotation(HttpDelete.class);
-        return annotation == null ? null : new RouteGenerator(controller, method, "delete", annotation.route());
+    private static RouteGenerator getPatchRouteGenerator(ControllerSource controller, ExecutableElement method) {
+        HttpPatch builtin = method.getAnnotation(HttpPatch.class);
+        if (builtin != null) {
+            return new RouteGenerator(controller, method, "patch", builtin.route());
+        }
+        return getRouteGeneratorByStandardAnnotation(
+            controller, method, javax.ws.rs.PATCH.class, "patch", javax.ws.rs.HttpMethod.PATCH);
     }
 
-    private static RouteGenerator getHeadCodeBlock(ControllerSource controller, ExecutableElement method) {
-        HttpHead annotation = method.getAnnotation(HttpHead.class);
-        return annotation == null ? null : new RouteGenerator(controller, method, "head", annotation.route());
+    private static RouteGenerator getHeadRouteGenerator(ControllerSource controller, ExecutableElement method) {
+        HttpHead builtin = method.getAnnotation(HttpHead.class);
+        if (builtin != null) {
+            return new RouteGenerator(controller, method, "head", builtin.route());
+        }
+        return getRouteGeneratorByStandardAnnotation(
+            controller, method, javax.ws.rs.HEAD.class, "head", javax.ws.rs.HttpMethod.HEAD);
     }
 
-    private static RouteGenerator getOptionsCodeBlock(ControllerSource controller, ExecutableElement method) {
-        HttpOptions annotation = method.getAnnotation(HttpOptions.class);
-        return annotation == null ? null : new RouteGenerator(controller, method, "options", annotation.route());
+    private static RouteGenerator getConnectRouteGenerator(ControllerSource controller, ExecutableElement method) {
+        HttpConnect builtin = method.getAnnotation(HttpConnect.class);
+        if (builtin != null) {
+            return new RouteGenerator(controller, method, "connect", builtin.route());
+        }
+        return getRouteGeneratorForHttpMethod(controller, method, "connect", "CONNECT");
     }
 
-    private static RouteGenerator getPatchCodeBlock(ControllerSource controller, ExecutableElement method) {
-        HttpPatch annotation = method.getAnnotation(HttpPatch.class);
-        return annotation == null ? null : new RouteGenerator(controller, method, "patch", annotation.route());
+    private static RouteGenerator getOptionsRouteGenerator(ControllerSource controller, ExecutableElement method) {
+        HttpOptions builtin = method.getAnnotation(HttpOptions.class);
+        if (builtin != null) {
+            return new RouteGenerator(controller, method, "options", builtin.route());
+        }
+        return getRouteGeneratorByStandardAnnotation(
+            controller, method, javax.ws.rs.OPTIONS.class, "options", javax.ws.rs.HttpMethod.OPTIONS);
+    }
+
+    private static RouteGenerator getRouteGeneratorByStandardAnnotation(
+            ControllerSource controller,
+            ExecutableElement method,
+            Class<? extends Annotation> clz,
+            String methodType,
+            String methodValue) {
+        Annotation annotation = method.getAnnotation(clz);
+        if (annotation != null) {
+            return getRouteGeneratorForAssociatedPath(controller, method, methodType);
+        }
+        return getRouteGeneratorForHttpMethod(controller, method, methodType, methodValue);
+    }
+
+    private static RouteGenerator getRouteGeneratorForHttpMethod(
+            ControllerSource controller,
+            ExecutableElement method,
+            String methodType,
+            String methodValue) {
+        javax.ws.rs.HttpMethod httpMethod = method.getAnnotation(javax.ws.rs.HttpMethod.class);
+        if (httpMethod != null && methodValue.equals(httpMethod.value())) {
+            return getRouteGeneratorForAssociatedPath(controller, method, methodType);
+        }
+        return null;
+    }
+
+    private static RouteGenerator getRouteGeneratorForAssociatedPath(
+            ControllerSource controller,
+            ExecutableElement method,
+            String methodType) {
+        javax.ws.rs.Path path = method.getAnnotation(javax.ws.rs.Path.class);
+        String route = path == null ? null : path.value();
+        return new RouteGenerator(controller, method, methodType, route);
     }
 
     public <T extends Annotation> T findAnnotation(Class<T> annotationClass) {

@@ -6,8 +6,10 @@ import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -29,30 +31,50 @@ final class ControllerSource {
             TypeUtils typeUtils,
             RoundEnvironment environment,
             Collection<TypeElement> alternateTypes) throws ProcessingException {
-        Set<? extends Element> controllerElements = environment.getElementsAnnotatedWith(Controller.class);
+        Set<Element> controllerElements = getControllerElements(environment);
         checkControllerElements(controllerElements);
         Stream<TypeElement> controllerTypes = controllerElements.stream()
             .map(TypeElement.class::cast);
+        // TODO - Add or replace with jakarta class when available
         Stream<TypeElement> oldControllerTypes = alternateTypes.stream()
-            .filter(t -> t.getAnnotation(Controller.class) != null);
+            .filter(t -> t.getAnnotation(Controller.class) != null || t.getAnnotation(javax.ws.rs.Path.class) != null);
         return Stream.concat(controllerTypes, oldControllerTypes)
             .distinct()
             .map(e -> new ControllerSource(typeUtils, e, getPrefix(e)))
             .collect(Collectors.toList());
     }
 
-    private static void checkControllerElements(Set<? extends Element> elements) throws ProcessingException {
+    private static Set<Element> getControllerElements(RoundEnvironment environment) {
+        Set<? extends Element> builtin = environment.getElementsAnnotatedWith(Controller.class);
+        Set<Element> elements = new HashSet<>(builtin);
+        // TODO - Add or replace this with jakarta when available.
+        List<Element> javax = environment.getElementsAnnotatedWith(javax.ws.rs.Path.class).stream()
+            .filter(e -> e.getKind() == ElementKind.INTERFACE || e.getKind() == ElementKind.CLASS)
+            .collect(Collectors.toList());
+        elements.addAll(javax);
+        return elements;
+    }
+
+    private static void checkControllerElements(Set<Element> elements) throws ProcessingException {
         Element[] badElements = elements.stream()
-            .filter(e -> e.getKind() != ElementKind.CLASS)
+            .filter(e -> e.getKind() != ElementKind.CLASS || e.getModifiers().contains(Modifier.ABSTRACT))
             .toArray(Element[]::new);
         if (badElements.length > 0) {
-            throw new ProcessingException("Controller annotations can only be applied to classes.", badElements);
+            String message = "Controller annotations can only be applied to non-abstract classes.";
+            throw new ProcessingException(message, badElements);
         }
     }
 
     private static String getPrefix(TypeElement element) {
-        Controller annotation = element.getAnnotation(Controller.class);
-        return annotation == null ? null : annotation.prefix();
+        Controller builtin = element.getAnnotation(Controller.class);
+        if (builtin != null) {
+            return builtin.prefix();
+        }
+        javax.ws.rs.Path javax = element.getAnnotation(javax.ws.rs.Path.class);
+        if (javax != null) {
+            return javax.value();
+        }
+        return null;
     }
 
     public TypeElement getType() {

@@ -1,7 +1,5 @@
 package com.truncon.javalin.mvc.api;
 
-import java.io.InputStream;
-
 /**
  * Represents the HTTP request being processed by the web application. It provide access to the
  * request information and allows for sending a response. Other utilities for handling requests

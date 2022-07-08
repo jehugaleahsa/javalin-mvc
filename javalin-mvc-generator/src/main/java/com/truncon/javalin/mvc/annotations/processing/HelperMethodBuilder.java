@@ -246,16 +246,31 @@ public final class HelperMethodBuilder {
         if (element.getAnnotation(FromPath.class) != null) {
             return ValueSource.Path;
         }
+        if (element.getAnnotation(javax.ws.rs.PathParam.class) != null) {
+            return ValueSource.Path;
+        }
         if (element.getAnnotation(FromQuery.class) != null) {
+            return ValueSource.QueryString;
+        }
+        if (element.getAnnotation(javax.ws.rs.QueryParam.class) != null) {
             return ValueSource.QueryString;
         }
         if (element.getAnnotation(FromHeader.class) != null) {
             return ValueSource.Header;
         }
+        if (element.getAnnotation(javax.ws.rs.HeaderParam.class) != null) {
+            return ValueSource.Header;
+        }
         if (element.getAnnotation(FromCookie.class) != null) {
             return ValueSource.Cookie;
         }
+        if (element.getAnnotation(javax.ws.rs.CookieParam.class) != null) {
+            return ValueSource.Cookie;
+        }
         if (element.getAnnotation(FromForm.class) != null) {
+            return ValueSource.FormData;
+        }
+        if (element.getAnnotation(javax.ws.rs.FormParam.class) != null) {
             return ValueSource.FormData;
         }
         return ValueSource.Any;
@@ -378,7 +393,7 @@ public final class HelperMethodBuilder {
         }
 
         String memberName = getMemberName(memberElement);
-        ValueSource valueSource = getMemberValueSource(memberElement, defaultSource);
+        ValueSource valueSource = getValueSource(memberElement, defaultSource);
         if (converter.hasContextOrRequestType(HttpContext.class)) {
             ConvertCallResult result = converter.getConverterCall(container, "context", memberName, "injector", valueSource);
             setMember(memberElement, methodBodyBuilder, result.getCall());
@@ -465,7 +480,7 @@ public final class HelperMethodBuilder {
             return false;
         }
         conversionHelper.addConversionMethod(this);
-        ValueSource valueSource = getMemberValueSource(memberElement, defaultSource);
+        ValueSource valueSource = getValueSource(memberElement, defaultSource);
         String sourceMethod = addSourceMethod(valueSource, conversionHelper.isCollectionType());
         String valueExpression = getValueExpression(conversionHelper, sourceMethod, memberName);
         return setMember(memberElement, methodBodyBuilder, valueExpression);
@@ -488,29 +503,44 @@ public final class HelperMethodBuilder {
         return conversionHelper.getConversionCall(sourceCall);
     }
 
-    private static ValueSource getMemberValueSource(Element memberElement, ValueSource defaultSource) {
+    public static ValueSource getValueSource(Element memberElement, ValueSource defaultSource) {
         if (memberElement.getAnnotation(FromHeader.class) != null) {
+            return ValueSource.Header;
+        }
+        if (memberElement.getAnnotation(javax.ws.rs.HeaderParam.class) != null) {
             return ValueSource.Header;
         }
         if (memberElement.getAnnotation(FromCookie.class) != null) {
             return ValueSource.Cookie;
         }
+        if (memberElement.getAnnotation(javax.ws.rs.CookieParam.class) != null) {
+            return ValueSource.Cookie;
+        }
         if (memberElement.getAnnotation(FromPath.class) != null) {
+            return ValueSource.Path;
+        }
+        if (memberElement.getAnnotation(javax.ws.rs.PathParam.class) != null) {
             return ValueSource.Path;
         }
         if (memberElement.getAnnotation(FromQuery.class) != null) {
             return ValueSource.QueryString;
         }
+        if (memberElement.getAnnotation(javax.ws.rs.QueryParam.class) != null) {
+            return ValueSource.QueryString;
+        }
         if (memberElement.getAnnotation(FromForm.class) != null) {
+            return ValueSource.FormData;
+        }
+        if (memberElement.getAnnotation(javax.ws.rs.FormParam.class) != null) {
             return ValueSource.FormData;
         }
         return defaultSource;
     }
 
     private static String getMemberName(Element memberElement) {
-        Named named = memberElement.getAnnotation(Named.class);
-        if (named != null) {
-            return named.value();
+        String specifiedName = getSpecifiedName(memberElement);
+        if (specifiedName != null) {
+            return specifiedName;
         }
         if (memberElement.getKind() == ElementKind.FIELD) {
             return memberElement.getSimpleName().toString();
@@ -520,6 +550,71 @@ public final class HelperMethodBuilder {
         } else {
             return null;
         }
+    }
+
+    public static String getSpecifiedName(Element element) {
+        String builtinName = getNameFromBuiltinAnnotations(element);
+        if (builtinName != null) {
+            return builtinName;
+        }
+        String standardName = getNameFromStandardAnnotations(element);
+        if (standardName != null) {
+            return standardName;
+        }
+
+        //noinspection deprecation
+        Named named = element.getAnnotation(Named.class);
+        return named == null ? null : StringUtils.stripToNull(named.value());
+    }
+
+    private static String getNameFromBuiltinAnnotations(Element element) {
+        FromCookie cookie = element.getAnnotation(FromCookie.class);
+        String cookieName = cookie == null ? null : StringUtils.stripToNull(cookie.getName());
+        if (cookieName != null) {
+            return cookieName;
+        }
+        FromForm form = element.getAnnotation(FromForm.class);
+        String formName = form == null ? null : StringUtils.stripToNull(form.getName());
+        if (formName != null) {
+            return formName;
+        }
+        FromHeader header = element.getAnnotation(FromHeader.class);
+        String headerName = header == null ? null : StringUtils.stripToNull(header.getName());
+        if (headerName != null) {
+            return headerName;
+        }
+        FromPath path = element.getAnnotation(FromPath.class);
+        String pathName = path == null ? null : StringUtils.stripToNull(path.getName());
+        if (pathName != null) {
+            return pathName;
+        }
+        FromQuery query = element.getAnnotation(FromQuery.class);
+        return query == null ? null : StringUtils.stripToNull(query.getName());
+    }
+
+    private static String getNameFromStandardAnnotations(Element element) {
+        javax.ws.rs.CookieParam cookie = element.getAnnotation(javax.ws.rs.CookieParam.class);
+        String cookieName = cookie == null ? null : StringUtils.stripToNull(cookie.value());
+        if (cookieName != null) {
+            return cookieName;
+        }
+        javax.ws.rs.FormParam form = element.getAnnotation(javax.ws.rs.FormParam.class);
+        String formName = form == null ? null : StringUtils.stripToNull(form.value());
+        if (formName != null) {
+            return formName;
+        }
+        javax.ws.rs.HeaderParam header = element.getAnnotation(javax.ws.rs.HeaderParam.class);
+        String headerName = header == null ? null : StringUtils.stripToNull(header.value());
+        if (headerName != null) {
+            return headerName;
+        }
+        javax.ws.rs.PathParam path = element.getAnnotation(javax.ws.rs.PathParam.class);
+        String pathName = path == null ? null : StringUtils.stripToNull(path.value());
+        if (pathName != null) {
+            return pathName;
+        }
+        javax.ws.rs.QueryParam query = element.getAnnotation(javax.ws.rs.QueryParam.class);
+        return query == null ? null : StringUtils.stripToNull(query.value());
     }
 
     public boolean hasMemberBinding(Element element) {
@@ -570,25 +665,42 @@ public final class HelperMethodBuilder {
             return false;
         }
         return hasAnnotation(element, FromPath.class)
+            || hasAnnotation(element, javax.ws.rs.PathParam.class)
             || hasAnnotation(element, FromQuery.class)
+            || hasAnnotation(element, javax.ws.rs.QueryParam.class)
             || hasAnnotation(element, FromHeader.class)
+            || hasAnnotation(element, javax.ws.rs.HeaderParam.class)
             || hasAnnotation(element, FromCookie.class)
+            || hasAnnotation(element, javax.ws.rs.CookieParam.class)
             || hasAnnotation(element, FromForm.class)
+            || hasAnnotation(element, javax.ws.rs.FormParam.class)
             || hasAnnotation(element, FromJson.class);
     }
 
     public static WsValueSource getDefaultWsFromBinding(Element element) {
+        if (element.getAnnotation(FromHeader.class) != null) {
+            return WsValueSource.Header;
+        }
+        if (element.getAnnotation(javax.ws.rs.HeaderParam.class) != null) {
+            return WsValueSource.Header;
+        }
+        if (element.getAnnotation(FromCookie.class) != null) {
+            return WsValueSource.Cookie;
+        }
+        if (element.getAnnotation(javax.ws.rs.CookieParam.class) != null) {
+            return WsValueSource.Cookie;
+        }
         if (element.getAnnotation(FromPath.class) != null) {
+            return WsValueSource.Path;
+        }
+        if (element.getAnnotation(javax.ws.rs.PathParam.class) != null) {
             return WsValueSource.Path;
         }
         if (element.getAnnotation(FromQuery.class) != null) {
             return WsValueSource.QueryString;
         }
-        if (element.getAnnotation(FromHeader.class) != null) {
-            return WsValueSource.Header;
-        }
-        if (element.getAnnotation(FromCookie.class) != null) {
-            return WsValueSource.Cookie;
+        if (element.getAnnotation(javax.ws.rs.QueryParam.class) != null) {
+            return WsValueSource.QueryString;
         }
         return WsValueSource.Any;
     }
@@ -706,7 +818,7 @@ public final class HelperMethodBuilder {
         }
 
         String memberName = getMemberName(memberElement);
-        WsValueSource valueSource = getMemberValueSource(memberElement, defaultSource);
+        WsValueSource valueSource = getValueSource(memberElement, defaultSource);
         if (converter.hasContextOrRequestType(WsContext.class) || converter.hasContextOrRequestType(contextType)) {
             ConvertCallResult result = converter.getConverterCall(container, "context", memberName, "injector", valueSource);
             setMember(memberElement, methodBodyBuilder, result.getCall());
@@ -802,9 +914,13 @@ public final class HelperMethodBuilder {
             return false;
         }
         return hasAnnotation(element, FromPath.class)
+            || hasAnnotation(element, javax.ws.rs.PathParam.class)
             || hasAnnotation(element, FromQuery.class)
+            || hasAnnotation(element, javax.ws.rs.QueryParam.class)
             || hasAnnotation(element, FromHeader.class)
+            || hasAnnotation(element, javax.ws.rs.HeaderParam.class)
             || hasAnnotation(element, FromCookie.class)
+            || hasAnnotation(element, javax.ws.rs.CookieParam.class)
             || hasAnnotation(element, FromJson.class)
             || hasAnnotation(element, FromBinary.class);
     }
@@ -823,23 +939,35 @@ public final class HelperMethodBuilder {
             return false;
         }
         conversionHelper.addConversionMethod(this);
-        WsValueSource valueSource = getMemberValueSource(memberElement, defaultSource);
+        WsValueSource valueSource = getValueSource(memberElement, defaultSource);
         String sourceMethod = addSourceMethod(valueSource, contextType, conversionHelper.isCollectionType());
         String valueExpression = getValueExpression(conversionHelper, sourceMethod, memberName);
         return setMember(memberElement, methodBodyBuilder, valueExpression);
     }
 
-    private static WsValueSource getMemberValueSource(Element memberElement, WsValueSource defaultSource) {
+    private static WsValueSource getValueSource(Element memberElement, WsValueSource defaultSource) {
         if (memberElement.getAnnotation(FromHeader.class) != null) {
+            return WsValueSource.Header;
+        }
+        if (memberElement.getAnnotation(javax.ws.rs.HeaderParam.class) != null) {
             return WsValueSource.Header;
         }
         if (memberElement.getAnnotation(FromCookie.class) != null) {
             return WsValueSource.Cookie;
         }
+        if (memberElement.getAnnotation(javax.ws.rs.CookieParam.class) != null) {
+            return WsValueSource.Cookie;
+        }
         if (memberElement.getAnnotation(FromPath.class) != null) {
             return WsValueSource.Path;
         }
+        if (memberElement.getAnnotation(javax.ws.rs.PathParam.class) != null) {
+            return WsValueSource.Path;
+        }
         if (memberElement.getAnnotation(FromQuery.class) != null) {
+            return WsValueSource.QueryString;
+        }
+        if (memberElement.getAnnotation(javax.ws.rs.QueryParam.class) != null) {
             return WsValueSource.QueryString;
         }
         return defaultSource;
@@ -2888,7 +3016,7 @@ public final class HelperMethodBuilder {
             return CodeBlock.builder()
                 .addStatement("$T request = $N.getRequest()", HttpRequest.class, wrapper)
                 .addStatement("$T<String> values = request.getPathLookup().get($N)", List.class, key)
-                .addStatement("return values == null ? $T.$N() : values", Collections.class, "emptyList")
+                .addStatement("return values == null ? $T.emptyList() : values", Collections.class)
                 .build();
         }
 
@@ -2929,7 +3057,7 @@ public final class HelperMethodBuilder {
             return CodeBlock.builder()
                 .addStatement("$T request = $N.getRequest()", HttpRequest.class, wrapper)
                 .addStatement("$T<String> values = request.getQueryLookup().get($N)", List.class, key)
-                .addStatement("return values == null ? $T.$N() : values", Collections.class, "emptyList")
+                .addStatement("return values == null ? $T.emptyList() : values", Collections.class)
                 .build();
         }
 
@@ -2970,7 +3098,7 @@ public final class HelperMethodBuilder {
             return CodeBlock.builder()
                 .addStatement("$T request = $N.getRequest()", HttpRequest.class, wrapper)
                 .addStatement("$T<String> values = request.getHeaderLookup().get($N)", List.class, key)
-                .addStatement("return values == null ? $T.$N() : values", Collections.class, "emptyList")
+                .addStatement("return values == null ? $T.emptyList() : values", Collections.class)
                 .build();
         }
 
@@ -3011,7 +3139,7 @@ public final class HelperMethodBuilder {
             return CodeBlock.builder()
                 .addStatement("$T request = $N.getRequest()", HttpRequest.class, wrapper)
                 .addStatement("$T<String> values = request.getCookieLookup().get($N)", List.class, key)
-                .addStatement("return values == null ? $T.$N() : values", Collections.class, "emptyList")
+                .addStatement("return values == null ? $T.emptyList() : values", Collections.class)
                 .build();
         }
 
@@ -3052,7 +3180,7 @@ public final class HelperMethodBuilder {
             return CodeBlock.builder()
                 .addStatement("$T request = $N.getRequest()", HttpRequest.class, wrapper)
                 .addStatement("$T<String> values = request.getFormLookup().get($N)", List.class, key)
-                .addStatement("return values == null ? $T.$N() : values", Collections.class, "emptyList")
+                .addStatement("return values == null ? $T.emptyList() : values", Collections.class)
                 .build();
         }
 

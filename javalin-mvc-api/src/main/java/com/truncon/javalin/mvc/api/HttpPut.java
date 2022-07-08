@@ -6,7 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Marks a method as an action responding to requests with PUT methods against the provided URL path.
+ * Marks a method as an action responding to a request with PUT methods against the provided URL path.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
