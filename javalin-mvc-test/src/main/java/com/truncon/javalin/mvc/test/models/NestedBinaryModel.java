@@ -1,9 +1,9 @@
 package com.truncon.javalin.mvc.test.models;
 
-import com.truncon.javalin.mvc.api.ws.FromBinary;
+import com.truncon.javalin.mvc.api.FromBody;
 
 public final class NestedBinaryModel {
-    @FromBinary
+    @FromBody
     public byte[] field;
     private byte[] setter;
     private byte[] parameter;
@@ -12,7 +12,7 @@ public final class NestedBinaryModel {
         return setter;
     }
 
-    @FromBinary
+    @FromBody
     public void setSetter(byte[] data) {
         this.setter = data;
     }
@@ -21,7 +21,7 @@ public final class NestedBinaryModel {
         return parameter;
     }
 
-    public void setParameter(@FromBinary byte[] data) {
+    public void setParameter(@FromBody byte[] data) {
         this.parameter = data;
     }
 }

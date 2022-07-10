@@ -1,6 +1,6 @@
 package com.truncon.javalin.mvc.test.controllers.ws.models;
 
-import com.truncon.javalin.mvc.api.FromJson;
+import com.truncon.javalin.mvc.api.FromBody;
 import com.truncon.javalin.mvc.api.ws.WsActionResult;
 import com.truncon.javalin.mvc.api.ws.WsConnect;
 import com.truncon.javalin.mvc.api.ws.WsController;
@@ -30,7 +30,7 @@ public final class ExplicitBindFromJsonModelController {
     }
 
     @WsMessage
-    public WsActionResult onMessage(@FromJson PrimitiveModel model) {
+    public WsActionResult onMessage(@FromBody PrimitiveModel model) {
         return new WsJsonResult(model);
     }
 }

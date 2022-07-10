@@ -1,9 +1,9 @@
 package com.truncon.javalin.mvc.test.models;
 
-import com.truncon.javalin.mvc.api.FromJson;
+import com.truncon.javalin.mvc.api.FromBody;
 
 public class NestedJsonModel {
-    @FromJson
+    @FromBody
     public PrimitiveModel field;
     private PrimitiveModel setter;
     private PrimitiveModel parameter;
@@ -12,7 +12,7 @@ public class NestedJsonModel {
         return setter;
     }
 
-    @FromJson
+    @FromBody
     public void setSetter(PrimitiveModel model) {
         this.setter = model;
     }
@@ -21,7 +21,7 @@ public class NestedJsonModel {
         return parameter;
     }
 
-    public void setParameter(@FromJson PrimitiveModel model) {
+    public void setParameter(@FromBody PrimitiveModel model) {
         this.parameter = model;
     }
 }

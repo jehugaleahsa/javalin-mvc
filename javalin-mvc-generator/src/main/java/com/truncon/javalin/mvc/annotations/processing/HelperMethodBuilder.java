@@ -9,6 +9,7 @@ import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeVariableName;
 import com.truncon.javalin.mvc.api.DefaultValue;
+import com.truncon.javalin.mvc.api.FromBody;
 import com.truncon.javalin.mvc.api.FromCookie;
 import com.truncon.javalin.mvc.api.FromForm;
 import com.truncon.javalin.mvc.api.FromHeader;
@@ -451,7 +452,7 @@ public final class HelperMethodBuilder {
     }
 
     private boolean addJsonSetter(Element memberElement, CodeBlock.Builder methodBodyBuilder) {
-        if (!hasFromJsonAnnotation(memberElement)) {
+        if (!hasFromBodyAnnotation(memberElement)) {
             return false;
         }
         String jsonMethod = addJsonMethod();
@@ -462,16 +463,20 @@ public final class HelperMethodBuilder {
         return true;
     }
 
-    private static boolean hasFromJsonAnnotation(Element element) {
-        FromJson annotation = element.getAnnotation(FromJson.class);
-        if (annotation != null) {
+    private static boolean hasFromBodyAnnotation(Element element) {
+        //noinspection deprecation
+        FromJson json = element.getAnnotation(FromJson.class);
+        if (json != null) {
+            return true;
+        }
+        FromBody body = element.getAnnotation(FromBody.class);
+        if (body != null) {
             return true;
         }
         if (element.getKind() == ElementKind.METHOD) {
             ExecutableElement method = (ExecutableElement) element;
             VariableElement parameter = method.getParameters().get(0); // We already checked there's one parameter
-            FromJson parameterAnnotation = parameter.getAnnotation(FromJson.class);
-            return parameterAnnotation != null;
+            return hasFromBodyAnnotation(parameter);
         }
         return false;
     }
@@ -679,6 +684,7 @@ public final class HelperMethodBuilder {
         if (hasAnnotation(element, NoBinding.class)) {
             return false;
         }
+        //noinspection deprecation
         return hasAnnotation(element, FromPath.class)
             || hasAnnotation(element, javax.ws.rs.PathParam.class)
             || hasAnnotation(element, FromQuery.class)
@@ -689,6 +695,7 @@ public final class HelperMethodBuilder {
             || hasAnnotation(element, javax.ws.rs.CookieParam.class)
             || hasAnnotation(element, FromForm.class)
             || hasAnnotation(element, javax.ws.rs.FormParam.class)
+            || hasAnnotation(element, FromBody.class)
             || hasAnnotation(element, FromJson.class);
     }
 
@@ -864,7 +871,7 @@ public final class HelperMethodBuilder {
     }
 
     private boolean addJsonSetter(Element memberElement, CodeBlock.Builder methodBodyBuilder, Class<? extends WsContext> contextType) {
-        if (!hasFromJsonAnnotation(memberElement)) {
+        if (!hasFromBodyAnnotation(memberElement)) {
             return false;
         }
         if (contextType != WsMessageContext.class) {
@@ -895,7 +902,9 @@ public final class HelperMethodBuilder {
         }
         // We only bind from the binary message if there's an explicit FromBinary annotation or
         // there's no other default/explicit source specified.
-        boolean hasBinaryAnnotation = hasAnnotation(memberElement, FromBinary.class);
+        //noinspection deprecation
+        boolean hasBinaryAnnotation = hasAnnotation(memberElement, FromBinary.class)
+            || hasAnnotation(memberElement, FromBody.class);
         if (defaultSource != WsValueSource.Any || !hasBinaryAnnotation) {
             return false;
         }
@@ -940,6 +949,7 @@ public final class HelperMethodBuilder {
         if (hasAnnotation(element, NoBinding.class)) {
             return false;
         }
+        //noinspection deprecation
         return hasAnnotation(element, FromPath.class)
             || hasAnnotation(element, javax.ws.rs.PathParam.class)
             || hasAnnotation(element, FromQuery.class)
@@ -948,6 +958,7 @@ public final class HelperMethodBuilder {
             || hasAnnotation(element, javax.ws.rs.HeaderParam.class)
             || hasAnnotation(element, FromCookie.class)
             || hasAnnotation(element, javax.ws.rs.CookieParam.class)
+            || hasAnnotation(element, FromBody.class)
             || hasAnnotation(element, FromJson.class)
             || hasAnnotation(element, FromBinary.class);
     }

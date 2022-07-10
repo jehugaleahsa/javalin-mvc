@@ -2,7 +2,7 @@ package com.truncon.javalin.mvc.test.controllers;
 
 import com.truncon.javalin.mvc.api.ActionResult;
 import com.truncon.javalin.mvc.api.Controller;
-import com.truncon.javalin.mvc.api.FromJson;
+import com.truncon.javalin.mvc.api.FromBody;
 import com.truncon.javalin.mvc.api.FromQuery;
 import com.truncon.javalin.mvc.api.HttpContext;
 import com.truncon.javalin.mvc.api.HttpGet;
@@ -95,7 +95,7 @@ public final class BindModelController {
 
     public static final String POST_NO_BINDING_ROUTE = "/api/bind/models/no-binding";
     @HttpPost(route = POST_NO_BINDING_ROUTE)
-    public ActionResult postNoBindingModel(@NoBinding HttpContext context, @NoBinding @FromJson PrimitiveModel model) {
+    public ActionResult postNoBindingModel(@NoBinding HttpContext context, @NoBinding @FromBody PrimitiveModel model) {
         if (context != null) {
             return new StatusCodeResult(500);
         }

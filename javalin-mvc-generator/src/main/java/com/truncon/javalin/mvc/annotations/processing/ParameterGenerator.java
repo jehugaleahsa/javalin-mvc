@@ -2,6 +2,7 @@ package com.truncon.javalin.mvc.annotations.processing;
 
 import com.squareup.javapoet.CodeBlock;
 import com.truncon.javalin.mvc.api.FileUpload;
+import com.truncon.javalin.mvc.api.FromBody;
 import com.truncon.javalin.mvc.api.FromCookie;
 import com.truncon.javalin.mvc.api.FromForm;
 import com.truncon.javalin.mvc.api.FromHeader;
@@ -460,6 +461,10 @@ final class ParameterGenerator {
         if (parameter.getAnnotation(javax.ws.rs.FormParam.class) != null) {
             return ValueSource.FormData;
         }
+        if (parameter.getAnnotation(FromBody.class) != null) {
+            return ValueSource.Json;
+        }
+        //noinspection deprecation
         if (parameter.getAnnotation(FromJson.class) != null) {
             return ValueSource.Json;
         }
@@ -467,9 +472,14 @@ final class ParameterGenerator {
     }
 
     private static WsValueSource getWsValueSource(Element parameter) {
+        if (parameter.getAnnotation(FromBody.class) != null) {
+            return WsValueSource.Message;
+        }
+        //noinspection deprecation
         if (parameter.getAnnotation(FromJson.class) != null) {
             return WsValueSource.Message;
         }
+        //noinspection deprecation
         if (parameter.getAnnotation(FromBinary.class) != null) {
             return WsValueSource.Message;
         }
