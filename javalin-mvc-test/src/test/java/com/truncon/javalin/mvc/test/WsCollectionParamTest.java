@@ -8,6 +8,8 @@ import com.truncon.javalin.mvc.test.controllers.ws.parameters.collections.Linked
 import com.truncon.javalin.mvc.test.controllers.ws.parameters.collections.LinkedListController;
 import com.truncon.javalin.mvc.test.controllers.ws.parameters.collections.ListController;
 import com.truncon.javalin.mvc.test.controllers.ws.parameters.collections.SetController;
+import com.truncon.javalin.mvc.test.controllers.ws.parameters.collections.SortedSetController;
+import com.truncon.javalin.mvc.test.controllers.ws.parameters.collections.TreeSetController;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -159,6 +161,46 @@ public final class WsCollectionParamTest {
                     BigInteger[] expected = new BigInteger[] {
                         new BigInteger("1234567890"), null, new BigInteger("2345678901")
                     };
+                    Assert.assertArrayEquals(expected, actual);
+                })
+            );
+        });
+    }
+
+    @Test
+    public void testSortedSet() {
+        AsyncTestUtils.runTest(app -> {
+            // Cannot handle null parameters
+            String route = RouteBuilder.buildWsRouteWithQueryParams(
+                SortedSetController.ROUTE,
+                queryParams(
+                    param("value", "hello"),
+                    param("value", "goodbye")
+                )
+            );
+            WsTestUtils.ws(route, sessionManager ->
+                sessionManager.sendStringAndAwaitJsonResponse("", String[].class).thenAccept((actual) -> {
+                    String[] expected = new String[] { "goodbye", "hello" };
+                    Assert.assertArrayEquals(expected, actual);
+                })
+            );
+        });
+    }
+
+    @Test
+    public void testTreeSet() {
+        AsyncTestUtils.runTest(app -> {
+            // Cannot handle null parameters
+            String route = RouteBuilder.buildWsRouteWithQueryParams(
+                TreeSetController.ROUTE,
+                queryParams(
+                    param("value", "hello"),
+                    param("value", "goodbye")
+                )
+            );
+            WsTestUtils.ws(route, sessionManager ->
+                sessionManager.sendStringAndAwaitJsonResponse("", String[].class).thenAccept((actual) -> {
+                    String[] expected = new String[] { "goodbye", "hello" };
                     Assert.assertArrayEquals(expected, actual);
                 })
             );
