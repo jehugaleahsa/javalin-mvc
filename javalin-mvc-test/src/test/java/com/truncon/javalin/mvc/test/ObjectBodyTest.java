@@ -13,6 +13,8 @@ import java.util.Date;
 import java.util.UUID;
 
 import static com.truncon.javalin.mvc.test.QueryUtils.getJsonResponseForPost;
+import static com.truncon.javalin.mvc.test.QueryUtils.getStringForPost;
+import static com.truncon.javalin.mvc.test.QueryUtils.getStringForStringBodyPost;
 import static com.truncon.javalin.mvc.test.RouteBuilder.*;
 
 public final class ObjectBodyTest {
@@ -130,5 +132,14 @@ public final class ObjectBodyTest {
         model.setBigDecimal(new BigDecimal("12345678901234567890.123"));
         model.setUuid(UUID.randomUUID());
         return model;
+    }
+
+    @Test
+    public void testInputStreamParameter() {
+        AsyncTestUtils.runTest(app -> {
+            String route = buildRoute(ObjectBodyController.INPUT_STREAM_BODY_ROUTE);
+            String actual = getStringForStringBodyPost(route, "Hello, world!!!");
+            Assert.assertEquals("Hello, world!!!", actual);
+        });
     }
 }

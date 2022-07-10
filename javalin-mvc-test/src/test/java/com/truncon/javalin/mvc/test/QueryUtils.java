@@ -113,6 +113,14 @@ public final class QueryUtils {
         return getStringForHeadersAndPost(route, Collections.emptyList());
     }
 
+    public static String getStringForStringBodyPost(String route, String body) throws IOException {
+        return Request.Post(route)
+            .bodyString(body, ContentType.TEXT_PLAIN)
+            .execute()
+            .returnContent()
+            .asString();
+    }
+
     public static String getStringForPut(String route) throws IOException {
         return getStringForHeadersAndPut(route, Collections.emptyList());
     }

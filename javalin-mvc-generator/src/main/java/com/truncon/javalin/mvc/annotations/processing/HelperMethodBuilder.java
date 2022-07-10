@@ -40,6 +40,8 @@ import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -82,6 +84,7 @@ public final class HelperMethodBuilder {
     private static final String JSON_METHOD_NAME = "toJson";
     private static final String BINARY_BYTE_ARRAY_METHOD_NAME = "toBinaryByteArray";
     private static final String BINARY_BYTE_BUFFER_METHOD_NAME = "toBinaryByteBuffer";
+    private static final String BINARY_INPUT_STREAM_METHOD_NAME = "toInputStream";
 
     private static Map<Class<?>, Function<Boolean, ConversionHelper>> getConversionHelperLookup() {
         Map<Class<?>, Function<Boolean, ConversionHelper>> lookup = new HashMap<>();
@@ -1085,6 +1088,8 @@ public final class HelperMethodBuilder {
             return addWsByteArrayBinaryMethod();
         } else if (container.getTypeUtils().isSameType(parameterType, ByteBuffer.class)) {
             return addWsByteBufferBinaryMethod();
+        } else if (container.getTypeUtils().isSameType(parameterType, InputStream.class)) {
+            return addWsInputStreamMethod();
         } else {
             return null;
         }
@@ -1132,6 +1137,24 @@ public final class HelperMethodBuilder {
         typeBuilder.addMethod(method);
         binaryMethods.add(ByteBuffer.class);
         return BINARY_BYTE_BUFFER_METHOD_NAME;
+    }
+
+    private String addWsInputStreamMethod() {
+        if (binaryMethods.contains(InputStream.class)) {
+            return BINARY_INPUT_STREAM_METHOD_NAME;
+        }
+        MethodSpec method = MethodSpec.methodBuilder(BINARY_INPUT_STREAM_METHOD_NAME)
+            .addModifiers(Modifier.PRIVATE, Modifier.STATIC)
+            .returns(InputStream.class)
+            .addParameter(WsBinaryMessageContext.class, "context")
+            .addCode(CodeBlock.builder()
+                .addStatement("return new $T(context.getData(), context.getOffset(), context.getLength())", ByteArrayInputStream.class)
+                .build()
+            )
+            .build();
+        typeBuilder.addMethod(method);
+        binaryMethods.add(ByteBuffer.class);
+        return BINARY_INPUT_STREAM_METHOD_NAME;
     }
 
     private static boolean isSetter(Element element) {

@@ -34,6 +34,7 @@ import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
+import java.io.InputStream;
 import java.util.Map;
 
 final class ParameterGenerator {
@@ -228,6 +229,8 @@ final class ParameterGenerator {
             return wrapper + ".getResponse()";
         } else if (typeUtils.isSameType(parameterType, FileUpload.class)) {
             return CodeBlock.of(wrapper + ".getRequest().getFile($S)", getParameterName()).toString();
+        } else if (typeUtils.isSameType(parameterType, InputStream.class)) {
+            return CodeBlock.of(wrapper + ".getRequest().getBodyAsInputStream()").toString();
         } else {
             return null;
         }

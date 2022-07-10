@@ -4,6 +4,13 @@ import com.truncon.javalin.mvc.api.*;
 import com.truncon.javalin.mvc.test.models.BoxedModel;
 import com.truncon.javalin.mvc.test.models.PrimitiveModel;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+
 @Controller
 public class ObjectBodyController {
     public static final String PRIMITIVE_BODY_ROUTE = "/api/body/json/primitive";
@@ -28,5 +35,12 @@ public class ObjectBodyController {
     @HttpPost(route = EXPLICIT_BOXED_BODY_ROUTE)
     public ActionResult getExplicitBoxedModel(@FromJson BoxedModel model) {
         return new JsonResult(model);
+    }
+
+    public static final String INPUT_STREAM_BODY_ROUTE = "/api/body/input_stream";
+    @HttpPost(route = INPUT_STREAM_BODY_ROUTE)
+    public ActionResult postInputStream(InputStream stream) throws IOException {
+        String decoded = new BufferedReader(new InputStreamReader(stream)).readLine();
+        return new ContentResult(decoded);
     }
 }
