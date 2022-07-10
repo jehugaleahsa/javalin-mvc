@@ -215,6 +215,7 @@ Here is a list of supported and/or desired features. An `x` means it is already 
 * [ ] Bind `InputStream` from request body (currently accessible via `HttpRequest`)
 * [ ] Bind `byte[]` from request body (currently accessible via `HttpRequest`)
 * [x] Override where parameters are bound from using `@From*` annotations.
+* [x] Support binding default values using `@DefaultValue`
 * [x] Support returning `ActionResult` implementations
     * [x] `ContentResult` - return plain strings
     * [x] `JsonResult` - return Object as JSON

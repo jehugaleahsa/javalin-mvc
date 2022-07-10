@@ -35,7 +35,6 @@ final class ControllerSource {
         checkControllerElements(controllerElements);
         Stream<TypeElement> controllerTypes = controllerElements.stream()
             .map(TypeElement.class::cast);
-        // TODO - Add or replace with jakarta class when available
         Stream<TypeElement> oldControllerTypes = alternateTypes.stream()
             .filter(t -> t.getAnnotation(Controller.class) != null || t.getAnnotation(javax.ws.rs.Path.class) != null);
         return Stream.concat(controllerTypes, oldControllerTypes)
@@ -47,7 +46,6 @@ final class ControllerSource {
     private static Set<Element> getControllerElements(RoundEnvironment environment) {
         Set<? extends Element> builtin = environment.getElementsAnnotatedWith(Controller.class);
         Set<Element> elements = new HashSet<>(builtin);
-        // TODO - Add or replace this with jakarta when available.
         List<Element> javax = environment.getElementsAnnotatedWith(javax.ws.rs.Path.class).stream()
             .filter(e -> e.getKind() == ElementKind.INTERFACE || e.getKind() == ElementKind.CLASS)
             .collect(Collectors.toList());

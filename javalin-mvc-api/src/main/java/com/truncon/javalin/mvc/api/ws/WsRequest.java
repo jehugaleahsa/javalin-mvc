@@ -46,6 +46,21 @@ public interface WsRequest {
     String getPathValue(String name);
 
     /**
+     * Gets the value of the parameter in the URL, or the given default value
+     * if the value is missing or empty.
+     * @param name The name of the parameter to search for.
+     * @param defaultValue The value to return if the value is missing or empty.
+     * @return the value of the parameter or the default value if it is missing or empty.
+     */
+    default String getPathValue(String name, String defaultValue) {
+        if (hasPathValue(name)) {
+            return getPathValue(name);
+        } else {
+            return defaultValue;
+        }
+    }
+
+    /**
      * Gets the value of the parameter in the URL, as a list.
      * @param name The name of the parameter to search for.
      * @return the value of the parameter as a list, if present; otherwise,
@@ -102,6 +117,21 @@ public interface WsRequest {
     String getQueryValue(String name);
 
     /**
+     * Gets the value of the parameter in the query string, or the given
+     * default value if the value is missing or empty.
+     * @param name The name of the parameter to search for.
+     * @param defaultValue The value to return if the value is missing or empty.
+     * @return the value of the parameter or the default value if it is missing or empty.
+     */
+    default String getQueryValue(String name, String defaultValue) {
+        if (hasQueryValue(name)) {
+            return getQueryValue(name);
+        } else {
+            return defaultValue;
+        }
+    }
+
+    /**
      * Gets the values of the parameter in the query string.
      * @param name The name of the parameter to search for.
      * @return The values of the parameter or an empty list if it does not exist.
@@ -151,6 +181,21 @@ public interface WsRequest {
     String getHeaderValue(String name);
 
     /**
+     * Gets the value of the header, or the given
+     * default value if the value is missing or empty.
+     * @param name The name of the header to search for.
+     * @param defaultValue The value to return if the value is missing or empty.
+     * @return the value of the header or the default value if it is missing or empty.
+     */
+    default String getHeaderValue(String name, String defaultValue) {
+        if (hasHeaderValue(name)) {
+            return getHeaderValue(name);
+        } else {
+            return defaultValue;
+        }
+    }
+
+    /**
      * Gets the value of the header, as a list.
      * @param name The name of the header to search for.
      * @return the value of the header, as a list, if present; otherwise,
@@ -194,6 +239,21 @@ public interface WsRequest {
      * @return the value of the cookie, or null if it does not exist.
      */
     String getCookieValue(String name);
+
+    /**
+     * Gets the value of the cookie, or the given
+     * default value if the value is missing or empty.
+     * @param name The name of the cookie to search for.
+     * @param defaultValue The value to return if the value is missing or empty.
+     * @return the value of the cookie or the default value if it is missing or empty.
+     */
+    default String getCookieValue(String name, String defaultValue) {
+        if (hasCookieValue(name)) {
+            return getCookieValue(name);
+        } else {
+            return defaultValue;
+        }
+    }
 
     /**
      * Gets the value of the cookie with the given name, as a list.

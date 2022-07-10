@@ -8,6 +8,7 @@ import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeVariableName;
+import com.truncon.javalin.mvc.api.DefaultValue;
 import com.truncon.javalin.mvc.api.FromCookie;
 import com.truncon.javalin.mvc.api.FromForm;
 import com.truncon.javalin.mvc.api.FromHeader;
@@ -64,6 +65,7 @@ import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
@@ -155,10 +157,10 @@ public final class HelperMethodBuilder {
     private final Set<Class<?>> addedSingletonConversionHelpers = new HashSet<>();
     private final Set<Class<?>> addedArrayConversionHelpers = new HashSet<>();
     private final Set<String> addedCollectionConversionHelpers = new HashSet<>();
-    private final Set<ValueSource> addedSingletonSourceHelpers = new HashSet<>();
+    private final Set<ScalarSourceKey> addedScalarSourceHelpers = new HashSet<>();
     private final Set<ValueSource> addedArraySourceHelpers = new HashSet<>();
     private final Set<String> addedFields = new HashSet<>();
-    private final Set<ImmutablePair<WsValueSource, Class<?>>> addedSingletonWsSourceHelpers = new HashSet<>();
+    private final Set<WsScalarSourceKey> addedWsScalarSourceHelpers = new HashSet<>();
     private final Set<ImmutablePair<WsValueSource, Class<?>>> addedArrayWsSourceHelpers = new HashSet<>();
     private final Map<ImmutablePair<ValueSource, String>, String> complexConversionLookup = new HashMap<>();
     private final Map<ImmutableTriple<WsValueSource, String, String>, String> complexWsConversionLookup = new HashMap<>();
@@ -481,8 +483,9 @@ public final class HelperMethodBuilder {
         }
         conversionHelper.addConversionMethod(this);
         ValueSource valueSource = getValueSource(memberElement, defaultSource);
-        String sourceMethod = addSourceMethod(valueSource, conversionHelper.isCollectionType());
-        String valueExpression = getValueExpression(conversionHelper, sourceMethod, memberName);
+        String defaultValue = getDefaultValue(memberElement);
+        String sourceMethod = addSourceMethod(valueSource, conversionHelper.isCollectionType(), defaultValue);
+        String valueExpression = getValueExpression(conversionHelper, sourceMethod, memberName, defaultValue);
         return setMember(memberElement, methodBodyBuilder, valueExpression);
     }
 
@@ -498,8 +501,14 @@ public final class HelperMethodBuilder {
         }
     }
 
-    private String getValueExpression(ConversionHelper conversionHelper, String sourceMethod, String key) {
-        String sourceCall = CodeBlock.of("$N($N, $S)", sourceMethod, "context", key).toString();
+    private String getValueExpression(
+            ConversionHelper conversionHelper,
+            String sourceMethod,
+            String key,
+            String defaultValue) {
+        String sourceCall = defaultValue == null
+            ? CodeBlock.of("$N($N, $S)", sourceMethod, "context", key).toString()
+            : CodeBlock.of("$N($N, $S, $S)", sourceMethod, "context", key, defaultValue).toString();
         return conversionHelper.getConversionCall(sourceCall);
     }
 
@@ -562,7 +571,6 @@ public final class HelperMethodBuilder {
             return standardName;
         }
 
-        //noinspection deprecation
         Named named = element.getAnnotation(Named.class);
         return named == null ? null : StringUtils.stripToNull(named.value());
     }
@@ -675,6 +683,18 @@ public final class HelperMethodBuilder {
             || hasAnnotation(element, FromForm.class)
             || hasAnnotation(element, javax.ws.rs.FormParam.class)
             || hasAnnotation(element, FromJson.class);
+    }
+
+    public static String getDefaultValue(Element parameter) {
+        DefaultValue builtin = parameter.getAnnotation(DefaultValue.class);
+        if (builtin != null) {
+            return builtin.value();
+        }
+        javax.ws.rs.DefaultValue standard = parameter.getAnnotation(javax.ws.rs.DefaultValue.class);
+        if (standard != null) {
+            return standard.value();
+        }
+        return null;
     }
 
     public static WsValueSource getDefaultWsFromBinding(Element element) {
@@ -929,7 +949,7 @@ public final class HelperMethodBuilder {
             Element memberElement,
             CodeBlock.Builder methodBodyBuilder,
             WsValueSource defaultSource,
-            Class<?> contextType) {
+            Class<? extends WsContext> contextType) {
         ConversionHelper conversionHelper = getConversionHelper(memberElement);
         if (conversionHelper == null) {
             return false;
@@ -940,8 +960,9 @@ public final class HelperMethodBuilder {
         }
         conversionHelper.addConversionMethod(this);
         WsValueSource valueSource = getValueSource(memberElement, defaultSource);
-        String sourceMethod = addSourceMethod(valueSource, contextType, conversionHelper.isCollectionType());
-        String valueExpression = getValueExpression(conversionHelper, sourceMethod, memberName);
+        String defaultValue = getDefaultValue(memberElement);
+        String sourceMethod = addSourceMethod(valueSource, contextType, conversionHelper.isCollectionType(), defaultValue);
+        String valueExpression = getValueExpression(conversionHelper, sourceMethod, memberName, defaultValue);
         return setMember(memberElement, methodBodyBuilder, valueExpression);
     }
 
@@ -977,25 +998,29 @@ public final class HelperMethodBuilder {
         return hasMemberBinding(element, this::hasWsFromAnnotation);
     }
 
-    public String addSourceMethod(ValueSource valueSource, boolean isArray) {
+    public String addSourceMethod(ValueSource valueSource, boolean isCollection, String defaultValue) {
         SourceHelper sourceHelper = SOURCE_HELPER_LOOKUP.get(valueSource);
-        if (isArray) {
+        if (isCollection) {
             sourceHelper.buildCollectionHelper(this);
-            return sourceHelper.getArrayName();
+            return sourceHelper.getCollectionName();
         } else {
-            sourceHelper.buildScalarHelper(this);
-            return sourceHelper.getSingletonName();
+            sourceHelper.buildScalarHelper(this, defaultValue);
+            return sourceHelper.getScalarName();
         }
     }
 
-    public String addSourceMethod(WsValueSource valueSource, Class<?> wrapperType, boolean isArray) {
+    public String addSourceMethod(
+            WsValueSource valueSource,
+            Class<? extends WsContext> wrapperType,
+            boolean isCollection,
+            String defaultValue) {
         // TODO - Check that the wrapper type and value source make sense together
         WsSourceHelper sourceHelper = WS_SOURCE_HELPER_LOOKUP.get(valueSource);
-        if (isArray) {
+        if (isCollection) {
             sourceHelper.buildCollectionHelper(this, wrapperType);
             return sourceHelper.getCollectionName();
         } else {
-            sourceHelper.buildScalarHelper(this, wrapperType);
+            sourceHelper.buildScalarHelper(this, wrapperType, defaultValue);
             return sourceHelper.getScalarName();
         }
     }
@@ -2946,42 +2971,49 @@ public final class HelperMethodBuilder {
 
     private static abstract class SourceHelper {
         public abstract ValueSource getValueSource();
-        public abstract String getSingletonName();
-        public abstract String getArrayName();
+        public abstract String getScalarName();
+        public abstract String getCollectionName();
 
-        public void buildScalarHelper(HelperMethodBuilder builder) {
-            if (builder.addedSingletonSourceHelpers.contains(getValueSource())) {
+        public void buildScalarHelper(HelperMethodBuilder builder, String defaultValue) {
+            ScalarSourceKey key = ScalarSourceKey.of(getValueSource(), defaultValue != null);
+            if (builder.addedScalarSourceHelpers.contains(key)) {
                 return;
             }
-            MethodSpec method = MethodSpec.methodBuilder(getSingletonName())
+            MethodSpec.Builder methodBuilder = MethodSpec.methodBuilder(getScalarName())
                 .addModifiers(Modifier.PRIVATE, Modifier.STATIC)
                 .returns(String.class)
                 .addParameter(HttpContext.class, "context")
-                .addParameter(String.class, "key")
-                .addCode(getSingletonMethodBody(builder, "context", "key"))
-                .build();
-            builder.typeBuilder.addMethod(method);
-            builder.addedSingletonSourceHelpers.add(getValueSource());
+                .addParameter(String.class, "key");
+            if (defaultValue != null) {
+                methodBuilder.addParameter(String.class, "defaultValue");
+            }
+            methodBuilder.addCode(getScalarMethodBody(builder, defaultValue, "context", "key"));
+            builder.typeBuilder.addMethod(methodBuilder.build());
+            builder.addedScalarSourceHelpers.add(key);
         }
 
-        protected abstract CodeBlock getSingletonMethodBody(HelperMethodBuilder builder, String context, String key);
+        protected abstract CodeBlock getScalarMethodBody(
+            HelperMethodBuilder builder,
+            String defaultValue,
+            String context,
+            String key);
 
         public void buildCollectionHelper(HelperMethodBuilder builder) {
             if (builder.addedArraySourceHelpers.contains(getValueSource())) {
                 return;
             }
-            MethodSpec method = MethodSpec.methodBuilder(getArrayName())
+            MethodSpec method = MethodSpec.methodBuilder(getCollectionName())
                 .addModifiers(Modifier.PRIVATE, Modifier.STATIC)
                 .returns(ParameterizedTypeName.get(List.class, String.class))
                 .addParameter(HttpContext.class, "context")
                 .addParameter(String.class, "key")
-                .addCode(getArrayMethodBody(builder,"context", "key"))
+                .addCode(getCollectionMethodBody(builder,"context", "key"))
                 .build();
             builder.typeBuilder.addMethod(method);
             builder.addedArraySourceHelpers.add(getValueSource());
         }
 
-        protected abstract CodeBlock getArrayMethodBody(HelperMethodBuilder builder, String context, String key);
+        protected abstract CodeBlock getCollectionMethodBody(HelperMethodBuilder builder, String context, String key);
 
         public abstract CodeBlock getPresenceCheck(String request, String key);
     }
@@ -2993,26 +3025,33 @@ public final class HelperMethodBuilder {
         }
 
         @Override
-        public String getSingletonName() {
+        public String getScalarName() {
             return "getPathValue";
         }
 
         @Override
-        public String getArrayName() {
+        public String getCollectionName() {
             return "getPathValues";
         }
 
         @Override
-        protected CodeBlock getSingletonMethodBody(HelperMethodBuilder builder, String wrapper, String key) {
-            HttpRequest request;
-            return CodeBlock.builder()
-                .addStatement("$T request = $N.getRequest()", HttpRequest.class, wrapper)
-                .addStatement("return request.getPathValue($N)", key)
-                .build();
+        protected CodeBlock getScalarMethodBody(
+                HelperMethodBuilder builder,
+                String defaultValue,
+                String wrapper,
+                String key) {
+            CodeBlock.Builder bodyBuilder = CodeBlock.builder();
+            bodyBuilder.addStatement("$T request = $N.getRequest()", HttpRequest.class, wrapper);
+            if (defaultValue == null) {
+                bodyBuilder.addStatement("return request.getPathValue($N)", key);
+            } else {
+                bodyBuilder.addStatement("return request.getPathValue($N, $S)", key, defaultValue);
+            }
+            return bodyBuilder.build();
         }
 
         @Override
-        protected CodeBlock getArrayMethodBody(HelperMethodBuilder builder, String wrapper, String key) {
+        protected CodeBlock getCollectionMethodBody(HelperMethodBuilder builder, String wrapper, String key) {
             return CodeBlock.builder()
                 .addStatement("$T request = $N.getRequest()", HttpRequest.class, wrapper)
                 .addStatement("return request.getPathValues($N)", key)
@@ -3034,25 +3073,33 @@ public final class HelperMethodBuilder {
         }
 
         @Override
-        public String getSingletonName() {
+        public String getScalarName() {
             return "getQueryValue";
         }
 
         @Override
-        public String getArrayName() {
+        public String getCollectionName() {
             return "getQueryValues";
         }
 
         @Override
-        protected CodeBlock getSingletonMethodBody(HelperMethodBuilder builder, String wrapper, String key) {
-            return CodeBlock.builder()
-                .addStatement("$T request = $N.getRequest()", HttpRequest.class, wrapper)
-                .addStatement("return request.getQueryValue($N)", key)
-                .build();
+        protected CodeBlock getScalarMethodBody(
+                HelperMethodBuilder builder,
+                String defaultValue,
+                String wrapper,
+                String key) {
+            CodeBlock.Builder bodyBuilder = CodeBlock.builder();
+            bodyBuilder.addStatement("$T request = $N.getRequest()", HttpRequest.class, wrapper);
+            if (defaultValue == null) {
+                bodyBuilder.addStatement("return request.getQueryValue($N)", key);
+            } else {
+                bodyBuilder.addStatement("return request.getQueryValue($N, $S)", key, defaultValue);
+            }
+            return bodyBuilder.build();
         }
 
         @Override
-        protected CodeBlock getArrayMethodBody(HelperMethodBuilder builder, String wrapper, String key) {
+        protected CodeBlock getCollectionMethodBody(HelperMethodBuilder builder, String wrapper, String key) {
             return CodeBlock.builder()
                 .addStatement("$T request = $N.getRequest()", HttpRequest.class, wrapper)
                 .addStatement("return request.getQueryValues($N)", key)
@@ -3074,25 +3121,33 @@ public final class HelperMethodBuilder {
         }
 
         @Override
-        public String getSingletonName() {
+        public String getScalarName() {
             return "getHeaderValue";
         }
 
         @Override
-        public String getArrayName() {
+        public String getCollectionName() {
             return "getHeaderValues";
         }
 
         @Override
-        protected CodeBlock getSingletonMethodBody(HelperMethodBuilder builder, String wrapper, String key) {
-            return CodeBlock.builder()
-                .addStatement("$T request = $N.getRequest()", HttpRequest.class, wrapper)
-                .addStatement("return request.getHeaderValue($N)", key)
-                .build();
+        protected CodeBlock getScalarMethodBody(
+                HelperMethodBuilder builder,
+                String defaultValue,
+                String wrapper,
+                String key) {
+            CodeBlock.Builder bodyBuilder = CodeBlock.builder();
+            bodyBuilder.addStatement("$T request = $N.getRequest()", HttpRequest.class, wrapper);
+            if (defaultValue == null) {
+                bodyBuilder.addStatement("return request.getHeaderValue($N)", key);
+            } else {
+                bodyBuilder.addStatement("return request.getHeaderValue($N, $S)", key, defaultValue);
+            }
+            return bodyBuilder.build();
         }
 
         @Override
-        protected CodeBlock getArrayMethodBody(HelperMethodBuilder builder, String wrapper, String key) {
+        protected CodeBlock getCollectionMethodBody(HelperMethodBuilder builder, String wrapper, String key) {
             return CodeBlock.builder()
                 .addStatement("$T request = $N.getRequest()", HttpRequest.class, wrapper)
                 .addStatement("return request.getHeaderValues($N)", key)
@@ -3114,25 +3169,33 @@ public final class HelperMethodBuilder {
         }
 
         @Override
-        public String getSingletonName() {
+        public String getScalarName() {
             return "getCookieValue";
         }
 
         @Override
-        public String getArrayName() {
+        public String getCollectionName() {
             return "getCookieValues";
         }
 
         @Override
-        protected CodeBlock getSingletonMethodBody(HelperMethodBuilder builder, String wrapper, String key) {
-            return CodeBlock.builder()
-                .addStatement("$T request = $N.getRequest()", HttpRequest.class, wrapper)
-                .addStatement("return request.getCookieValue($N)", key)
-                .build();
+        protected CodeBlock getScalarMethodBody(
+                HelperMethodBuilder builder,
+                String defaultValue,
+                String wrapper,
+                String key) {
+            CodeBlock.Builder bodyBuilder = CodeBlock.builder();
+            bodyBuilder.addStatement("$T request = $N.getRequest()", HttpRequest.class, wrapper);
+            if (defaultValue == null) {
+                bodyBuilder.addStatement("return request.getCookieValue($N)", key);
+            } else {
+                bodyBuilder.addStatement("return request.getCookieValue($N, $S)", key, defaultValue);
+            }
+            return bodyBuilder.build();
         }
 
         @Override
-        protected CodeBlock getArrayMethodBody(HelperMethodBuilder builder, String wrapper, String key) {
+        protected CodeBlock getCollectionMethodBody(HelperMethodBuilder builder, String wrapper, String key) {
             return CodeBlock.builder()
                 .addStatement("$T request = $N.getRequest()", HttpRequest.class, wrapper)
                 .addStatement("return request.getCookieValues($N)", key)
@@ -3154,25 +3217,33 @@ public final class HelperMethodBuilder {
         }
 
         @Override
-        public String getSingletonName() {
+        public String getScalarName() {
             return "getFormDataValue";
         }
 
         @Override
-        public String getArrayName() {
+        public String getCollectionName() {
             return "getFormDataValues";
         }
 
         @Override
-        protected CodeBlock getSingletonMethodBody(HelperMethodBuilder builder, String wrapper, String key) {
-            return CodeBlock.builder()
-                .addStatement("$T request = $N.getRequest()", HttpRequest.class, wrapper)
-                .addStatement("return request.getFormValue($N)", key)
-                .build();
+        protected CodeBlock getScalarMethodBody(
+                HelperMethodBuilder builder,
+                String defaultValue,
+                String wrapper,
+                String key) {
+            CodeBlock.Builder bodyBuilder = CodeBlock.builder();
+            bodyBuilder.addStatement("$T request = $N.getRequest()", HttpRequest.class, wrapper);
+            if (defaultValue == null) {
+                bodyBuilder.addStatement("return request.getFormValue($N)", key);
+            } else {
+                bodyBuilder.addStatement("return request.getFormValue($N, $S)", key, defaultValue);
+            }
+            return bodyBuilder.build();
         }
 
         @Override
-        protected CodeBlock getArrayMethodBody(HelperMethodBuilder builder, String wrapper, String key) {
+        protected CodeBlock getCollectionMethodBody(HelperMethodBuilder builder, String wrapper, String key) {
             return CodeBlock.builder()
                 .addStatement("$T request = $N.getRequest()", HttpRequest.class, wrapper)
                 .addStatement("return request.getFormValues($N)", key)
@@ -3194,23 +3265,27 @@ public final class HelperMethodBuilder {
         }
 
         @Override
-        public String getSingletonName() {
+        public String getScalarName() {
             return "getValue";
         }
 
         @Override
-        public String getArrayName() {
+        public String getCollectionName() {
             return "getValues";
         }
 
         @Override
-        protected CodeBlock getSingletonMethodBody(HelperMethodBuilder builder, String wrapper, String key) {
+        protected CodeBlock getScalarMethodBody(
+                HelperMethodBuilder builder,
+                String defaultValue,
+                String wrapper,
+                String key) {
             // Build the source helpers for all the other source types
             for (Map.Entry<ValueSource, SourceHelper> entry : SOURCE_HELPER_LOOKUP.entrySet()) {
                 ValueSource source = entry.getKey();
                 if (source != ValueSource.Any) {
                     SourceHelper helper = entry.getValue();
-                    helper.buildScalarHelper(builder);
+                    helper.buildScalarHelper(builder, defaultValue);
                 }
             }
 
@@ -3223,7 +3298,11 @@ public final class HelperMethodBuilder {
                     CodeBlock check = helper.getPresenceCheck("request", key);
                     if (check != null) {
                         codeBuilder.beginControlFlow("if (" + check.toString() + ")");
-                        codeBuilder.addStatement("return $N($N, $N)", helper.getSingletonName(), wrapper, key);
+                        if (defaultValue == null) {
+                            codeBuilder.addStatement("return $N($N, $N)", helper.getScalarName(), wrapper, key);
+                        } else {
+                            codeBuilder.addStatement("return $N($N, $N, $S)", helper.getScalarName(), wrapper, key, defaultValue);
+                        }
                         codeBuilder.endControlFlow();
                     }
                 }
@@ -3233,7 +3312,7 @@ public final class HelperMethodBuilder {
         }
 
         @Override
-        protected CodeBlock getArrayMethodBody(HelperMethodBuilder builder, String wrapper, String key) {
+        protected CodeBlock getCollectionMethodBody(HelperMethodBuilder builder, String wrapper, String key) {
             // Build the source helpers for all the other source types
             for (Map.Entry<ValueSource, SourceHelper> entry : SOURCE_HELPER_LOOKUP.entrySet()) {
                 ValueSource source = entry.getKey();
@@ -3252,7 +3331,7 @@ public final class HelperMethodBuilder {
                     CodeBlock check = helper.getPresenceCheck("request", key);
                     if (check != null) {
                         codeBuilder.beginControlFlow("if (" + check.toString() + ")");
-                        codeBuilder.addStatement("return $N($N, $N)", helper.getArrayName(), wrapper, key);
+                        codeBuilder.addStatement("return $N($N, $N)", helper.getCollectionName(), wrapper, key);
                         codeBuilder.endControlFlow();
                     }
                 }
@@ -3267,6 +3346,45 @@ public final class HelperMethodBuilder {
         }
     }
 
+    private static final class ScalarSourceKey {
+        private final ValueSource valueSource;
+        private final boolean hasDefaultValue;
+
+        private ScalarSourceKey(ValueSource valueSource, boolean hasDefaultValue) {
+            this.valueSource = valueSource;
+            this.hasDefaultValue = hasDefaultValue;
+        }
+
+        public static ScalarSourceKey of(ValueSource valueSource, boolean hasDefaultValue) {
+            return new ScalarSourceKey(valueSource, hasDefaultValue);
+        }
+
+        public ValueSource getValueSource() {
+            return valueSource;
+        }
+
+        public boolean isHasDefaultValue() {
+            return hasDefaultValue;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            ScalarSourceKey that = (ScalarSourceKey) o;
+            return hasDefaultValue == that.hasDefaultValue && valueSource == that.valueSource;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(valueSource, hasDefaultValue);
+        }
+    }
+
     // endregion
 
     // region WsSourceHelper
@@ -3276,9 +3394,12 @@ public final class HelperMethodBuilder {
         public abstract String getScalarName();
         public abstract String getCollectionName();
 
-        public void buildScalarHelper(HelperMethodBuilder builder, Class<?> wrapperType) {
-            ImmutablePair<WsValueSource, Class<?>> key = ImmutablePair.of(getValueSource(), wrapperType);
-            if (builder.addedSingletonWsSourceHelpers.contains(key)) {
+        public void buildScalarHelper(
+                HelperMethodBuilder builder,
+                Class<? extends WsContext> wrapperType,
+                String defaultValue) {
+            WsScalarSourceKey key = WsScalarSourceKey.of(getValueSource(), wrapperType, defaultValue != null);
+            if (builder.addedWsScalarSourceHelpers.contains(key)) {
                 return;
             }
             MethodSpec method = MethodSpec.methodBuilder(getScalarName())
@@ -3286,19 +3407,20 @@ public final class HelperMethodBuilder {
                 .returns(String.class)
                 .addParameter(wrapperType, "context")
                 .addParameter(String.class, "key")
-                .addCode(getSingletonMethodBody(builder, wrapperType, "context", "key"))
+                .addCode(getScalarMethodBody(builder, wrapperType, defaultValue, "context", "key"))
                 .build();
             builder.typeBuilder.addMethod(method);
-            builder.addedSingletonWsSourceHelpers.add(key);
+            builder.addedWsScalarSourceHelpers.add(key);
         }
 
-        protected abstract CodeBlock getSingletonMethodBody(
+        protected abstract CodeBlock getScalarMethodBody(
             HelperMethodBuilder builder,
-            Class<?> contextType,
+            Class<? extends WsContext> contextType,
+            String defaultValue,
             String context,
             String key);
 
-        public void buildCollectionHelper(HelperMethodBuilder builder, Class<?> wrapperType) {
+        public void buildCollectionHelper(HelperMethodBuilder builder, Class<? extends WsContext> wrapperType) {
             ImmutablePair<WsValueSource, Class<?>> key = ImmutablePair.of(getValueSource(), wrapperType);
             if (builder.addedArrayWsSourceHelpers.contains(key)) {
                 return;
@@ -3308,15 +3430,15 @@ public final class HelperMethodBuilder {
                 .returns(ParameterizedTypeName.get(List.class, String.class))
                 .addParameter(wrapperType, "context")
                 .addParameter(String.class, "key")
-                .addCode(getArrayMethodBody(builder, wrapperType, "context", "key"))
+                .addCode(getCollectionMethodBody(builder, wrapperType, "context", "key"))
                 .build();
             builder.typeBuilder.addMethod(method);
             builder.addedArrayWsSourceHelpers.add(key);
         }
 
-        protected abstract CodeBlock getArrayMethodBody(
+        protected abstract CodeBlock getCollectionMethodBody(
             HelperMethodBuilder builder,
-            Class<?> contextType,
+            Class<? extends WsContext> contextType,
             String context,
             String key);
 
@@ -3340,21 +3462,26 @@ public final class HelperMethodBuilder {
         }
 
         @Override
-        protected CodeBlock getSingletonMethodBody(
+        protected CodeBlock getScalarMethodBody(
                 HelperMethodBuilder builder,
-                Class<?> wrapperType,
+                Class<? extends WsContext> wrapperType,
+                String defaultValue,
                 String wrapper,
                 String key) {
-            return CodeBlock.builder()
-                .addStatement("$T request = $N.getRequest()", WsRequest.class, wrapper)
-                .addStatement("return request.getPathValue($N)", key)
-                .build();
+            CodeBlock.Builder bodyBuilder = CodeBlock.builder();
+            bodyBuilder.addStatement("$T request = $N.getRequest()", WsRequest.class, wrapper);
+            if (defaultValue == null) {
+                bodyBuilder.addStatement("return request.getPathValue($N)", key);
+            } else {
+                bodyBuilder.addStatement("return request.getPathValue($N, $S)", key, defaultValue);
+            }
+            return bodyBuilder.build();
         }
 
         @Override
-        protected CodeBlock getArrayMethodBody(
+        protected CodeBlock getCollectionMethodBody(
                 HelperMethodBuilder builder,
-                Class<?> wrapperType,
+                Class<? extends WsContext> wrapperType,
                 String wrapper,
                 String key) {
             return CodeBlock.builder()
@@ -3388,21 +3515,26 @@ public final class HelperMethodBuilder {
         }
 
         @Override
-        protected CodeBlock getSingletonMethodBody(
+        protected CodeBlock getScalarMethodBody(
                 HelperMethodBuilder builder,
-                Class<?> wrapperType,
+                Class<? extends WsContext> wrapperType,
+                String defaultValue,
                 String wrapper,
                 String key) {
-            return CodeBlock.builder()
-                .addStatement("$T request = $N.getRequest()", WsRequest.class, wrapper)
-                .addStatement("return request.getQueryValue($N)", key)
-                .build();
+            CodeBlock.Builder bodyBuilder = CodeBlock.builder();
+            bodyBuilder.addStatement("$T request = $N.getRequest()", WsRequest.class, wrapper);
+            if (defaultValue == null) {
+                bodyBuilder.addStatement("return request.getQueryValue($N)", key);
+            } else {
+                bodyBuilder.addStatement("return request.getQueryValue($N, $S)", key, defaultValue);
+            }
+            return bodyBuilder.build();
         }
 
         @Override
-        protected CodeBlock getArrayMethodBody(
+        protected CodeBlock getCollectionMethodBody(
                 HelperMethodBuilder builder,
-                Class<?> wrapperType,
+                Class<? extends WsContext> wrapperType,
                 String wrapper,
                 String key) {
             return CodeBlock.builder()
@@ -3436,21 +3568,26 @@ public final class HelperMethodBuilder {
         }
 
         @Override
-        protected CodeBlock getSingletonMethodBody(
+        protected CodeBlock getScalarMethodBody(
                 HelperMethodBuilder builder,
-                Class<?> wrapperType,
+                Class<? extends WsContext> wrapperType,
+                String defaultValue,
                 String wrapper,
                 String key) {
-            return CodeBlock.builder()
-                .addStatement("$T request = $N.getRequest()", WsRequest.class, wrapper)
-                .addStatement("return request.getHeaderValue($N)", key)
-                .build();
+            CodeBlock.Builder bodyBuilder = CodeBlock.builder();
+            bodyBuilder.addStatement("$T request = $N.getRequest()", WsRequest.class, wrapper);
+            if (defaultValue == null) {
+                bodyBuilder.addStatement("return request.getHeaderValue($N)", key);
+            } else {
+                bodyBuilder.addStatement("return request.getHeaderValue($N, $S)", key, defaultValue);
+            }
+            return bodyBuilder.build();
         }
 
         @Override
-        protected CodeBlock getArrayMethodBody(
+        protected CodeBlock getCollectionMethodBody(
                 HelperMethodBuilder builder,
-                Class<?> wrapperType,
+                Class<? extends WsContext> wrapperType,
                 String wrapper,
                 String key) {
             return CodeBlock.builder()
@@ -3484,21 +3621,26 @@ public final class HelperMethodBuilder {
         }
 
         @Override
-        protected CodeBlock getSingletonMethodBody(
+        protected CodeBlock getScalarMethodBody(
                 HelperMethodBuilder builder,
-                Class<?> wrapperType,
+                Class<? extends WsContext> wrapperType,
+                String defaultValue,
                 String wrapper,
                 String key) {
-            return CodeBlock.builder()
-                .addStatement("$T request = $N.getRequest()", WsRequest.class, wrapper)
-                .addStatement("return request.getCookieValue($N)", key)
-                .build();
+            CodeBlock.Builder bodyBuilder = CodeBlock.builder();
+            bodyBuilder.addStatement("$T request = $N.getRequest()", WsRequest.class, wrapper);
+            if (defaultValue == null) {
+                bodyBuilder.addStatement("return request.getCookieValue($N)", key);
+            } else {
+                bodyBuilder.addStatement("return request.getCookieValue($N, $S)", key, defaultValue);
+            }
+            return bodyBuilder.build();
         }
 
         @Override
-        protected CodeBlock getArrayMethodBody(
+        protected CodeBlock getCollectionMethodBody(
                 HelperMethodBuilder builder,
-                Class<?> wrapperType,
+                Class<? extends WsContext> wrapperType,
                 String wrapper,
                 String key) {
             return CodeBlock.builder()
@@ -3532,9 +3674,10 @@ public final class HelperMethodBuilder {
         }
 
         @Override
-        protected CodeBlock getSingletonMethodBody(
+        protected CodeBlock getScalarMethodBody(
                 HelperMethodBuilder builder,
-                Class<?> wrapperType,
+                Class<? extends WsContext> wrapperType,
+                String defaultValue, // Unused?
                 String wrapper,
                 String key) {
             if (wrapperType == WsMessageContext.class) {
@@ -3545,9 +3688,9 @@ public final class HelperMethodBuilder {
         }
 
         @Override
-        protected CodeBlock getArrayMethodBody(
+        protected CodeBlock getCollectionMethodBody(
                 HelperMethodBuilder builder,
-                Class<?> wrapperType,
+                Class<? extends WsContext> wrapperType,
                 String wrapper,
                 String key) {
             if (wrapperType == WsMessageContext.class) {
@@ -3580,9 +3723,10 @@ public final class HelperMethodBuilder {
         }
 
         @Override
-        protected CodeBlock getSingletonMethodBody(
+        protected CodeBlock getScalarMethodBody(
                 HelperMethodBuilder builder,
-                Class<?> wrapperType,
+                Class<? extends WsContext> wrapperType,
+                String defaultValue,
                 String wrapper,
                 String key) {
             // Build the source helpers for all the other source types
@@ -3590,7 +3734,7 @@ public final class HelperMethodBuilder {
                 WsValueSource source = entry.getKey();
                 if (source != WsValueSource.Any) {
                     WsSourceHelper helper = entry.getValue();
-                    helper.buildScalarHelper(builder, wrapperType);
+                    helper.buildScalarHelper(builder, wrapperType, defaultValue);
                 }
             }
 
@@ -3603,7 +3747,11 @@ public final class HelperMethodBuilder {
                     CodeBlock check = helper.getPresenceCheck("request", key);
                     if (check != null) {
                         codeBuilder.beginControlFlow("if (" + check.toString() + ")");
-                        codeBuilder.addStatement("return $N($N, $N)", helper.getScalarName(), wrapper, key);
+                        if (defaultValue == null) {
+                            codeBuilder.addStatement("return $N($N, $N)", helper.getScalarName(), wrapper, key);
+                        } else {
+                            codeBuilder.addStatement("return $N($N, $N, $S)", helper.getScalarName(), wrapper, key, defaultValue);
+                        }
                         codeBuilder.endControlFlow();
                     }
                 }
@@ -3614,9 +3762,9 @@ public final class HelperMethodBuilder {
         }
 
         @Override
-        protected CodeBlock getArrayMethodBody(
+        protected CodeBlock getCollectionMethodBody(
                 HelperMethodBuilder builder,
-                Class<?> wrapperType,
+                Class<? extends WsContext> wrapperType,
                 String wrapper,
                 String key) {
             // Build the source helpers for all the other source types
@@ -3650,6 +3798,59 @@ public final class HelperMethodBuilder {
         @Override
         public CodeBlock getPresenceCheck(String request, String key) {
             return null;
+        }
+    }
+
+    private static final class WsScalarSourceKey {
+        private final WsValueSource source;
+        private final Class<? extends WsContext> contextType;
+        private final boolean hasDefaultValue;
+
+        private WsScalarSourceKey(
+                WsValueSource source,
+                Class<? extends WsContext> contextType,
+                boolean hasDefaultValue) {
+            this.source = source;
+            this.contextType = contextType;
+            this.hasDefaultValue = hasDefaultValue;
+        }
+
+        public static WsScalarSourceKey of(
+                WsValueSource source,
+                Class<? extends WsContext> contextType,
+                boolean hasDefaultValue) {
+            return new WsScalarSourceKey(source, contextType, hasDefaultValue);
+        }
+
+        public WsValueSource getSource() {
+            return source;
+        }
+
+        public Class<? extends WsContext> getContextType() {
+            return contextType;
+        }
+
+        public boolean isHasDefaultValue() {
+            return hasDefaultValue;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            WsScalarSourceKey that = (WsScalarSourceKey) o;
+            return hasDefaultValue == that.hasDefaultValue
+                && source == that.source
+                && contextType.equals(that.contextType);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(source, contextType, hasDefaultValue);
         }
     }
 

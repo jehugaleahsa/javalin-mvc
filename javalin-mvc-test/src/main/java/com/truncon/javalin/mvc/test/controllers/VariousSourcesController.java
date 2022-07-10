@@ -2,6 +2,7 @@ package com.truncon.javalin.mvc.test.controllers;
 
 import com.truncon.javalin.mvc.api.ActionResult;
 import com.truncon.javalin.mvc.api.Controller;
+import com.truncon.javalin.mvc.api.DefaultValue;
 import com.truncon.javalin.mvc.api.FromCookie;
 import com.truncon.javalin.mvc.api.FromForm;
 import com.truncon.javalin.mvc.api.FromHeader;
@@ -44,6 +45,40 @@ public final class VariousSourcesController {
             @HeaderParam("value") String header,
             @CookieParam("value") String cookie,
             @FormParam("value") String form) {
+        VariousSourcesModel model = new VariousSourcesModel();
+        model.setPath(path);
+        model.setQuery(query);
+        model.setHeader(header);
+        model.setCookie(cookie);
+        model.setForm(form);
+        return new JsonResult(model);
+    }
+
+    public static final String VARIOUS_SOURCES_BUILTIN_DEFAULTS_ROUTE = "/api/various_sources/parameters/builtin-with-defaults";
+    @HttpPost(route = VARIOUS_SOURCES_BUILTIN_DEFAULTS_ROUTE)
+    public ActionResult postVariousSourcesBuiltinWithDefaults(
+            @PathParam("value") @DefaultValue("path") String path,
+            @QueryParam("value") @DefaultValue("query") String query,
+            @HeaderParam("value") @DefaultValue("header") String header,
+            @CookieParam("value") @DefaultValue("cookie") String cookie,
+            @FormParam("value") @DefaultValue("form") String form) {
+        VariousSourcesModel model = new VariousSourcesModel();
+        model.setPath(path);
+        model.setQuery(query);
+        model.setHeader(header);
+        model.setCookie(cookie);
+        model.setForm(form);
+        return new JsonResult(model);
+    }
+
+    public static final String VARIOUS_SOURCES_STANDARD_DEFAULTS_ROUTE = "/api/various_sources/parameters/standard-with-defaults";
+    @HttpPost(route = VARIOUS_SOURCES_STANDARD_DEFAULTS_ROUTE)
+    public ActionResult postVariousSourcesStandardWithDefaults(
+            @PathParam("value") @javax.ws.rs.DefaultValue("path") String path,
+            @QueryParam("value") @javax.ws.rs.DefaultValue("query") String query,
+            @HeaderParam("value") @javax.ws.rs.DefaultValue("header") String header,
+            @CookieParam("value") @javax.ws.rs.DefaultValue("cookie") String cookie,
+            @FormParam("value") @javax.ws.rs.DefaultValue("form") String form) {
         VariousSourcesModel model = new VariousSourcesModel();
         model.setPath(path);
         model.setQuery(query);

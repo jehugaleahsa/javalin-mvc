@@ -114,6 +114,7 @@ final class ParameterGenerator {
 
         String parameterName = getParameterName();
         ValueSource valueSource = getValueSource(parameter);
+        String defaultValue = HelperMethodBuilder.getDefaultValue(parameter);
         String converterName = getConverterName();
         ConverterBuilder converter = converterLookup.get(converterName);
         if (converter == null) {
@@ -162,8 +163,10 @@ final class ParameterGenerator {
         HelperMethodBuilder.ConversionHelper conversionHelper = helperBuilder.getConversionHelper(parameterType);
         if (conversionHelper != null) {
             conversionHelper.addConversionMethod(helperBuilder);
-            String sourceMethod = helperBuilder.addSourceMethod(valueSource, conversionHelper.isCollectionType());
-            String sourceCall = CodeBlock.of("$N($N, $S)", sourceMethod, wrapper, parameterName).toString();
+            String sourceMethod = helperBuilder.addSourceMethod(valueSource, conversionHelper.isCollectionType(), defaultValue);
+            String sourceCall = defaultValue == null
+                ? CodeBlock.of("$N($N, $S)", sourceMethod, wrapper, parameterName).toString()
+                : CodeBlock.of("$N($N, $S, $S)", sourceMethod, wrapper, parameterName, defaultValue).toString();
             String conversionCall = conversionHelper.getConversionCall(sourceCall);
             result.addArgument(conversionCall);
             return;
@@ -249,7 +252,7 @@ final class ParameterGenerator {
 
         String parameterName = getParameterName();
         WsValueSource valueSource = getWsValueSource(parameter);
-
+        String defaultValue = HelperMethodBuilder.getDefaultValue(parameter);
         String converterName = getConverterName();
         ConverterBuilder converter = converterLookup.get(converterName);
         if (converter == null) {
@@ -328,8 +331,11 @@ final class ParameterGenerator {
         HelperMethodBuilder.ConversionHelper conversionHelper = helperBuilder.getConversionHelper(parameterType);
         if (conversionHelper != null) {
             conversionHelper.addConversionMethod(helperBuilder);
-            String sourceMethod = helperBuilder.addSourceMethod(valueSource, wrapperType, conversionHelper.isCollectionType());
-            String sourceCall = CodeBlock.of("$N($N, $S)", sourceMethod, wrapper, parameterName).toString();
+            String sourceMethod = helperBuilder.addSourceMethod(
+                valueSource, wrapperType, conversionHelper.isCollectionType(), defaultValue);
+            String sourceCall = defaultValue == null
+                ? CodeBlock.of("$N($N, $S)", sourceMethod, wrapper, parameterName).toString()
+                : CodeBlock.of("$N($N, $S, $S)", sourceMethod, wrapper, parameterName, defaultValue).toString();
             String conversionCall = conversionHelper.getConversionCall(sourceCall);
             result.addArgument(conversionCall);
             return;

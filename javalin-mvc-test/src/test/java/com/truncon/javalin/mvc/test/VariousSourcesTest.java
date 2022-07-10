@@ -8,6 +8,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import static com.truncon.javalin.mvc.test.RouteBuilder.appendQueryString;
+import static com.truncon.javalin.mvc.test.RouteBuilder.buildRoute;
 import static com.truncon.javalin.mvc.test.RouteBuilder.buildRouteWithPathParams;
 import static com.truncon.javalin.mvc.test.RouteBuilder.param;
 import static com.truncon.javalin.mvc.test.RouteBuilder.pathParams;
@@ -37,7 +38,6 @@ public final class VariousSourcesTest {
         });
     }
 
-
     @Test
     public void testVariousParameterSources_standard_allSourcesBound() {
         AsyncTestUtils.runTest(app -> {
@@ -49,6 +49,40 @@ public final class VariousSourcesTest {
                 .addHeader("value", "header")
                 .addHeader("Cookie", "value=cookie")
                 .bodyForm(new BasicNameValuePair("value", "form"))
+                .execute()
+                .returnContent()
+                .asString();
+            VariousSourcesModel model = QueryUtils.MAPPER.readValue(response, VariousSourcesModel.class);
+            Assert.assertEquals("path", model.getPath());
+            Assert.assertEquals("query", model.getQuery());
+            Assert.assertEquals("header", model.getHeader());
+            Assert.assertEquals("cookie", model.getCookie());
+            Assert.assertEquals("form", model.getForm());
+        });
+    }
+
+    @Test
+    public void testVariousParameterSources_builtin_withDefaults_allSourcesBound() {
+        AsyncTestUtils.runTest(app -> {
+            String route = buildRoute(VariousSourcesController.VARIOUS_SOURCES_BUILTIN_DEFAULTS_ROUTE);
+            String response = Request.Post(route)
+                .execute()
+                .returnContent()
+                .asString();
+            VariousSourcesModel model = QueryUtils.MAPPER.readValue(response, VariousSourcesModel.class);
+            Assert.assertEquals("path", model.getPath());
+            Assert.assertEquals("query", model.getQuery());
+            Assert.assertEquals("header", model.getHeader());
+            Assert.assertEquals("cookie", model.getCookie());
+            Assert.assertEquals("form", model.getForm());
+        });
+    }
+
+    @Test
+    public void testVariousParameterSources_standard_withDefaults_allSourcesBound() {
+        AsyncTestUtils.runTest(app -> {
+            String route = buildRoute(VariousSourcesController.VARIOUS_SOURCES_STANDARD_DEFAULTS_ROUTE);
+            String response = Request.Post(route)
                 .execute()
                 .returnContent()
                 .asString();
