@@ -65,6 +65,19 @@ public final class CollectionParamTest {
     }
 
     @Test
+    public void testSortedSet() {
+        AsyncTestUtils.runTest(app -> {
+            // Default comparator doesn't handle nulls
+            String route = RouteBuilder.buildRouteWithQueryParams(
+                CollectionParameterController.SORTED_SET_ROUTE,
+                queryParams(param("value", "hello"), param("value", "goodbye")));
+            String[] actual = getJsonResponseForGet(route, String[].class);
+            String[] expected = new String[] { "goodbye", "hello" };
+            Assert.assertArrayEquals(expected, actual);
+        });
+    }
+
+    @Test
     public void testArrayList() {
         AsyncTestUtils.runTest(app -> {
             UUID first = UUID.randomUUID();
@@ -130,6 +143,25 @@ public final class CollectionParamTest {
             BigInteger[] actual = getJsonResponseForGet(route, BigInteger[].class);
             BigInteger[] expected = new BigInteger[] {
                 new BigInteger("1234567890"), null, new BigInteger("2345678901")
+            };
+            Assert.assertArrayEquals(expected, actual);
+        });
+    }
+
+    @Test
+    public void testTreeSet() {
+        AsyncTestUtils.runTest(app -> {
+            // Default comparator doesn't handle nulls
+            String route = RouteBuilder.buildRouteWithQueryParams(
+                CollectionParameterController.TREE_SET_ROUTE,
+                queryParams(
+                    param("value", "1234567890"),
+                    param("value", "2345678901")
+                )
+            );
+            BigInteger[] actual = getJsonResponseForGet(route, BigInteger[].class);
+            BigInteger[] expected = new BigInteger[] {
+                new BigInteger("1234567890"), new BigInteger("2345678901")
             };
             Assert.assertArrayEquals(expected, actual);
         });

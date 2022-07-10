@@ -15,6 +15,8 @@ import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.UUID;
 
 @Controller
@@ -43,6 +45,12 @@ public class CollectionParameterController {
         return new JsonResult(values);
     }
 
+    public static final String SORTED_SET_ROUTE = "/api/parameters/collections/sorted_set";
+    @HttpGet(route = SORTED_SET_ROUTE)
+    public ActionResult getSortedSet(@FromQuery("value") SortedSet<String> values) {
+        return new JsonResult(values);
+    }
+
     public static final String ARRAY_LIST_ROUTE = "/api/parameters/collections/array_list";
     @HttpGet(route = ARRAY_LIST_ROUTE)
     public ActionResult getArrayList(@FromQuery("value") ArrayList<UUID> values) {
@@ -64,6 +72,12 @@ public class CollectionParameterController {
     public static final String LINKED_HASH_SET_ROUTE = "/api/parameters/collections/linked_hash_set";
     @HttpGet(route = LINKED_HASH_SET_ROUTE)
     public ActionResult getLinkedHashSet(@FromQuery("value") LinkedHashSet<BigInteger> values) {
+        return new JsonResult(values);
+    }
+
+    public static final String TREE_SET_ROUTE = "/api/parameters/collections/tree_set";
+    @HttpGet(route = TREE_SET_ROUTE)
+    public ActionResult getTreeSet(@FromQuery("value") TreeSet<BigInteger> values) {
         return new JsonResult(values);
     }
 }

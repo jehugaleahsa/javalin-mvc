@@ -67,6 +67,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -120,10 +122,12 @@ public final class HelperMethodBuilder {
         lookup.put(Collection.class, CollectionHelper::new);
         lookup.put(List.class, ListHelper::new);
         lookup.put(Set.class, SetHelper::new);
+        lookup.put(SortedSet.class, SortedSetHelper::new);
         lookup.put(ArrayList.class, ArrayListHelper::new);
         lookup.put(LinkedList.class, LinkedListHelper::new);
         lookup.put(HashSet.class, HashSetHelper::new);
         lookup.put(LinkedHashSet.class, LinkedHashSetHelper::new);
+        lookup.put(TreeSet.class, TreeSetHelper::new);
         return lookup;
     }
 
@@ -2896,6 +2900,27 @@ public final class HelperMethodBuilder {
         }
     }
 
+    private static final class SortedSetHelper extends CollectionConversionHelper {
+        public SortedSetHelper(ConversionHelper conversionHelper) {
+            super(conversionHelper);
+        }
+
+        @Override
+        protected Class<?> getCollectionClass() {
+            return SortedSet.class;
+        }
+
+        @Override
+        protected Class<?> getImplementationClass() {
+            return TreeSet.class;
+        }
+
+        @Override
+        protected boolean acceptsCapacity() {
+            return false;
+        }
+    }
+
     private static final class ArrayListHelper extends CollectionConversionHelper {
         public ArrayListHelper(ConversionHelper conversionHelper) {
             super(conversionHelper);
@@ -2962,6 +2987,27 @@ public final class HelperMethodBuilder {
         @Override
         protected Class<?> getImplementationClass() {
             return LinkedHashSet.class;
+        }
+    }
+
+    private static final class TreeSetHelper extends CollectionConversionHelper {
+        public TreeSetHelper(ConversionHelper conversionHelper) {
+            super(conversionHelper);
+        }
+
+        @Override
+        protected Class<?> getCollectionClass() {
+            return TreeSet.class;
+        }
+
+        @Override
+        protected Class<?> getImplementationClass() {
+            return TreeSet.class;
+        }
+
+        @Override
+        protected boolean acceptsCapacity() {
+            return false;
         }
     }
 
