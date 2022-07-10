@@ -3957,9 +3957,13 @@ public final class HelperMethodBuilder {
                 String wrapper,
                 String key) {
             if (wrapperType == WsMessageContext.class) {
-                return CodeBlock.of("return $T.singletonList($N.getMessage())", Collections.class, wrapper);
+                return CodeBlock.builder()
+                    .addStatement("return $T.singletonList($N.getMessage())", Collections.class, wrapper)
+                    .build();
             } else {
-                return CodeBlock.of("return $T.emptyList()", Collections.class);
+                return CodeBlock.builder()
+                    .addStatement("return $T.emptyList()", Collections.class)
+                    .build();
             }
         }
 

@@ -1,6 +1,5 @@
 package com.truncon.javalin.mvc.test;
 
-import com.truncon.javalin.mvc.test.models.PrimitiveModel;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.StatusCode;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketClose;
@@ -13,11 +12,13 @@ import org.eclipse.jetty.websocket.client.WebSocketClient;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.net.HttpCookie;
 import java.net.URI;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
-import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CountDownLatch;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -139,6 +140,18 @@ public final class WsTestUtils {
             } catch (IOException exception) {
                 throw new UncheckedIOException(exception);
             }
+        }
+
+        public SessionManager setHeader(String header, String value) {
+            session.getUpgradeRequest().setHeader(header, value);
+            return this;
+        }
+
+        public SessionManager setCookie(String cookie, String value) {
+            List<HttpCookie> cookies = new ArrayList<>(session.getUpgradeRequest().getCookies());
+            cookies.add(new HttpCookie(cookie, value));
+            session.getUpgradeRequest().setCookies(cookies);
+            return this;
         }
 
         public CompletableFuture<String> sendStringAndAwaitResponse(String message) {
