@@ -1158,13 +1158,14 @@ public final class HelperMethodBuilder {
             .addModifiers(Modifier.PRIVATE, Modifier.STATIC)
             .returns(InputStream.class)
             .addParameter(WsBinaryMessageContext.class, "context")
-            .addCode(CodeBlock.builder()
-                .addStatement("return new $T(context.getData(), context.getOffset(), context.getLength())", ByteArrayInputStream.class)
-                .build()
+            .addCode(
+                CodeBlock.builder()
+                    .addStatement("return new $T(context.getData(), context.getOffset(), context.getLength())", ByteArrayInputStream.class)
+                    .build()
             )
             .build();
         typeBuilder.addMethod(method);
-        binaryMethods.add(ByteBuffer.class);
+        binaryMethods.add(InputStream.class);
         return BINARY_INPUT_STREAM_METHOD_NAME;
     }
 
