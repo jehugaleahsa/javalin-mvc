@@ -2,9 +2,11 @@ package com.truncon.javalin.mvc.test;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.http.client.utils.URIBuilder;
 
 import java.io.UncheckedIOException;
 import java.io.UnsupportedEncodingException;
+import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -62,21 +64,21 @@ public final class RouteBuilder {
         } catch (UnsupportedEncodingException exception) {
             throw new UncheckedIOException(exception);
         }
-        String queryString = query.stream().map(pair -> {
-            try {
-                String value = pair.getValue();
-                value = StringUtils.defaultIfBlank(value, "");
-                value = URLEncoder.encode(value, StandardCharsets.UTF_8.name());
-                return pair.getKey() + "=" + value;
-            } catch (Exception e) {
-                throw new RuntimeException();
-            }
-        }).collect(Collectors.joining("&"));
         String route = (isWebSockets ? "ws" : "http") + "://localhost:" + AppHost.PORT + path;
-        if (!queryString.isEmpty()) {
-            route = route + "?" + queryString;
-        }
+        route = appendQueryString(route, query);
         return route;
+    }
+
+    public static String appendQueryString(String route, Collection<Pair<String, String>> query) {
+        try {
+            URIBuilder builder = new URIBuilder(route);
+            for (Pair<String, String> nameValuePair : query) {
+                builder.addParameter(nameValuePair.getKey(), nameValuePair.getValue());
+            }
+            return builder.toString();
+        } catch (URISyntaxException exception) {
+            throw new RuntimeException(exception);
+        }
     }
 
     @SafeVarargs
