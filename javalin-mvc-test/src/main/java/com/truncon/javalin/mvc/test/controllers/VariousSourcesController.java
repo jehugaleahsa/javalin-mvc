@@ -17,6 +17,7 @@ import javax.ws.rs.FormParam;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
+import java.util.List;
 
 @Controller
 public final class VariousSourcesController {
@@ -85,6 +86,40 @@ public final class VariousSourcesController {
         model.setHeader(header);
         model.setCookie(cookie);
         model.setForm(form);
+        return new JsonResult(model);
+    }
+
+    public static final String VARIOUS_SOURCES_COLLECTIONS_BUILTIN_DEFAULTS_ROUTE = "/api/various_sources/parameters/collections/builtin-with-defaults";
+    @HttpPost(route = VARIOUS_SOURCES_COLLECTIONS_BUILTIN_DEFAULTS_ROUTE)
+    public ActionResult postVariousSourcesCollectionsBuiltinWithDefaults(
+            @PathParam("value") @DefaultValue("path") List<String> paths,
+            @QueryParam("value") @DefaultValue("query") List<String> queries,
+            @HeaderParam("value") @DefaultValue("header") List<String> headers,
+            @CookieParam("value") @DefaultValue("cookie") List<String> cookies,
+            @FormParam("value") @DefaultValue("form") List<String> forms) {
+        VariousSourcesModel model = new VariousSourcesModel();
+        model.setPath(paths.size() == 1 ? paths.get(0) : null);
+        model.setQuery(queries.size() == 1 ? queries.get(0) : null);
+        model.setHeader(headers.size() == 1 ? headers.get(0) : null);
+        model.setCookie(cookies.size() == 1 ? cookies.get(0) : null);
+        model.setForm(forms.size() == 1 ? forms.get(0) : null);
+        return new JsonResult(model);
+    }
+
+    public static final String VARIOUS_SOURCES_COLLECTIONS_STANDARD_DEFAULTS_ROUTE = "/api/various_sources/parameters/collections/standard-with-defaults";
+    @HttpPost(route = VARIOUS_SOURCES_COLLECTIONS_STANDARD_DEFAULTS_ROUTE)
+    public ActionResult postVariousSourcesCollectionsStandardWithDefaults(
+            @PathParam("value") @javax.ws.rs.DefaultValue("path") List<String> paths,
+            @QueryParam("value") @javax.ws.rs.DefaultValue("query") List<String> queries,
+            @HeaderParam("value") @javax.ws.rs.DefaultValue("header") List<String> headers,
+            @CookieParam("value") @javax.ws.rs.DefaultValue("cookie") List<String> cookies,
+            @FormParam("value") @javax.ws.rs.DefaultValue("form") List<String> forms) {
+        VariousSourcesModel model = new VariousSourcesModel();
+        model.setPath(paths.size() == 1 ? paths.get(0) : null);
+        model.setQuery(queries.size() == 1 ? queries.get(0) : null);
+        model.setHeader(headers.size() == 1 ? headers.get(0) : null);
+        model.setCookie(cookies.size() == 1 ? cookies.get(0) : null);
+        model.setForm(forms.size() == 1 ? forms.get(0) : null);
         return new JsonResult(model);
     }
 }

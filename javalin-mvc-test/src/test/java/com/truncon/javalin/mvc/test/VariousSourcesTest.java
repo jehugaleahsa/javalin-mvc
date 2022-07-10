@@ -94,4 +94,38 @@ public final class VariousSourcesTest {
             Assert.assertEquals("form", model.getForm());
         });
     }
+
+    @Test
+    public void testVariousParameterSources_builtin_collections_withDefaults_allSourcesBound() {
+        AsyncTestUtils.runTest(app -> {
+            String route = buildRoute(VariousSourcesController.VARIOUS_SOURCES_COLLECTIONS_BUILTIN_DEFAULTS_ROUTE);
+            String response = Request.Post(route)
+                .execute()
+                .returnContent()
+                .asString();
+            VariousSourcesModel model = QueryUtils.MAPPER.readValue(response, VariousSourcesModel.class);
+            Assert.assertEquals("path", model.getPath());
+            Assert.assertEquals("query", model.getQuery());
+            Assert.assertEquals("header", model.getHeader());
+            Assert.assertEquals("cookie", model.getCookie());
+            Assert.assertEquals("form", model.getForm());
+        });
+    }
+
+    @Test
+    public void testVariousParameterSources_standard_collections_withDefaults_allSourcesBound() {
+        AsyncTestUtils.runTest(app -> {
+            String route = buildRoute(VariousSourcesController.VARIOUS_SOURCES_COLLECTIONS_STANDARD_DEFAULTS_ROUTE);
+            String response = Request.Post(route)
+                .execute()
+                .returnContent()
+                .asString();
+            VariousSourcesModel model = QueryUtils.MAPPER.readValue(response, VariousSourcesModel.class);
+            Assert.assertEquals("path", model.getPath());
+            Assert.assertEquals("query", model.getQuery());
+            Assert.assertEquals("header", model.getHeader());
+            Assert.assertEquals("cookie", model.getCookie());
+            Assert.assertEquals("form", model.getForm());
+        });
+    }
 }

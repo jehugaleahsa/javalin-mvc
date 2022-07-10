@@ -158,10 +158,10 @@ public final class HelperMethodBuilder {
     private final Set<Class<?>> addedArrayConversionHelpers = new HashSet<>();
     private final Set<String> addedCollectionConversionHelpers = new HashSet<>();
     private final Set<ScalarSourceKey> addedScalarSourceHelpers = new HashSet<>();
-    private final Set<ValueSource> addedArraySourceHelpers = new HashSet<>();
+    private final Set<CollectionSourceKey> addedCollectionSourceHelpers = new HashSet<>();
     private final Set<String> addedFields = new HashSet<>();
     private final Set<WsScalarSourceKey> addedWsScalarSourceHelpers = new HashSet<>();
-    private final Set<ImmutablePair<WsValueSource, Class<?>>> addedArrayWsSourceHelpers = new HashSet<>();
+    private final Set<WsCollectionSourceKey> addedCollectionWsSourceHelpers = new HashSet<>();
     private final Map<ImmutablePair<ValueSource, String>, String> complexConversionLookup = new HashMap<>();
     private final Map<ImmutableTriple<WsValueSource, String, String>, String> complexWsConversionLookup = new HashMap<>();
     private final Map<String, Integer> complexConversionCounts = new HashMap<>();
@@ -1001,7 +1001,7 @@ public final class HelperMethodBuilder {
     public String addSourceMethod(ValueSource valueSource, boolean isCollection, String defaultValue) {
         SourceHelper sourceHelper = SOURCE_HELPER_LOOKUP.get(valueSource);
         if (isCollection) {
-            sourceHelper.buildCollectionHelper(this);
+            sourceHelper.buildCollectionHelper(this, defaultValue);
             return sourceHelper.getCollectionName();
         } else {
             sourceHelper.buildScalarHelper(this, defaultValue);
@@ -1017,7 +1017,7 @@ public final class HelperMethodBuilder {
         // TODO - Check that the wrapper type and value source make sense together
         WsSourceHelper sourceHelper = WS_SOURCE_HELPER_LOOKUP.get(valueSource);
         if (isCollection) {
-            sourceHelper.buildCollectionHelper(this, wrapperType);
+            sourceHelper.buildCollectionHelper(this, wrapperType, defaultValue);
             return sourceHelper.getCollectionName();
         } else {
             sourceHelper.buildScalarHelper(this, wrapperType, defaultValue);
@@ -2998,22 +2998,29 @@ public final class HelperMethodBuilder {
             String context,
             String key);
 
-        public void buildCollectionHelper(HelperMethodBuilder builder) {
-            if (builder.addedArraySourceHelpers.contains(getValueSource())) {
+        public void buildCollectionHelper(HelperMethodBuilder builder, String defaultValue) {
+            CollectionSourceKey key = CollectionSourceKey.of(getValueSource(), defaultValue != null);
+            if (builder.addedCollectionSourceHelpers.contains(key)) {
                 return;
             }
-            MethodSpec method = MethodSpec.methodBuilder(getCollectionName())
+            MethodSpec.Builder methodBuilder = MethodSpec.methodBuilder(getCollectionName())
                 .addModifiers(Modifier.PRIVATE, Modifier.STATIC)
                 .returns(ParameterizedTypeName.get(List.class, String.class))
                 .addParameter(HttpContext.class, "context")
-                .addParameter(String.class, "key")
-                .addCode(getCollectionMethodBody(builder,"context", "key"))
-                .build();
-            builder.typeBuilder.addMethod(method);
-            builder.addedArraySourceHelpers.add(getValueSource());
+                .addParameter(String.class, "key");
+            if (defaultValue != null) {
+                methodBuilder.addParameter(String.class, "defaultValue");
+            }
+            methodBuilder.addCode(getCollectionMethodBody(builder, defaultValue, "context", "key"));
+            builder.typeBuilder.addMethod(methodBuilder.build());
+            builder.addedCollectionSourceHelpers.add(key);
         }
 
-        protected abstract CodeBlock getCollectionMethodBody(HelperMethodBuilder builder, String context, String key);
+        protected abstract CodeBlock getCollectionMethodBody(
+            HelperMethodBuilder builder,
+            String defaultValue,
+            String context,
+            String key);
 
         public abstract CodeBlock getPresenceCheck(String request, String key);
     }
@@ -3045,17 +3052,32 @@ public final class HelperMethodBuilder {
             if (defaultValue == null) {
                 bodyBuilder.addStatement("return request.getPathValue($N)", key);
             } else {
-                bodyBuilder.addStatement("return request.getPathValue($N, $S)", key, defaultValue);
+                bodyBuilder.addStatement("return request.getPathValue($N, $N)", key, "defaultValue");
             }
             return bodyBuilder.build();
         }
 
         @Override
-        protected CodeBlock getCollectionMethodBody(HelperMethodBuilder builder, String wrapper, String key) {
-            return CodeBlock.builder()
-                .addStatement("$T request = $N.getRequest()", HttpRequest.class, wrapper)
-                .addStatement("return request.getPathValues($N)", key)
-                .build();
+        protected CodeBlock getCollectionMethodBody(
+                HelperMethodBuilder builder,
+                String defaultValue,
+                String wrapper,
+                String key) {
+            CodeBlock.Builder bodyBuilder = CodeBlock.builder();
+            bodyBuilder.addStatement("$T request = $N.getRequest()", HttpRequest.class, wrapper);
+            if (defaultValue == null) {
+                bodyBuilder.addStatement("return request.getPathValues($N)", key);
+            } else {
+                bodyBuilder.addStatement(
+                    "$T values = request.getPathValues($N)",
+                    ParameterizedTypeName.get(List.class, String.class),
+                    key);
+                bodyBuilder.addStatement(
+                    "return values.isEmpty() ? $T.singletonList($N) : values",
+                    Collections.class,
+                    "defaultValue");
+            }
+            return bodyBuilder.build();
         }
 
         @Override
@@ -3093,17 +3115,32 @@ public final class HelperMethodBuilder {
             if (defaultValue == null) {
                 bodyBuilder.addStatement("return request.getQueryValue($N)", key);
             } else {
-                bodyBuilder.addStatement("return request.getQueryValue($N, $S)", key, defaultValue);
+                bodyBuilder.addStatement("return request.getQueryValue($N, $N)", key, "defaultValue");
             }
             return bodyBuilder.build();
         }
 
         @Override
-        protected CodeBlock getCollectionMethodBody(HelperMethodBuilder builder, String wrapper, String key) {
-            return CodeBlock.builder()
-                .addStatement("$T request = $N.getRequest()", HttpRequest.class, wrapper)
-                .addStatement("return request.getQueryValues($N)", key)
-                .build();
+        protected CodeBlock getCollectionMethodBody(
+                HelperMethodBuilder builder,
+                String defaultValue,
+                String wrapper,
+                String key) {
+            CodeBlock.Builder bodyBuilder = CodeBlock.builder();
+            bodyBuilder.addStatement("$T request = $N.getRequest()", HttpRequest.class, wrapper);
+            if (defaultValue == null) {
+                bodyBuilder.addStatement("return request.getQueryValues($N)", key);
+            } else {
+                bodyBuilder.addStatement(
+                    "$T values = request.getQueryValues($N)",
+                    ParameterizedTypeName.get(List.class, String.class),
+                    key);
+                bodyBuilder.addStatement(
+                    "return values.isEmpty() ? $T.singletonList($N) : values",
+                    Collections.class,
+                    "defaultValue");
+            }
+            return bodyBuilder.build();
         }
 
         @Override
@@ -3141,17 +3178,32 @@ public final class HelperMethodBuilder {
             if (defaultValue == null) {
                 bodyBuilder.addStatement("return request.getHeaderValue($N)", key);
             } else {
-                bodyBuilder.addStatement("return request.getHeaderValue($N, $S)", key, defaultValue);
+                bodyBuilder.addStatement("return request.getHeaderValue($N, $N)", key, "defaultValue");
             }
             return bodyBuilder.build();
         }
 
         @Override
-        protected CodeBlock getCollectionMethodBody(HelperMethodBuilder builder, String wrapper, String key) {
-            return CodeBlock.builder()
-                .addStatement("$T request = $N.getRequest()", HttpRequest.class, wrapper)
-                .addStatement("return request.getHeaderValues($N)", key)
-                .build();
+        protected CodeBlock getCollectionMethodBody(
+                HelperMethodBuilder builder,
+                String defaultValue,
+                String wrapper,
+                String key) {
+            CodeBlock.Builder bodyBuilder = CodeBlock.builder();
+            bodyBuilder.addStatement("$T request = $N.getRequest()", HttpRequest.class, wrapper);
+            if (defaultValue == null) {
+                bodyBuilder.addStatement("return request.getHeaderValues($N)", key);
+            } else {
+                bodyBuilder.addStatement(
+                    "$T values = request.getHeaderValues($N)",
+                    ParameterizedTypeName.get(List.class, String.class),
+                    key);
+                bodyBuilder.addStatement(
+                    "return values.isEmpty() ? $T.singletonList($N) : values",
+                    Collections.class,
+                    "defaultValue");
+            }
+            return bodyBuilder.build();
         }
 
         @Override
@@ -3189,17 +3241,32 @@ public final class HelperMethodBuilder {
             if (defaultValue == null) {
                 bodyBuilder.addStatement("return request.getCookieValue($N)", key);
             } else {
-                bodyBuilder.addStatement("return request.getCookieValue($N, $S)", key, defaultValue);
+                bodyBuilder.addStatement("return request.getCookieValue($N, $N)", key, "defaultValue");
             }
             return bodyBuilder.build();
         }
 
         @Override
-        protected CodeBlock getCollectionMethodBody(HelperMethodBuilder builder, String wrapper, String key) {
-            return CodeBlock.builder()
-                .addStatement("$T request = $N.getRequest()", HttpRequest.class, wrapper)
-                .addStatement("return request.getCookieValues($N)", key)
-                .build();
+        protected CodeBlock getCollectionMethodBody(
+                HelperMethodBuilder builder,
+                String defaultValue,
+                String wrapper,
+                String key) {
+            CodeBlock.Builder bodyBuilder = CodeBlock.builder();
+            bodyBuilder.addStatement("$T request = $N.getRequest()", HttpRequest.class, wrapper);
+            if (defaultValue == null) {
+                bodyBuilder.addStatement("return request.getCookieValues($N)", key);
+            } else {
+                bodyBuilder.addStatement(
+                    "$T values = request.getCookieValues($N)",
+                    ParameterizedTypeName.get(List.class, String.class),
+                    key);
+                bodyBuilder.addStatement(
+                    "return values.isEmpty() ? $T.singletonList($N) : values",
+                    Collections.class,
+                    "defaultValue");
+            }
+            return bodyBuilder.build();
         }
 
         @Override
@@ -3237,17 +3304,32 @@ public final class HelperMethodBuilder {
             if (defaultValue == null) {
                 bodyBuilder.addStatement("return request.getFormValue($N)", key);
             } else {
-                bodyBuilder.addStatement("return request.getFormValue($N, $S)", key, defaultValue);
+                bodyBuilder.addStatement("return request.getFormValue($N, $N)", key, "defaultValue");
             }
             return bodyBuilder.build();
         }
 
         @Override
-        protected CodeBlock getCollectionMethodBody(HelperMethodBuilder builder, String wrapper, String key) {
-            return CodeBlock.builder()
-                .addStatement("$T request = $N.getRequest()", HttpRequest.class, wrapper)
-                .addStatement("return request.getFormValues($N)", key)
-                .build();
+        protected CodeBlock getCollectionMethodBody(
+                HelperMethodBuilder builder,
+                String defaultValue,
+                String wrapper,
+                String key) {
+            CodeBlock.Builder bodyBuilder = CodeBlock.builder();
+            bodyBuilder.addStatement("$T request = $N.getRequest()", HttpRequest.class, wrapper);
+            if (defaultValue == null) {
+                bodyBuilder.addStatement("return request.getFormValues($N)", key);
+            } else {
+                bodyBuilder.addStatement(
+                    "$T values = request.getFormValues($N)",
+                    ParameterizedTypeName.get(List.class, String.class),
+                    key);
+                bodyBuilder.addStatement(
+                    "return values.isEmpty() ? $T.singletonList($N) : values",
+                    Collections.class,
+                    "defaultValue");
+            }
+            return bodyBuilder.build();
         }
 
         @Override
@@ -3301,7 +3383,7 @@ public final class HelperMethodBuilder {
                         if (defaultValue == null) {
                             codeBuilder.addStatement("return $N($N, $N)", helper.getScalarName(), wrapper, key);
                         } else {
-                            codeBuilder.addStatement("return $N($N, $N, $S)", helper.getScalarName(), wrapper, key, defaultValue);
+                            codeBuilder.addStatement("return $N($N, $N, $N)", helper.getScalarName(), wrapper, key, "defaultValue");
                         }
                         codeBuilder.endControlFlow();
                     }
@@ -3312,13 +3394,13 @@ public final class HelperMethodBuilder {
         }
 
         @Override
-        protected CodeBlock getCollectionMethodBody(HelperMethodBuilder builder, String wrapper, String key) {
+        protected CodeBlock getCollectionMethodBody(HelperMethodBuilder builder, String defaultValue, String wrapper, String key) {
             // Build the source helpers for all the other source types
             for (Map.Entry<ValueSource, SourceHelper> entry : SOURCE_HELPER_LOOKUP.entrySet()) {
                 ValueSource source = entry.getKey();
                 if (source != ValueSource.Any) {
                     SourceHelper helper = entry.getValue();
-                    helper.buildCollectionHelper(builder);
+                    helper.buildCollectionHelper(builder, defaultValue);
                 }
             }
 
@@ -3331,7 +3413,11 @@ public final class HelperMethodBuilder {
                     CodeBlock check = helper.getPresenceCheck("request", key);
                     if (check != null) {
                         codeBuilder.beginControlFlow("if (" + check.toString() + ")");
-                        codeBuilder.addStatement("return $N($N, $N)", helper.getCollectionName(), wrapper, key);
+                        if (defaultValue == null) {
+                            codeBuilder.addStatement("return $N($N, $N)", helper.getCollectionName(), wrapper, key);
+                        } else {
+                            codeBuilder.addStatement("return $N($N, $N, $N)", helper.getCollectionName(), wrapper, key, "defaultValue");
+                        }
                         codeBuilder.endControlFlow();
                     }
                 }
@@ -3385,6 +3471,45 @@ public final class HelperMethodBuilder {
         }
     }
 
+    private static final class CollectionSourceKey {
+        private final ValueSource valueSource;
+        private final boolean hasDefaultValue;
+
+        private CollectionSourceKey(ValueSource valueSource, boolean hasDefaultValue) {
+            this.valueSource = valueSource;
+            this.hasDefaultValue = hasDefaultValue;
+        }
+
+        public static CollectionSourceKey of(ValueSource valueSource, boolean hasDefaultValue) {
+            return new CollectionSourceKey(valueSource, hasDefaultValue);
+        }
+
+        public ValueSource getValueSource() {
+            return valueSource;
+        }
+
+        public boolean isHasDefaultValue() {
+            return hasDefaultValue;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            CollectionSourceKey that = (CollectionSourceKey) o;
+            return hasDefaultValue == that.hasDefaultValue && valueSource == that.valueSource;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(valueSource, hasDefaultValue);
+        }
+    }
+
     // endregion
 
     // region WsSourceHelper
@@ -3402,14 +3527,16 @@ public final class HelperMethodBuilder {
             if (builder.addedWsScalarSourceHelpers.contains(key)) {
                 return;
             }
-            MethodSpec method = MethodSpec.methodBuilder(getScalarName())
+            MethodSpec.Builder methodBuilder = MethodSpec.methodBuilder(getScalarName())
                 .addModifiers(Modifier.PRIVATE, Modifier.STATIC)
                 .returns(String.class)
                 .addParameter(wrapperType, "context")
-                .addParameter(String.class, "key")
-                .addCode(getScalarMethodBody(builder, wrapperType, defaultValue, "context", "key"))
-                .build();
-            builder.typeBuilder.addMethod(method);
+                .addParameter(String.class, "key");
+            if (defaultValue != null) {
+                methodBuilder.addParameter(String.class, "defaultValue");
+            }
+            methodBuilder.addCode(getScalarMethodBody(builder, wrapperType, defaultValue, "context", "key"));
+            builder.typeBuilder.addMethod(methodBuilder.build());
             builder.addedWsScalarSourceHelpers.add(key);
         }
 
@@ -3420,25 +3547,31 @@ public final class HelperMethodBuilder {
             String context,
             String key);
 
-        public void buildCollectionHelper(HelperMethodBuilder builder, Class<? extends WsContext> wrapperType) {
-            ImmutablePair<WsValueSource, Class<?>> key = ImmutablePair.of(getValueSource(), wrapperType);
-            if (builder.addedArrayWsSourceHelpers.contains(key)) {
+        public void buildCollectionHelper(
+                HelperMethodBuilder builder,
+                Class<? extends WsContext> wrapperType,
+                String defaultValue) {
+            WsCollectionSourceKey key = WsCollectionSourceKey.of(getValueSource(), wrapperType, defaultValue != null);
+            if (builder.addedCollectionWsSourceHelpers.contains(key)) {
                 return;
             }
-            MethodSpec method = MethodSpec.methodBuilder(getCollectionName())
+            MethodSpec.Builder methodBuilder = MethodSpec.methodBuilder(getCollectionName())
                 .addModifiers(Modifier.PRIVATE, Modifier.STATIC)
                 .returns(ParameterizedTypeName.get(List.class, String.class))
                 .addParameter(wrapperType, "context")
-                .addParameter(String.class, "key")
-                .addCode(getCollectionMethodBody(builder, wrapperType, "context", "key"))
-                .build();
-            builder.typeBuilder.addMethod(method);
-            builder.addedArrayWsSourceHelpers.add(key);
+                .addParameter(String.class, "key");
+            if (defaultValue != null) {
+                methodBuilder.addParameter(String.class, "defaultValue");
+            }
+            methodBuilder.addCode(getCollectionMethodBody(builder, wrapperType, defaultValue, "context", "key"));
+            builder.typeBuilder.addMethod(methodBuilder.build());
+            builder.addedCollectionWsSourceHelpers.add(key);
         }
 
         protected abstract CodeBlock getCollectionMethodBody(
             HelperMethodBuilder builder,
             Class<? extends WsContext> contextType,
+            String defaultValue,
             String context,
             String key);
 
@@ -3473,7 +3606,7 @@ public final class HelperMethodBuilder {
             if (defaultValue == null) {
                 bodyBuilder.addStatement("return request.getPathValue($N)", key);
             } else {
-                bodyBuilder.addStatement("return request.getPathValue($N, $S)", key, defaultValue);
+                bodyBuilder.addStatement("return request.getPathValue($N, $N)", key, "defaultValue");
             }
             return bodyBuilder.build();
         }
@@ -3482,12 +3615,24 @@ public final class HelperMethodBuilder {
         protected CodeBlock getCollectionMethodBody(
                 HelperMethodBuilder builder,
                 Class<? extends WsContext> wrapperType,
+                String defaultValue,
                 String wrapper,
                 String key) {
-            return CodeBlock.builder()
-                .addStatement("$T request = $N.getRequest()", WsRequest.class, wrapper)
-                .addStatement("return request.getPathValues($N)", key)
-                .build();
+            CodeBlock.Builder bodyBuilder = CodeBlock.builder();
+            bodyBuilder.addStatement("$T request = $N.getRequest()", WsRequest.class, wrapper);
+            if (defaultValue == null) {
+                bodyBuilder.addStatement("return request.getPathValues($N)", key);
+            } else {
+                bodyBuilder.addStatement(
+                    "$T values = request.getPathValues($N)",
+                    ParameterizedTypeName.get(List.class, String.class),
+                    key);
+                bodyBuilder.addStatement(
+                    "return values.isEmpty() ? $T.singletonList($N) : values",
+                    Collections.class,
+                    "defaultValue");
+            }
+            return bodyBuilder.build();
         }
 
         @Override
@@ -3526,7 +3671,7 @@ public final class HelperMethodBuilder {
             if (defaultValue == null) {
                 bodyBuilder.addStatement("return request.getQueryValue($N)", key);
             } else {
-                bodyBuilder.addStatement("return request.getQueryValue($N, $S)", key, defaultValue);
+                bodyBuilder.addStatement("return request.getQueryValue($N, $N)", key, "defaultValue");
             }
             return bodyBuilder.build();
         }
@@ -3535,12 +3680,24 @@ public final class HelperMethodBuilder {
         protected CodeBlock getCollectionMethodBody(
                 HelperMethodBuilder builder,
                 Class<? extends WsContext> wrapperType,
+                String defaultValue,
                 String wrapper,
                 String key) {
-            return CodeBlock.builder()
-                .addStatement("$T request = $N.getRequest()", WsRequest.class, wrapper)
-                .addStatement("return request.getQueryValues($N)", key)
-                .build();
+            CodeBlock.Builder bodyBuilder = CodeBlock.builder();
+            bodyBuilder.addStatement("$T request = $N.getRequest()", WsRequest.class, wrapper);
+            if (defaultValue == null) {
+                bodyBuilder.addStatement("return request.getQueryValues($N)", key);
+            } else {
+                bodyBuilder.addStatement(
+                    "$T values = request.getQueryValues($N)",
+                    ParameterizedTypeName.get(List.class, String.class),
+                    key);
+                bodyBuilder.addStatement(
+                    "return values.isEmpty() ? $T.singletonList($N) : values",
+                    Collections.class,
+                    "defaultValue");
+            }
+            return bodyBuilder.build();
         }
 
         @Override
@@ -3579,7 +3736,7 @@ public final class HelperMethodBuilder {
             if (defaultValue == null) {
                 bodyBuilder.addStatement("return request.getHeaderValue($N)", key);
             } else {
-                bodyBuilder.addStatement("return request.getHeaderValue($N, $S)", key, defaultValue);
+                bodyBuilder.addStatement("return request.getHeaderValue($N, $N)", key, "defaultValue");
             }
             return bodyBuilder.build();
         }
@@ -3588,12 +3745,24 @@ public final class HelperMethodBuilder {
         protected CodeBlock getCollectionMethodBody(
                 HelperMethodBuilder builder,
                 Class<? extends WsContext> wrapperType,
+                String defaultValue,
                 String wrapper,
                 String key) {
-            return CodeBlock.builder()
-                .addStatement("$T request = $N.getRequest()", WsRequest.class, wrapper)
-                .addStatement("return request.getHeaderValues($N)", key)
-                .build();
+            CodeBlock.Builder bodyBuilder = CodeBlock.builder();
+            bodyBuilder.addStatement("$T request = $N.getRequest()", WsRequest.class, wrapper);
+            if (defaultValue == null) {
+                bodyBuilder.addStatement("return request.getHeaderValues($N)", key);
+            } else {
+                bodyBuilder.addStatement(
+                    "$T values = request.getHeaderValues($N)",
+                    ParameterizedTypeName.get(List.class, String.class),
+                    key);
+                bodyBuilder.addStatement(
+                    "return values.isEmpty() ? $T.singletonList($N) : values",
+                    Collections.class,
+                    "defaultValue");
+            }
+            return bodyBuilder.build();
         }
 
         @Override
@@ -3632,7 +3801,7 @@ public final class HelperMethodBuilder {
             if (defaultValue == null) {
                 bodyBuilder.addStatement("return request.getCookieValue($N)", key);
             } else {
-                bodyBuilder.addStatement("return request.getCookieValue($N, $S)", key, defaultValue);
+                bodyBuilder.addStatement("return request.getCookieValue($N, $N)", key, "defaultValue");
             }
             return bodyBuilder.build();
         }
@@ -3641,12 +3810,24 @@ public final class HelperMethodBuilder {
         protected CodeBlock getCollectionMethodBody(
                 HelperMethodBuilder builder,
                 Class<? extends WsContext> wrapperType,
+                String defaultValue,
                 String wrapper,
                 String key) {
-            return CodeBlock.builder()
-                .addStatement("$T request = $N.getRequest()", WsRequest.class, wrapper)
-                .addStatement("return request.getCookieValues($N)", key)
-                .build();
+            CodeBlock.Builder bodyBuilder = CodeBlock.builder();
+            bodyBuilder.addStatement("$T request = $N.getRequest()", WsRequest.class, wrapper);
+            if (defaultValue == null) {
+                bodyBuilder.addStatement("return request.getCookieValues($N)", key);
+            } else {
+                bodyBuilder.addStatement(
+                    "$T values = request.getCookieValues($N)",
+                    ParameterizedTypeName.get(List.class, String.class),
+                    key);
+                bodyBuilder.addStatement(
+                    "return values.isEmpty() ? $T.singletonList($N) : values",
+                    Collections.class,
+                    "defaultValue");
+            }
+            return bodyBuilder.build();
         }
 
         @Override
@@ -3691,6 +3872,7 @@ public final class HelperMethodBuilder {
         protected CodeBlock getCollectionMethodBody(
                 HelperMethodBuilder builder,
                 Class<? extends WsContext> wrapperType,
+                String defaultValue,
                 String wrapper,
                 String key) {
             if (wrapperType == WsMessageContext.class) {
@@ -3750,7 +3932,7 @@ public final class HelperMethodBuilder {
                         if (defaultValue == null) {
                             codeBuilder.addStatement("return $N($N, $N)", helper.getScalarName(), wrapper, key);
                         } else {
-                            codeBuilder.addStatement("return $N($N, $N, $S)", helper.getScalarName(), wrapper, key, defaultValue);
+                            codeBuilder.addStatement("return $N($N, $N, $N)", helper.getScalarName(), wrapper, key, defaultValue, "defaultValue");
                         }
                         codeBuilder.endControlFlow();
                     }
@@ -3765,6 +3947,7 @@ public final class HelperMethodBuilder {
         protected CodeBlock getCollectionMethodBody(
                 HelperMethodBuilder builder,
                 Class<? extends WsContext> wrapperType,
+                String defaultValue,
                 String wrapper,
                 String key) {
             // Build the source helpers for all the other source types
@@ -3772,7 +3955,7 @@ public final class HelperMethodBuilder {
                 WsValueSource source = entry.getKey();
                 if (source != WsValueSource.Any) {
                     WsSourceHelper helper = entry.getValue();
-                    helper.buildCollectionHelper(builder, wrapperType);
+                    helper.buildCollectionHelper(builder, wrapperType, defaultValue);
                 }
             }
 
@@ -3785,7 +3968,11 @@ public final class HelperMethodBuilder {
                     CodeBlock check = helper.getPresenceCheck("request", key);
                     if (check != null) {
                         codeBuilder.beginControlFlow("if (" + check.toString() + ")");
-                        codeBuilder.addStatement("return $N($N, $N)", helper.getCollectionName(), wrapper, key);
+                        if (defaultValue == null) {
+                            codeBuilder.addStatement("return $N($N, $N)", helper.getCollectionName(), wrapper, key);
+                        } else {
+                            codeBuilder.addStatement("return $N($N, $N, $N)", helper.getCollectionName(), wrapper, key, "defaultValue");
+                        }
                         codeBuilder.endControlFlow();
                     }
                 }
@@ -3851,6 +4038,57 @@ public final class HelperMethodBuilder {
         @Override
         public int hashCode() {
             return Objects.hash(source, contextType, hasDefaultValue);
+        }
+    }
+
+    private static final class WsCollectionSourceKey {
+        private final WsValueSource valueSource;
+        private final Class<? extends WsContext> contextType;
+        private final boolean hasDefaultValue;
+
+        private WsCollectionSourceKey(
+                WsValueSource valueSource,
+                Class<? extends WsContext> contextType,
+                boolean hasDefaultValue) {
+            this.valueSource = valueSource;
+            this.contextType = contextType;
+            this.hasDefaultValue = hasDefaultValue;
+        }
+
+        public static WsCollectionSourceKey of(
+                WsValueSource valueSource,
+                Class<? extends WsContext> contextType,
+                boolean hasDefaultValue) {
+            return new WsCollectionSourceKey(valueSource, contextType, hasDefaultValue);
+        }
+
+        public WsValueSource getValueSource() {
+            return valueSource;
+        }
+
+        public Class<? extends WsContext> getContextType() {
+            return contextType;
+        }
+
+        public boolean isHasDefaultValue() {
+            return hasDefaultValue;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            WsCollectionSourceKey that = (WsCollectionSourceKey) o;
+            return hasDefaultValue == that.hasDefaultValue && valueSource == that.valueSource && contextType.equals(that.contextType);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(valueSource, contextType, hasDefaultValue);
         }
     }
 
