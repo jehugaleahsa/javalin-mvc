@@ -61,7 +61,7 @@ Javalin MVC uses annotation processing, so must be setup in your web project's `
 I have no idea how to configure Javalin MVC to run with Gradle. Feel free to submit a PR with the steps listed here if you get this working, and you're feeling generous. 😁
 
 ## Defining a controller
-A controller is a class decorated with the `@Controller` annotation. It can have one or more methods annotated with `@HttpGet`, `@HttpPost`, `@HttpPut`, `@HttpPatch`, `@HttpDelete`, `@HttpHead`, or `@HttpOptions`. Each method is associated with a route and will cause a Javalin route handler to be generated. The route handler simply creates an instance of the controller, then calls the method. Simple!
+A controller is a class decorated with the `@Controller` annotation. It can have one or more methods annotated with `@HttpGet`, `@HttpPost`, `@HttpPut`, `@HttpPatch`, `@HttpDelete`, `@HttpHead`, or `@HttpOptions`. These annotated methods are known as "action methods", and each are associated with a route that will cause a Javalin route handler to be generated. The route handler simply creates an instance of the controller, then calls the method. Simple!
 
 So this:
 
@@ -75,7 +75,7 @@ public final class HomeController {
 } 
 ```
 
-is *essentially* converted to this:
+is *essentially* turned into this:
 
 ```java
 app.get("/", ctx -> {
@@ -212,18 +212,20 @@ Here is a list of supported and/or desired features. An `x` means it is already 
     * [x] Support setting arrays of int, short, byte, char, String, Date, etc.
     * [x] Support binding values from headers, cookies, URL parameters, query strings, and form data
     * [x] Support overriding binding source using `@From*` annotations on a specific member.
+* [ ] Bind `InputStream` from request body (currently accessible via `HttpRequest`)
+* [ ] Bind `byte[]` from request body (currently accessible via `HttpRequest`)
 * [x] Override where parameters are bound from using `@From*` annotations.
 * [x] Support returning `ActionResult` implementations
     * [x] `ContentResult` - return plain strings
     * [x] `JsonResult` - return Object as JSON
-    * [x] `StatusCodeResult` - return HTTP status code (with no body)
+    * [x] `StatusCodeResult` - return HTTP status code (without a body)
     * [x] `RedirectResult` - tell the browser to redirect to another URL
     * [x] `StreamResult` - respond with a stream of bytes (think images, movies, etc.)
     * [x] `DownloadResult` - respond so the browser does a file download
 * [x] Support returning non-`ActionResult` values
     * [x] void (a response must be provided via `HttpResponse` manually)
     * [x] Primitives, Strings, Dates, UUIDs, etc.
-    * [x] Objects using JsonResult
+    * [x] Objects using `JsonResult`
 * [x] Support parameter naming flexibility via `@Named` annotation
 * [x] Support pre-execution interceptor via `@Before`
 * [x] Support post-execution interceptor via `@After`
