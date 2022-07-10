@@ -75,6 +75,7 @@ public final class VariousSourcesTest {
             Assert.assertEquals("header", model.getHeader());
             Assert.assertEquals("cookie", model.getCookie());
             Assert.assertEquals("form", model.getForm());
+            Assert.assertEquals("any", model.getAny());
         });
     }
 
@@ -92,6 +93,7 @@ public final class VariousSourcesTest {
             Assert.assertEquals("header", model.getHeader());
             Assert.assertEquals("cookie", model.getCookie());
             Assert.assertEquals("form", model.getForm());
+            Assert.assertEquals("any", model.getAny());
         });
     }
 
@@ -109,6 +111,7 @@ public final class VariousSourcesTest {
             Assert.assertEquals("header", model.getHeader());
             Assert.assertEquals("cookie", model.getCookie());
             Assert.assertEquals("form", model.getForm());
+            Assert.assertEquals("any", model.getAny());
         });
     }
 
@@ -126,6 +129,7 @@ public final class VariousSourcesTest {
             Assert.assertEquals("header", model.getHeader());
             Assert.assertEquals("cookie", model.getCookie());
             Assert.assertEquals("form", model.getForm());
+            Assert.assertEquals("any", model.getAny());
         });
     }
 }

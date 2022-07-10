@@ -3413,7 +3413,7 @@ public final class HelperMethodBuilder {
                 ValueSource source = entry.getKey();
                 if (source != ValueSource.Any) {
                     SourceHelper helper = entry.getValue();
-                    helper.buildScalarHelper(builder, defaultValue);
+                    helper.buildScalarHelper(builder, null /* We don't pass defaultValue here */);
                 }
             }
 
@@ -3426,16 +3426,16 @@ public final class HelperMethodBuilder {
                     CodeBlock check = helper.getPresenceCheck("request", key);
                     if (check != null) {
                         codeBuilder.beginControlFlow("if (" + check.toString() + ")");
-                        if (defaultValue == null) {
-                            codeBuilder.addStatement("return $N($N, $N)", helper.getScalarName(), wrapper, key);
-                        } else {
-                            codeBuilder.addStatement("return $N($N, $N, $N)", helper.getScalarName(), wrapper, key, "defaultValue");
-                        }
+                        codeBuilder.addStatement("return $N($N, $N)", helper.getScalarName(), wrapper, key);
                         codeBuilder.endControlFlow();
                     }
                 }
             }
-            codeBuilder.addStatement("return null");
+            if (defaultValue == null) {
+                codeBuilder.addStatement("return null");
+            } else {
+                codeBuilder.addStatement("return $N", "defaultValue");
+            }
             return codeBuilder.build();
         }
 
@@ -3446,7 +3446,7 @@ public final class HelperMethodBuilder {
                 ValueSource source = entry.getKey();
                 if (source != ValueSource.Any) {
                     SourceHelper helper = entry.getValue();
-                    helper.buildCollectionHelper(builder, defaultValue);
+                    helper.buildCollectionHelper(builder, null /* We don't pass defaultValue here */);
                 }
             }
 
@@ -3459,16 +3459,16 @@ public final class HelperMethodBuilder {
                     CodeBlock check = helper.getPresenceCheck("request", key);
                     if (check != null) {
                         codeBuilder.beginControlFlow("if (" + check.toString() + ")");
-                        if (defaultValue == null) {
-                            codeBuilder.addStatement("return $N($N, $N)", helper.getCollectionName(), wrapper, key);
-                        } else {
-                            codeBuilder.addStatement("return $N($N, $N, $N)", helper.getCollectionName(), wrapper, key, "defaultValue");
-                        }
+                        codeBuilder.addStatement("return $N($N, $N)", helper.getCollectionName(), wrapper, key);
                         codeBuilder.endControlFlow();
                     }
                 }
             }
-            codeBuilder.addStatement("return $T.$N()", Collections.class, "emptyList");
+            if (defaultValue == null) {
+                codeBuilder.addStatement("return $T.emptyList()", Collections.class);
+            } else {
+                codeBuilder.addStatement("return $T.singletonList($N)", Collections.class, "defaultValue");
+            }
             return codeBuilder.build();
         }
 
@@ -3962,7 +3962,7 @@ public final class HelperMethodBuilder {
                 WsValueSource source = entry.getKey();
                 if (source != WsValueSource.Any) {
                     WsSourceHelper helper = entry.getValue();
-                    helper.buildScalarHelper(builder, wrapperType, defaultValue);
+                    helper.buildScalarHelper(builder, wrapperType, null /* We don't pass defaultValue here */);
                 }
             }
 
@@ -3975,17 +3975,17 @@ public final class HelperMethodBuilder {
                     CodeBlock check = helper.getPresenceCheck("request", key);
                     if (check != null) {
                         codeBuilder.beginControlFlow("if (" + check.toString() + ")");
-                        if (defaultValue == null) {
-                            codeBuilder.addStatement("return $N($N, $N)", helper.getScalarName(), wrapper, key);
-                        } else {
-                            codeBuilder.addStatement("return $N($N, $N, $N)", helper.getScalarName(), wrapper, key, defaultValue, "defaultValue");
-                        }
+                        codeBuilder.addStatement("return $N($N, $N)", helper.getScalarName(), wrapper, key);
                         codeBuilder.endControlFlow();
                     }
                 }
             }
-            WsSourceHelper messageHelper = WS_SOURCE_HELPER_LOOKUP.get(WsValueSource.Message);
-            codeBuilder.addStatement("return $N($N, $N)", messageHelper.getScalarName(), wrapper, key);
+            if (defaultValue == null) {
+                WsSourceHelper messageHelper = WS_SOURCE_HELPER_LOOKUP.get(WsValueSource.Message);
+                codeBuilder.addStatement("return $N($N, $N)", messageHelper.getScalarName(), wrapper, key);
+            } else  {
+                codeBuilder.addStatement("return $N", "defaultValue");
+            }
             return codeBuilder.build();
         }
 
@@ -4001,7 +4001,7 @@ public final class HelperMethodBuilder {
                 WsValueSource source = entry.getKey();
                 if (source != WsValueSource.Any) {
                     WsSourceHelper helper = entry.getValue();
-                    helper.buildCollectionHelper(builder, wrapperType, defaultValue);
+                    helper.buildCollectionHelper(builder, wrapperType, null /* We do not pass defaultValue here */);
                 }
             }
 
@@ -4014,17 +4014,17 @@ public final class HelperMethodBuilder {
                     CodeBlock check = helper.getPresenceCheck("request", key);
                     if (check != null) {
                         codeBuilder.beginControlFlow("if (" + check.toString() + ")");
-                        if (defaultValue == null) {
-                            codeBuilder.addStatement("return $N($N, $N)", helper.getCollectionName(), wrapper, key);
-                        } else {
-                            codeBuilder.addStatement("return $N($N, $N, $N)", helper.getCollectionName(), wrapper, key, "defaultValue");
-                        }
+                        codeBuilder.addStatement("return $N($N, $N)", helper.getCollectionName(), wrapper, key);
                         codeBuilder.endControlFlow();
                     }
                 }
             }
-            WsSourceHelper messageHelper = WS_SOURCE_HELPER_LOOKUP.get(WsValueSource.Message);
-            codeBuilder.addStatement("return $N($N, $N)", messageHelper.getCollectionName(), wrapper, key);
+            if (defaultValue == null) {
+                WsSourceHelper messageHelper = WS_SOURCE_HELPER_LOOKUP.get(WsValueSource.Message);
+                codeBuilder.addStatement("return $N($N, $N)", messageHelper.getCollectionName(), wrapper, key);
+            } else {
+                codeBuilder.addStatement("return $T.singletonList($N)", Collections.class, "defaultValue");
+            }
             return codeBuilder.build();
         }
 

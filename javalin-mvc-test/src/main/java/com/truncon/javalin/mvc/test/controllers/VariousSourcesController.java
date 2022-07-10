@@ -10,6 +10,7 @@ import com.truncon.javalin.mvc.api.FromPath;
 import com.truncon.javalin.mvc.api.FromQuery;
 import com.truncon.javalin.mvc.api.HttpPost;
 import com.truncon.javalin.mvc.api.JsonResult;
+import com.truncon.javalin.mvc.api.Named;
 import com.truncon.javalin.mvc.test.models.VariousSourcesModel;
 
 import javax.ws.rs.CookieParam;
@@ -62,13 +63,15 @@ public final class VariousSourcesController {
             @QueryParam("value") @DefaultValue("query") String query,
             @HeaderParam("value") @DefaultValue("header") String header,
             @CookieParam("value") @DefaultValue("cookie") String cookie,
-            @FormParam("value") @DefaultValue("form") String form) {
+            @FormParam("value") @DefaultValue("form") String form,
+            @DefaultValue("any") @Named("value") String any) {
         VariousSourcesModel model = new VariousSourcesModel();
         model.setPath(path);
         model.setQuery(query);
         model.setHeader(header);
         model.setCookie(cookie);
         model.setForm(form);
+        model.setAny(any);
         return new JsonResult(model);
     }
 
@@ -79,13 +82,15 @@ public final class VariousSourcesController {
             @QueryParam("value") @javax.ws.rs.DefaultValue("query") String query,
             @HeaderParam("value") @javax.ws.rs.DefaultValue("header") String header,
             @CookieParam("value") @javax.ws.rs.DefaultValue("cookie") String cookie,
-            @FormParam("value") @javax.ws.rs.DefaultValue("form") String form) {
+            @FormParam("value") @javax.ws.rs.DefaultValue("form") String form,
+            @javax.ws.rs.DefaultValue("any") @Named("value") String any) {
         VariousSourcesModel model = new VariousSourcesModel();
         model.setPath(path);
         model.setQuery(query);
         model.setHeader(header);
         model.setCookie(cookie);
         model.setForm(form);
+        model.setAny(any);
         return new JsonResult(model);
     }
 
@@ -96,13 +101,15 @@ public final class VariousSourcesController {
             @QueryParam("value") @DefaultValue("query") List<String> queries,
             @HeaderParam("value") @DefaultValue("header") List<String> headers,
             @CookieParam("value") @DefaultValue("cookie") List<String> cookies,
-            @FormParam("value") @DefaultValue("form") List<String> forms) {
+            @FormParam("value") @DefaultValue("form") List<String> forms,
+            @Named("value") @DefaultValue("any") List<String> anyValues) {
         VariousSourcesModel model = new VariousSourcesModel();
         model.setPath(paths.size() == 1 ? paths.get(0) : null);
         model.setQuery(queries.size() == 1 ? queries.get(0) : null);
         model.setHeader(headers.size() == 1 ? headers.get(0) : null);
         model.setCookie(cookies.size() == 1 ? cookies.get(0) : null);
         model.setForm(forms.size() == 1 ? forms.get(0) : null);
+        model.setAny(anyValues.size() == 1 ? anyValues.get(0) : null);
         return new JsonResult(model);
     }
 
@@ -113,13 +120,15 @@ public final class VariousSourcesController {
             @QueryParam("value") @javax.ws.rs.DefaultValue("query") List<String> queries,
             @HeaderParam("value") @javax.ws.rs.DefaultValue("header") List<String> headers,
             @CookieParam("value") @javax.ws.rs.DefaultValue("cookie") List<String> cookies,
-            @FormParam("value") @javax.ws.rs.DefaultValue("form") List<String> forms) {
+            @FormParam("value") @javax.ws.rs.DefaultValue("form") List<String> forms,
+            @Named("value") @javax.ws.rs.DefaultValue("any") List<String> anyValues) {
         VariousSourcesModel model = new VariousSourcesModel();
         model.setPath(paths.size() == 1 ? paths.get(0) : null);
         model.setQuery(queries.size() == 1 ? queries.get(0) : null);
         model.setHeader(headers.size() == 1 ? headers.get(0) : null);
         model.setCookie(cookies.size() == 1 ? cookies.get(0) : null);
         model.setForm(forms.size() == 1 ? forms.get(0) : null);
+        model.setAny(anyValues.size() == 1 ? anyValues.get(0) : null);
         return new JsonResult(model);
     }
 }

@@ -6,6 +6,7 @@ public final class VariousSourcesModel {
     private String header;
     private String cookie;
     private String form;
+    private String any;
 
     public String getPath() {
         return path;
@@ -45,5 +46,13 @@ public final class VariousSourcesModel {
 
     public void setForm(String form) {
         this.form = form;
+    }
+
+    public String getAny() {
+        return any;
+    }
+
+    public void setAny(String any) {
+        this.any = any;
     }
 }
