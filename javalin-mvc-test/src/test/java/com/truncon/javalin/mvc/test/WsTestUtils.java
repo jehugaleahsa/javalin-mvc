@@ -1,5 +1,6 @@
 package com.truncon.javalin.mvc.test;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.StatusCode;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketClose;
@@ -16,6 +17,8 @@ import java.net.HttpCookie;
 import java.net.URI;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -42,6 +45,15 @@ public final class WsTestUtils {
             String route,
             Consumer<WsTestUtils> consumer,
             Function<SessionManager, CompletableFuture<Void>> testBody) {
+        return ws(route, consumer, Collections.emptyList(), Collections.emptyList(), testBody);
+    }
+
+    public static CompletableFuture<Void> ws(
+            String route,
+            Consumer<WsTestUtils> consumer,
+            Collection<Pair<String, String>> headers,
+            Collection<Pair<String, String>> cookies,
+            Function<SessionManager, CompletableFuture<Void>> testBody) {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 WebSocketClient client = new WebSocketClient();
@@ -53,10 +65,18 @@ public final class WsTestUtils {
         }).thenCompose(client -> {
             WsTestUtils utils = new WsTestUtils();
             consumer.accept(utils);
-            Socket socket = new Socket(utils);
-            URI uri = URI.create(route);
-            ClientUpgradeRequest request = new ClientUpgradeRequest();
             try {
+                Socket socket = new Socket(utils);
+                URI uri = URI.create(route);
+                ClientUpgradeRequest request = new ClientUpgradeRequest();
+                for (Pair<String, String> header : headers) {
+                    request.setHeader(header.getKey(), header.getValue());
+                }
+                List<HttpCookie> httpCookies = new ArrayList<>();
+                for (Pair<String, String> cookie : cookies) {
+                    httpCookies.add(new HttpCookie(cookie.getKey(), cookie.getValue()));
+                }
+                request.setCookies(httpCookies);
                 CompletableFuture<Session> future = (CompletableFuture<Session>) client.connect(socket, uri, request);
                 return future.thenApply(session -> new SessionManager(client, socket, session))
                     .thenCompose(sm -> testBody.apply(sm).handleAsync((r, ex) -> {
@@ -140,18 +160,6 @@ public final class WsTestUtils {
             } catch (IOException exception) {
                 throw new UncheckedIOException(exception);
             }
-        }
-
-        public SessionManager setHeader(String header, String value) {
-            session.getUpgradeRequest().setHeader(header, value);
-            return this;
-        }
-
-        public SessionManager setCookie(String cookie, String value) {
-            List<HttpCookie> cookies = new ArrayList<>(session.getUpgradeRequest().getCookies());
-            cookies.add(new HttpCookie(cookie, value));
-            session.getUpgradeRequest().setCookies(cookies);
-            return this;
         }
 
         public CompletableFuture<String> sendStringAndAwaitResponse(String message) {
