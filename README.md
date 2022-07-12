@@ -24,12 +24,12 @@ The following dependencies are needed in your web project:
   <dependency>
     <groupId>com.truncon</groupId>
     <artifactId>javalin-mvc-api</artifactId>
-    <version>4.2.0</version>
+    <version>4.3.0</version>
   </dependency>
   <dependency>
     <groupId>com.truncon</groupId>
     <artifactId>javalin-mvc-core</artifactId>
-    <version>4.2.0</version>
+    <version>4.3.0</version>
   </dependency>
 </dependencies>
 ```
@@ -49,7 +49,7 @@ Javalin MVC uses annotation processing, so must be setup in your web project's `
                     <path>
                         <groupId>com.truncon</groupId>
                         <artifactId>javalin-mvc-generator</artifactId>
-                        <version>4.2.0</version>
+                        <version>4.3.0</version>
                     </path>
                 </annotationProcessorPaths>
             </configuration>
@@ -158,7 +158,7 @@ public final class App {
 
 If you have access to the generated sources, you can inspect the generated `JavalinControllerRegistry.java` file. If you do, you will see most of the file consists of calls to `app.get(...)`, `app.post(...)`, etc.
 
-## Supported Features
+## Feature Overview
 Here is a list of supported and/or desired features. An `x` means it is already supported. Feel free to submit an issue for feature requests!!!
 
 * [x] Specify controllers via `@Controller`
@@ -241,6 +241,11 @@ Here is a list of supported and/or desired features. An `x` means it is already 
     * [x] Inject into bound models
     * [x] Inject into converter classes
     * [x] Inject into `@Before` and `@After` handlers
+* [x] Partial [JAX-RS](https://projects.eclipse.org/projects/ee4j.rest) Support (`javax.ws.rs.*` only)
+  * [x] `@Path`
+  * [x] `@GET`, `@POST`, `@PUT`, `@PATCH`, `@DELETE`, etc.
+  * [x] `@PathParam`, `@QueryParam`, `@HeaderParam`, `@CookieParam`, `@FormParam`
+  * [x] `@DefaultValue`
 * [x] Open API/Swagger Annotations
     * [x] Uses built-in Javalin OpenAPI annotations
 * [x] WebSockets
@@ -278,7 +283,7 @@ There is direct support for [Dagger](https://dagger.dev). To use it, you must co
             <path>
                 <groupId>com.truncon</groupId>
                 <artifactId>javalin-mvc-generator</artifactId>
-                <version>4.2.0</version>
+                <version>4.3.0</version>
             </path>
         </annotationProcessorPaths>
     </configuration>
@@ -514,7 +519,12 @@ One caveat is that you must ensure method names in your controllers are unique; 
 ## WebSockets
 WebSockets are handled by marking classes with the `@WsController` annotation. Unlike HTTP controllers, a WebSocket controller only handles a single route. Each WebSocket controller can process client connections, disconnections, errors, and messages (text or binary). The route the controller will handle is passed as a parameter to the `@WsController` annotation. The methods within the controller can be marked with the `@WsConnect`, `@WsDisconnect`, `@WsError`, `@WsMessage`, or `@WsBinaryMessage` annotations. Only one instance of each annotation can appear within a class; however, the same method can have multiple annotations.
 
-Similar to HTTP controllers, method parameters can be bound from query strings, path parameters, headers, and cookies. Note, there's no support for URL-encoded form data. If you want to explicitly bind a value from a particular source, you can use the same `@From*` annotations, just like for HTTP. In addition, you can use the `@FromJson` annotation to bind parameters directly from the message. You can also use `@FromBinary` to bind binary messages to `byte[]` or `ByteBuffer` parameters.
+Similar to HTTP controllers, method parameters can be bound from query strings, path parameters, 
+headers, and cookies. Note, there's no support for URL-encoded form data as this does not exist 
+for WebSockets. If you want to explicitly bind a value from a particular source, you can use the 
+same `@From*` annotations, just like for HTTP. In addition, you can use the `@FromBody` annotation 
+to bind parameters directly from the message. You can also use `@FromBody` to bind binary messages 
+to `byte[]`, `ByteBuffer`, or `InputStream` parameters.
 
 If a method accepts a `WsContext` object, it will have direct access to the context object. Similarly, you can bind to `WsRequest` and `WsResponse` objects. A method-specific sub-interface exists for each method, so there is a `WsConnectContext`, `WsDisconnectContext`, `WsErrorContext`, `WsMessageContext`, and `WsBinaryMessageContext` that can be used as parameters, as well; however, these will only be initialized if used on the appropriate method.
 
@@ -543,7 +553,7 @@ public final class WsPickleController {
     }
 
     @WsMessage
-    public WsActionResult onMessage(@FromJson Payload payload) {
+    public WsActionResult onMessage(@FromBody Payload payload) {
         return new WsJsonResult(payload);
     }
 }
@@ -760,7 +770,8 @@ however, if you registered your model with DI container, Javalin MVC will use it
 model.
 
 ### JSON and binary binding
-Javalin MVC also allows you to use the `@FromJson` and `@FromBinary` annotations on model members. Just be aware that binding the same binary data multiple times can result in unexpected behavior.
+Javalin MVC also allows you to use the `@FromBody` annotation on model members. 
+Just be aware that binding the same binary data multiple times can result in unexpected behavior.
 
 ## Custom Conversion
 One of the big enhancements with Javalin MVC 2.x is the introduction of custom converters. Custom conversions are performed using a pair of new annotations: `@Converter` and `@UseConverter`. Static and instance methods can be annotated with `@Converter`, so long as they use the correct signature. For example:
@@ -817,6 +828,25 @@ with a DI container, Javalin MVC will use it to instantiate the converter.
 As of Javalin MVC 4.x, there is very early, basic support for incremental builds. In IDE environments, like IntelliJ, compile times are improved by only compiling files that changed. However, the sources that are generated at compile-time by Javalin MVC require looking at every decorated controller class, etc. Javalin MVC solves this by keeping track of which files were previously used so the full output can be generated. Keep in mind that this is very experimental, and if you encounter any issues, please let me know. My expectation is that support for incremental builds will eliminate some of the more mystifying errors reported in the past.
 
 Often, if you can't figure out why the build is failing, try cleaning the project (like deleting the `target` directory or whatever). In IntelliJ, you can also right-click on the module and select Rebuild to perform a full compilation.
+
+## JAX-RS Support
+If you are familiar with the JAX-RS API, specifically it's annotations, you should feel free to 
+use them instead of the equivalent annotations provided by Javalin MVC. Simply add the following 
+dependency:
+
+```xml
+<dependency>
+    <groupId>javax.ws.rs</groupId>
+    <artifactId>javax.ws.rs-api</artifactId>
+    <version>2.1.1</version>
+    <scope>compile</scope>
+</dependency>
+```
+
+Until Javalin MVC is changed to target Java 9+, you must use the `javax.*` annotations instead 
+of `jakarta.*`. Due to Javalin targeting Java 8+, Javalin MVC also targets Java 8+ and the 
+jakarta annotations require a newer Java version. Fortunately, switching from javax to jakarta 
+is a simple find/replace operation.
 
 ## Known Limitations
 Also, note some IDEs incorrectly run the Dagger and Javalin MVC annotation processors out-of-order or at random. Dagger should always run first - otherwise Javalin MVC can't see that a dependency is provided. This often manifests itself as Javalin MVC trying to default-construct a class without a default constructor. 😬 
