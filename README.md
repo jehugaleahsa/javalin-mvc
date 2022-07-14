@@ -212,7 +212,7 @@ Here is a list of supported and/or desired features. An `x` means it is already 
     * [x] Support setting arrays of int, short, byte, char, String, Date, etc.
     * [x] Support binding values from headers, cookies, URL parameters, query strings, and form data
     * [x] Support overriding binding source using `@From*` annotations on a specific member.
-* [ ] Bind `InputStream` from request body (currently accessible via `HttpRequest`)
+* [x] Bind `InputStream` from request body
 * [ ] Bind `byte[]` from request body (currently accessible via `HttpRequest`)
 * [x] Override where parameters are bound from using `@From*` annotations.
 * [x] Support binding default values using `@DefaultValue`
