@@ -779,8 +779,8 @@ One of the big enhancements with Javalin MVC 2.x is the introduction of custom c
 ```java
 @Converter("pair")
 public static Pair parse(HttpRequest request, String name, ValueSource valueSource) {
-    Map<String, Collection<String>> lookup = request.getSourceLookup(valueSource);
-    Collection<String> values = lookup.get(name);
+    Map<String, List<String>> lookup = request.getSourceLookup(valueSource);
+    List<String> values = lookup.get(name);
     return values.size() == 1 ? Pair.parse(values.iterator().next()) : null;
 }
 ```
