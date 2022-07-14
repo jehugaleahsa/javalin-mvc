@@ -250,7 +250,7 @@ Here is a list of supported and/or desired features. An `x` means it is already 
     * [x] Uses built-in Javalin OpenAPI annotations
 * [x] WebSockets
     * [x] Specify routes via `@WsController`
-    * [x] Support `@WsConnect`, `@WsDisconnect`, `@WsError`, `@WsMessage` and WsBinaryMessage annotations
+    * [x] Support `@WsConnect`, `@WsDisconnect`, `@WsError`, `@WsMessage` and `@WsBinaryMessage` annotations
     * [x] Support for data binding
     * [x] Support for `@Before` and `@After` handlers
     * [x] Support returning `CompletableFuture<T>`
