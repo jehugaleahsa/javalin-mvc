@@ -6,10 +6,10 @@ import com.truncon.javalin.mvc.api.ws.WsJsonResult;
 import com.truncon.javalin.mvc.api.ws.WsMessage;
 import com.truncon.javalin.mvc.test.models.VariousSourcesModel;
 
-import javax.ws.rs.CookieParam;
-import javax.ws.rs.HeaderParam;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.QueryParam;
+import jakarta.ws.rs.CookieParam;
+import jakarta.ws.rs.HeaderParam;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.QueryParam;
 
 @WsController(route = VariousSourcesStandardController.ROUTE)
 public final class VariousSourcesStandardController {

@@ -13,11 +13,11 @@ import com.truncon.javalin.mvc.api.JsonResult;
 import com.truncon.javalin.mvc.api.Named;
 import com.truncon.javalin.mvc.test.models.VariousSourcesModel;
 
-import javax.ws.rs.CookieParam;
-import javax.ws.rs.FormParam;
-import javax.ws.rs.HeaderParam;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.QueryParam;
+import jakarta.ws.rs.CookieParam;
+import jakarta.ws.rs.FormParam;
+import jakarta.ws.rs.HeaderParam;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.QueryParam;
 import java.util.List;
 
 @Controller
@@ -78,12 +78,12 @@ public final class VariousSourcesController {
     public static final String VARIOUS_SOURCES_STANDARD_DEFAULTS_ROUTE = "/api/various_sources/parameters/standard-with-defaults";
     @HttpPost(route = VARIOUS_SOURCES_STANDARD_DEFAULTS_ROUTE)
     public ActionResult postVariousSourcesStandardWithDefaults(
-            @PathParam("value") @javax.ws.rs.DefaultValue("path") String path,
-            @QueryParam("value") @javax.ws.rs.DefaultValue("query") String query,
-            @HeaderParam("value") @javax.ws.rs.DefaultValue("header") String header,
-            @CookieParam("value") @javax.ws.rs.DefaultValue("cookie") String cookie,
-            @FormParam("value") @javax.ws.rs.DefaultValue("form") String form,
-            @javax.ws.rs.DefaultValue("any") @Named("value") String any) {
+            @PathParam("value") @jakarta.ws.rs.DefaultValue("path") String path,
+            @QueryParam("value") @jakarta.ws.rs.DefaultValue("query") String query,
+            @HeaderParam("value") @jakarta.ws.rs.DefaultValue("header") String header,
+            @CookieParam("value") @jakarta.ws.rs.DefaultValue("cookie") String cookie,
+            @FormParam("value") @jakarta.ws.rs.DefaultValue("form") String form,
+            @jakarta.ws.rs.DefaultValue("any") @Named("value") String any) {
         VariousSourcesModel model = new VariousSourcesModel();
         model.setPath(path);
         model.setQuery(query);
@@ -116,12 +116,12 @@ public final class VariousSourcesController {
     public static final String VARIOUS_SOURCES_COLLECTIONS_STANDARD_DEFAULTS_ROUTE = "/api/various_sources/parameters/collections/standard-with-defaults";
     @HttpPost(route = VARIOUS_SOURCES_COLLECTIONS_STANDARD_DEFAULTS_ROUTE)
     public ActionResult postVariousSourcesCollectionsStandardWithDefaults(
-            @PathParam("value") @javax.ws.rs.DefaultValue("path") List<String> paths,
-            @QueryParam("value") @javax.ws.rs.DefaultValue("query") List<String> queries,
-            @HeaderParam("value") @javax.ws.rs.DefaultValue("header") List<String> headers,
-            @CookieParam("value") @javax.ws.rs.DefaultValue("cookie") List<String> cookies,
-            @FormParam("value") @javax.ws.rs.DefaultValue("form") List<String> forms,
-            @Named("value") @javax.ws.rs.DefaultValue("any") List<String> anyValues) {
+            @PathParam("value") @jakarta.ws.rs.DefaultValue("path") List<String> paths,
+            @QueryParam("value") @jakarta.ws.rs.DefaultValue("query") List<String> queries,
+            @HeaderParam("value") @jakarta.ws.rs.DefaultValue("header") List<String> headers,
+            @CookieParam("value") @jakarta.ws.rs.DefaultValue("cookie") List<String> cookies,
+            @FormParam("value") @jakarta.ws.rs.DefaultValue("form") List<String> forms,
+            @Named("value") @jakarta.ws.rs.DefaultValue("any") List<String> anyValues) {
         VariousSourcesModel model = new VariousSourcesModel();
         model.setPath(paths.size() == 1 ? paths.get(0) : null);
         model.setQuery(queries.size() == 1 ? queries.get(0) : null);
