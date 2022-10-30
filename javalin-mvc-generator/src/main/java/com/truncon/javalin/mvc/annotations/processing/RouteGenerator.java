@@ -12,7 +12,6 @@ import com.truncon.javalin.mvc.api.HttpPatch;
 import com.truncon.javalin.mvc.api.HttpPost;
 import com.truncon.javalin.mvc.api.HttpPut;
 import com.truncon.javalin.mvc.api.JsonResult;
-import io.javalin.http.Handler;
 import com.truncon.javalin.mvc.JavalinHttpContext;
 import org.apache.commons.lang3.StringUtils;
 
@@ -93,7 +92,7 @@ final class RouteGenerator {
             return new RouteGenerator(controller, method, "get", builtin.route());
         }
         return getRouteGeneratorByStandardAnnotation(
-            controller, method, javax.ws.rs.GET.class, "get", javax.ws.rs.HttpMethod.GET);
+            controller, method, jakarta.ws.rs.GET.class, "get", jakarta.ws.rs.HttpMethod.GET);
     }
 
     private static RouteGenerator getPostRouteGenerator(ControllerSource controller, ExecutableElement method) {
@@ -102,7 +101,7 @@ final class RouteGenerator {
             return new RouteGenerator(controller, method, "post", builtin.route());
         }
         return getRouteGeneratorByStandardAnnotation(
-            controller, method, javax.ws.rs.POST.class, "post", javax.ws.rs.HttpMethod.POST);
+            controller, method, jakarta.ws.rs.POST.class, "post", jakarta.ws.rs.HttpMethod.POST);
     }
 
     private static RouteGenerator getPutRouteGenerator(ControllerSource controller, ExecutableElement method) {
@@ -111,7 +110,7 @@ final class RouteGenerator {
             return new RouteGenerator(controller, method, "put", builtin.route());
         }
         return getRouteGeneratorByStandardAnnotation(
-            controller, method, javax.ws.rs.PUT.class, "put", javax.ws.rs.HttpMethod.PUT);
+            controller, method, jakarta.ws.rs.PUT.class, "put", jakarta.ws.rs.HttpMethod.PUT);
     }
 
     private static RouteGenerator getDeleteRouteGenerator(ControllerSource controller, ExecutableElement method) {
@@ -120,7 +119,7 @@ final class RouteGenerator {
             return new RouteGenerator(controller, method, "delete", builtin.route());
         }
         return getRouteGeneratorByStandardAnnotation(
-            controller, method, javax.ws.rs.DELETE.class, "delete", javax.ws.rs.HttpMethod.DELETE);
+            controller, method, jakarta.ws.rs.DELETE.class, "delete", jakarta.ws.rs.HttpMethod.DELETE);
     }
 
     private static RouteGenerator getPatchRouteGenerator(ControllerSource controller, ExecutableElement method) {
@@ -129,7 +128,7 @@ final class RouteGenerator {
             return new RouteGenerator(controller, method, "patch", builtin.route());
         }
         return getRouteGeneratorByStandardAnnotation(
-            controller, method, javax.ws.rs.PATCH.class, "patch", javax.ws.rs.HttpMethod.PATCH);
+            controller, method, jakarta.ws.rs.PATCH.class, "patch", jakarta.ws.rs.HttpMethod.PATCH);
     }
 
     private static RouteGenerator getHeadRouteGenerator(ControllerSource controller, ExecutableElement method) {
@@ -138,7 +137,7 @@ final class RouteGenerator {
             return new RouteGenerator(controller, method, "head", builtin.route());
         }
         return getRouteGeneratorByStandardAnnotation(
-            controller, method, javax.ws.rs.HEAD.class, "head", javax.ws.rs.HttpMethod.HEAD);
+            controller, method, jakarta.ws.rs.HEAD.class, "head", jakarta.ws.rs.HttpMethod.HEAD);
     }
 
     private static RouteGenerator getConnectRouteGenerator(ControllerSource controller, ExecutableElement method) {
@@ -155,7 +154,7 @@ final class RouteGenerator {
             return new RouteGenerator(controller, method, "options", builtin.route());
         }
         return getRouteGeneratorByStandardAnnotation(
-            controller, method, javax.ws.rs.OPTIONS.class, "options", javax.ws.rs.HttpMethod.OPTIONS);
+            controller, method, jakarta.ws.rs.OPTIONS.class, "options", jakarta.ws.rs.HttpMethod.OPTIONS);
     }
 
     private static RouteGenerator getRouteGeneratorByStandardAnnotation(
@@ -176,7 +175,7 @@ final class RouteGenerator {
             ExecutableElement method,
             String methodType,
             String methodValue) {
-        javax.ws.rs.HttpMethod httpMethod = method.getAnnotation(javax.ws.rs.HttpMethod.class);
+        jakarta.ws.rs.HttpMethod httpMethod = method.getAnnotation(jakarta.ws.rs.HttpMethod.class);
         if (httpMethod != null && methodValue.equals(httpMethod.value())) {
             return getRouteGeneratorForAssociatedPath(controller, method, methodType);
         }
@@ -187,7 +186,7 @@ final class RouteGenerator {
             ControllerSource controller,
             ExecutableElement method,
             String methodType) {
-        javax.ws.rs.Path path = method.getAnnotation(javax.ws.rs.Path.class);
+        jakarta.ws.rs.Path path = method.getAnnotation(jakarta.ws.rs.Path.class);
         String route = path == null ? null : path.value();
         return new RouteGenerator(controller, method, methodType, route);
     }
@@ -200,12 +199,9 @@ final class RouteGenerator {
             int index,
             HelperMethodBuilder helperBuilder,
             Map<String, ConverterBuilder> converterLookup) {
-        ContainerSource container = helperBuilder.getContainer();
-        CodeBlock.Builder handlerBuilder = CodeBlock.builder();
-        handlerBuilder.beginControlFlow("$T handler$L = (ctx) ->", Handler.class, index);
-
         CodeBlock.Builder restBuilder = CodeBlock.builder();
         restBuilder.addStatement("$T wrapper = new $T(ctx)", HttpContext.class, JavalinHttpContext.class);
+        ContainerSource container = helperBuilder.getContainer();
         boolean injectorNeeded = addControllerCreation(restBuilder, container);
 
         List<BeforeGenerator> beforeGenerators = BeforeGenerator.getBeforeGenerators(container, this);
@@ -234,21 +230,34 @@ final class RouteGenerator {
             restBuilder.addStatement("result.execute(wrapper)");
         } else if (methodUtils.hasFutureVoidReturnType(method)) {
             restBuilder.addStatement(
-                "controller.$N(" + parameterResult.getArgumentList() + ")",
-                method.getSimpleName());
+                "$T future = controller.$N(" + parameterResult.getArgumentList() + ")",
+                method.getReturnType(),
+                method.getSimpleName()
+            );
+            restBuilder.addStatement("$N.future(() -> future)", "ctx");
+        } else if (methodUtils.hasFutureActionResultReturnType(method)) {
+            restBuilder.addStatement(
+                "$T future = controller.$N(" + parameterResult.getArgumentList() + ")",
+                method.getReturnType(),
+                method.getSimpleName()
+            );
+            restBuilder.addStatement(
+                "$N.future(() -> future.thenAccept(r -> r.execute($N)))",
+                "ctx",
+                "wrapper"
+            );
         } else if (methodUtils.hasFutureReturnType(method)) {
             restBuilder.addStatement(
                 "$T future = controller.$N(" + parameterResult.getArgumentList() + ")",
                 method.getReturnType(),
-                method.getSimpleName());
+                method.getSimpleName()
+            );
             restBuilder.addStatement(
-                "$N.future(future, r -> (r instanceof $T ? ($T) r : new $T(r)).execute($N))",
+                "$N.future(() -> future.thenAccept(r -> new JsonResult((Object) r).execute($N)))",
                 "ctx",
-                ActionResult.class,
-                ActionResult.class,
-                JsonResult.class,
-                "wrapper");
-        } else {
+                "wrapper"
+            );
+        }  else {
             restBuilder.addStatement(
                 "Object result = controller.$N(" + parameterResult.getArgumentList() + ")",
                 method.getSimpleName());
@@ -274,25 +283,25 @@ final class RouteGenerator {
         }
 
         // Only create an injector if it is actually needed.
+        CodeBlock.Builder handlerBuilder = CodeBlock.builder();
         if (injectorNeeded) {
             handlerBuilder.addStatement("$T injector = $N.get()", container.getInjectorType(), ControllerRegistryGenerator.SCOPE_FACTORY_NAME);
         }
         handlerBuilder.add(restBuilder.build());
 
-        handlerBuilder.endControlFlow();
-        handlerBuilder.addStatement("");
+        String methodName = "httpHandler" + index;
+        helperBuilder.addRouteHandler(methodName, handlerBuilder.build());
 
-        handlerBuilder.addStatement(
-            "handler$L = $T.moveDocumentationFromAnnotationToHandler($T.class, $S, handler$L)",
-            index,
-            io.javalin.plugin.openapi.dsl.OpenApiBuilder.class,
-            typeUtils.erasure(controller.getType().asType()),
-            method.getSimpleName(),
-            index);
+        // TODO - Clone OpenAPI annotations to handler method
 
         return CodeBlock.builder()
-            .add(handlerBuilder.build())
-            .addStatement("$N.$L($S, handler$L)", ControllerRegistryGenerator.APP_NAME, methodType, route, index)
+            .addStatement(
+                "$N.$L($S, this::$N)",
+                ControllerRegistryGenerator.APP_NAME,
+                methodType,
+                route,
+                methodName
+            )
             .build();
     }
 

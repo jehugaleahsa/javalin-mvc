@@ -142,7 +142,7 @@ final class JavalinHttpRequest implements HttpRequest {
 
     @Override
     public InputStream getBodyAsInputStream() {
-        return context.bodyAsInputStream();
+        return context.bodyInputStream();
     }
 
     @Override
@@ -157,7 +157,7 @@ final class JavalinHttpRequest implements HttpRequest {
 
     @Override
     public String getMethod() {
-        return context.method();
+        return context.req().getMethod();
     }
 
     @Override
@@ -176,6 +176,6 @@ final class JavalinHttpRequest implements HttpRequest {
         if (file == null) {
             return null;
         }
-        return new FileUpload(file.getContent(), file.getContentType(), file.getFilename());
+        return new FileUpload(file.content(), file.contentType(), file.filename());
     }
 }

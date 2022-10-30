@@ -57,4 +57,20 @@ final class MethodUtils {
         TypeMirror futureType = declaredType.getTypeArguments().get(0);
         return typeUtils.isSameType(futureType, Void.class);
     }
+
+    public boolean hasFutureActionResultReturnType(ExecutableElement method) {
+        if (!hasFutureReturnType(method)) {
+            return false;
+        }
+        TypeMirror returnType = method.getReturnType();
+        if (!(returnType instanceof DeclaredType)) {
+            return false;
+        }
+        DeclaredType declaredType = (DeclaredType) returnType;
+        if (declaredType.getTypeArguments().size() != 1) {
+            return false;
+        }
+        TypeMirror futureType = declaredType.getTypeArguments().get(0);
+        return typeUtils.isSubtype(futureType, typeUtils.toType(ActionResult.class));
+    }
 }

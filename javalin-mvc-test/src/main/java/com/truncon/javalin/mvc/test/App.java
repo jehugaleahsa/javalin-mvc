@@ -6,17 +6,20 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
-import com.google.inject.Module;
+//import com.google.inject.Module;
 import com.truncon.javalin.mvc.ControllerRegistry;
 import com.truncon.javalin.mvc.JavalinControllerRegistry;
-import io.javalin.plugin.json.JavalinJackson;
-import io.javalin.plugin.json.JsonMapper;
-import io.javalin.plugin.openapi.OpenApiOptions;
-import io.javalin.plugin.openapi.OpenApiPlugin;
-import io.javalin.plugin.openapi.ui.SwaggerOptions;
-import io.swagger.v3.oas.models.info.Info;
+import io.javalin.json.JavalinJackson;
+import io.javalin.json.JsonMapper;
 import io.javalin.Javalin;
 import io.javalin.http.staticfiles.Location;
+import io.javalin.openapi.OpenApiInfo;
+import io.javalin.openapi.plugin.OpenApiConfiguration;
+import io.javalin.openapi.plugin.OpenApiPlugin;
+import io.javalin.openapi.plugin.redoc.ReDocConfiguration;
+import io.javalin.openapi.plugin.redoc.ReDocPlugin;
+import io.javalin.openapi.plugin.swagger.SwaggerConfiguration;
+import io.javalin.openapi.plugin.swagger.SwaggerPlugin;
 import org.apache.log4j.Logger;
 
 public final class App {
@@ -42,9 +45,12 @@ public final class App {
             JsonMapper jsonMapper = new JavalinJackson(mapper);
             config.jsonMapper(jsonMapper);
 
-            config.registerPlugin(new OpenApiPlugin(getOpenApiOptions()));
-            config.addStaticFiles("./public", Location.EXTERNAL);
-            config.addSinglePageRoot("/", "./public/index.html", Location.EXTERNAL);
+            config.plugins.register(new OpenApiPlugin(getOpenApiOptions()));
+            config.plugins.register(new SwaggerPlugin(getSwaggerOptions()));
+            config.plugins.register(new ReDocPlugin(getReDocOptions()));
+
+            config.staticFiles.add("./public", Location.EXTERNAL);
+            config.spaRoot.addFile("/", "./public/index.html", Location.EXTERNAL);
         });
 
         // Provide method of constructing a new DI container
@@ -73,13 +79,24 @@ public final class App {
         app.stop();
     }
 
-    private static OpenApiOptions getOpenApiOptions() {
-        return new OpenApiOptions(new Info()
-                .version("1.0")
-                .description("Pickle Web"))
-            .path("/swagger")
-            .swagger(new SwaggerOptions("/swagger-ui")
-                .title("Pickle Web API Documentation"))
-            .activateAnnotationScanningFor("net.pinnacle21.web");
+    private static OpenApiConfiguration getOpenApiOptions() {
+        OpenApiConfiguration configuration = new OpenApiConfiguration();
+        OpenApiInfo info = configuration.getInfo();
+        info.setVersion("1.0");
+        info.setDescription("Pickle Web");
+        configuration.setDocumentationPath("/openapi");
+        return configuration;
+    }
+
+    private static SwaggerConfiguration getSwaggerOptions() {
+        SwaggerConfiguration configuration = new SwaggerConfiguration();
+        configuration.setUiPath("/swagger");
+        return configuration;
+    }
+
+    private static ReDocConfiguration getReDocOptions() {
+        ReDocConfiguration configuration = new ReDocConfiguration();
+        configuration.setUiPath("/redoc");
+        return configuration;
     }
 }

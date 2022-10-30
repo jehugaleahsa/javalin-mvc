@@ -3,6 +3,7 @@ package com.truncon.javalin.mvc;
 import io.javalin.http.Context;
 
 import com.truncon.javalin.mvc.api.HttpResponse;
+import io.javalin.http.HttpStatus;
 
 import java.io.InputStream;
 
@@ -84,7 +85,7 @@ final class JavalinHttpResponse implements HttpResponse {
 
     @Override
     public HttpResponse redirect(String location, int statusCode) {
-        context.redirect(location, statusCode);
+        context.redirect(location, HttpStatus.forStatus(statusCode));
         return this;
     }
 

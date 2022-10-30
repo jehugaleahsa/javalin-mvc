@@ -86,6 +86,7 @@ final class WsControllerSource {
     }
 
     public CodeBlock generateRouteHandler(
+            int index,
             HelperMethodBuilder helperBuilder,
             Map<String, ConverterBuilder> converterLookup) throws ProcessingException {
         ExecutableElement connectMethod = getAnnotatedMethod(WsConnect.class);
@@ -104,11 +105,11 @@ final class WsControllerSource {
         CodeBlock.Builder handlerBuilder = CodeBlock.builder();
         handlerBuilder.beginControlFlow("$N.ws($S, (ws) ->", ControllerRegistryGenerator.APP_NAME, getRoute());
 
-        addOnConnectHandler(handlerBuilder, connectMethod, helperBuilder, converterLookup);
-        addOnDisconnectHandler(handlerBuilder, disconnectMethod, helperBuilder, converterLookup);
-        addOnErrorHandler(handlerBuilder, errorMethod, helperBuilder, converterLookup);
-        addOnMessageHandler(handlerBuilder, messageMethod, helperBuilder, converterLookup);
-        addOnBinaryMessageHandler(handlerBuilder, binaryMessageMethod, helperBuilder, converterLookup);
+        addOnConnectHandler(index, handlerBuilder, connectMethod, helperBuilder, converterLookup);
+        addOnDisconnectHandler(index, handlerBuilder, disconnectMethod, helperBuilder, converterLookup);
+        addOnErrorHandler(index, handlerBuilder, errorMethod, helperBuilder, converterLookup);
+        addOnMessageHandler(index, handlerBuilder, messageMethod, helperBuilder, converterLookup);
+        addOnBinaryMessageHandler(index, handlerBuilder, binaryMessageMethod, helperBuilder, converterLookup);
 
         handlerBuilder.endControlFlow(")");
         return handlerBuilder.build();
@@ -142,13 +143,16 @@ final class WsControllerSource {
     }
 
     private void addOnConnectHandler(
+            int index,
             CodeBlock.Builder handlerBuilder,
             ExecutableElement method,
             HelperMethodBuilder helperBuilder,
             Map<String, ConverterBuilder> converterLookup) {
         addHandler(
+            index,
             handlerBuilder,
             "onConnect",
+            io.javalin.websocket.WsConnectContext.class,
             WsConnectContext.class,
             JavalinWsConnectContext.class,
             method,
@@ -157,13 +161,16 @@ final class WsControllerSource {
     }
 
     private void addOnDisconnectHandler(
+            int index,
             CodeBlock.Builder handlerBuilder,
             ExecutableElement method,
             HelperMethodBuilder helperBuilder,
             Map<String, ConverterBuilder> converterLookup) {
         addHandler(
+            index,
             handlerBuilder,
             "onClose",
+            io.javalin.websocket.WsCloseContext.class,
             WsDisconnectContext.class,
             JavalinWsDisconnectContext.class,
             method,
@@ -172,13 +179,16 @@ final class WsControllerSource {
     }
 
     private void addOnErrorHandler(
+            int index,
             CodeBlock.Builder handlerBuilder,
             ExecutableElement method,
             HelperMethodBuilder helperBuilder,
             Map<String, ConverterBuilder> converterLookup) {
         addHandler(
+            index,
             handlerBuilder,
             "onError",
+            io.javalin.websocket.WsErrorContext.class,
             WsErrorContext.class,
             JavalinWsErrorContext.class,
             method,
@@ -187,13 +197,16 @@ final class WsControllerSource {
     }
 
     private void addOnMessageHandler(
+            int index,
             CodeBlock.Builder handlerBuilder,
             ExecutableElement method,
             HelperMethodBuilder helperBuilder,
             Map<String, ConverterBuilder> converterLookup) {
         addHandler(
+            index,
             handlerBuilder,
             "onMessage",
+            io.javalin.websocket.WsMessageContext.class,
             WsMessageContext.class,
             JavalinWsMessageContext.class,
             method,
@@ -202,13 +215,16 @@ final class WsControllerSource {
     }
 
     private void addOnBinaryMessageHandler(
+            int index,
             CodeBlock.Builder handlerBuilder,
             ExecutableElement method,
             HelperMethodBuilder helperBuilder,
             Map<String, ConverterBuilder> converterLookup) {
         addHandler(
+            index,
             handlerBuilder,
             "onBinaryMessage",
+            io.javalin.websocket.WsBinaryMessageContext.class,
             WsBinaryMessageContext.class,
             JavalinWsBinaryMessageContext.class,
             method,
@@ -217,8 +233,10 @@ final class WsControllerSource {
     }
 
     private void addHandler(
+            int index,
             CodeBlock.Builder handlerBuilder,
             String javalinHandler,
+            Class<? extends io.javalin.websocket.WsContext> javalinContext,
             Class<? extends WsContext> contextInterface,
             Class<?> contextImpl,
             ExecutableElement method,
@@ -228,14 +246,15 @@ final class WsControllerSource {
             return;
         }
         String context = "ctx";
-        handlerBuilder.beginControlFlow("ws.$N(($N) ->", javalinHandler, context);
         String wrapper = "context";
-        handlerBuilder.addStatement("$T $N = new $T($N)", contextInterface, wrapper, contextImpl, context);
-
         CodeBlock.Builder restBuilder = CodeBlock.builder();
-
         ContainerSource container = helperBuilder.getContainer();
         boolean injectorNeeded = addController(container, restBuilder);
+        if (injectorNeeded) {
+            handlerBuilder.addStatement("$T injector = $N.get()", container.getInjectorType(), ControllerRegistryGenerator.SCOPE_FACTORY_NAME);
+        }
+        restBuilder.addStatement("$T $N = new $T($N)", contextInterface, wrapper, contextImpl, context);
+
 
         List<WsBeforeGenerator> beforeGenerators = WsBeforeGenerator.getBeforeGenerators(container, method);
         List<WsAfterGenerator> afterGenerators = WsAfterGenerator.getAfterGenerators(container, method);
@@ -311,13 +330,11 @@ final class WsControllerSource {
             injectorNeeded |= afterInjectorNeeded;
         }
 
-        // only create injector if needed
-        if (injectorNeeded) {
-            handlerBuilder.addStatement("$T injector = $N.get()", container.getInjectorType(), ControllerRegistryGenerator.SCOPE_FACTORY_NAME);
-        }
-        handlerBuilder.add(restBuilder.build());
+        String methodName = javalinHandler + "WsHandler" + index;
+        helperBuilder.addWsRouteHandler(methodName, javalinContext, restBuilder.build());
 
-        handlerBuilder.endControlFlow(")");
+        // only create injector if needed
+        handlerBuilder.addStatement("ws.$N(this::$N)", javalinHandler, methodName);
     }
 
     private boolean addController(ContainerSource container, CodeBlock.Builder handlerBuilder) {

@@ -434,31 +434,31 @@ final class ParameterGenerator {
         if (parameter.getAnnotation(FromHeader.class) != null) {
             return ValueSource.Header;
         }
-        if (parameter.getAnnotation(javax.ws.rs.HeaderParam.class) != null) {
+        if (parameter.getAnnotation(jakarta.ws.rs.HeaderParam.class) != null) {
             return ValueSource.Header;
         }
         if (parameter.getAnnotation(FromCookie.class) != null) {
             return ValueSource.Cookie;
         }
-        if (parameter.getAnnotation(javax.ws.rs.CookieParam.class) != null) {
+        if (parameter.getAnnotation(jakarta.ws.rs.CookieParam.class) != null) {
             return ValueSource.Cookie;
         }
         if (parameter.getAnnotation(FromPath.class) != null) {
             return ValueSource.Path;
         }
-        if (parameter.getAnnotation(javax.ws.rs.PathParam.class) != null) {
+        if (parameter.getAnnotation(jakarta.ws.rs.PathParam.class) != null) {
             return ValueSource.Path;
         }
         if (parameter.getAnnotation(FromQuery.class) != null) {
             return ValueSource.QueryString;
         }
-        if (parameter.getAnnotation(javax.ws.rs.QueryParam.class) != null) {
+        if (parameter.getAnnotation(jakarta.ws.rs.QueryParam.class) != null) {
             return ValueSource.QueryString;
         }
         if (parameter.getAnnotation(FromForm.class) != null) {
             return ValueSource.FormData;
         }
-        if (parameter.getAnnotation(javax.ws.rs.FormParam.class) != null) {
+        if (parameter.getAnnotation(jakarta.ws.rs.FormParam.class) != null) {
             return ValueSource.FormData;
         }
         if (parameter.getAnnotation(FromBody.class) != null) {
@@ -486,25 +486,25 @@ final class ParameterGenerator {
         if (parameter.getAnnotation(FromHeader.class) != null) {
             return WsValueSource.Header;
         }
-        if (parameter.getAnnotation(javax.ws.rs.HeaderParam.class) != null) {
+        if (parameter.getAnnotation(jakarta.ws.rs.HeaderParam.class) != null) {
             return WsValueSource.Header;
         }
         if (parameter.getAnnotation(FromCookie.class) != null) {
             return WsValueSource.Cookie;
         }
-        if (parameter.getAnnotation(javax.ws.rs.CookieParam.class) != null) {
+        if (parameter.getAnnotation(jakarta.ws.rs.CookieParam.class) != null) {
             return WsValueSource.Cookie;
         }
         if (parameter.getAnnotation(FromPath.class) != null) {
             return WsValueSource.Path;
         }
-        if (parameter.getAnnotation(javax.ws.rs.PathParam.class) != null) {
+        if (parameter.getAnnotation(jakarta.ws.rs.PathParam.class) != null) {
             return WsValueSource.Path;
         }
         if (parameter.getAnnotation(FromQuery.class) != null) {
             return WsValueSource.QueryString;
         }
-        if (parameter.getAnnotation(javax.ws.rs.QueryParam.class) != null) {
+        if (parameter.getAnnotation(jakarta.ws.rs.QueryParam.class) != null) {
             return WsValueSource.QueryString;
         }
         return WsValueSource.Any;

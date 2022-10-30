@@ -36,7 +36,7 @@ final class ControllerSource {
         Stream<TypeElement> controllerTypes = controllerElements.stream()
             .map(TypeElement.class::cast);
         Stream<TypeElement> oldControllerTypes = alternateTypes.stream()
-            .filter(t -> t.getAnnotation(Controller.class) != null || t.getAnnotation(javax.ws.rs.Path.class) != null);
+            .filter(t -> t.getAnnotation(Controller.class) != null || t.getAnnotation(jakarta.ws.rs.Path.class) != null);
         return Stream.concat(controllerTypes, oldControllerTypes)
             .distinct()
             .map(e -> new ControllerSource(typeUtils, e, getPrefix(e)))
@@ -46,7 +46,7 @@ final class ControllerSource {
     private static Set<Element> getControllerElements(RoundEnvironment environment) {
         Set<? extends Element> builtin = environment.getElementsAnnotatedWith(Controller.class);
         Set<Element> elements = new HashSet<>(builtin);
-        List<Element> javax = environment.getElementsAnnotatedWith(javax.ws.rs.Path.class).stream()
+        List<Element> javax = environment.getElementsAnnotatedWith(jakarta.ws.rs.Path.class).stream()
             .filter(e -> e.getKind() == ElementKind.INTERFACE || e.getKind() == ElementKind.CLASS)
             .collect(Collectors.toList());
         elements.addAll(javax);
@@ -68,7 +68,7 @@ final class ControllerSource {
         if (builtin != null) {
             return builtin.prefix();
         }
-        javax.ws.rs.Path javax = element.getAnnotation(javax.ws.rs.Path.class);
+        jakarta.ws.rs.Path javax = element.getAnnotation(jakarta.ws.rs.Path.class);
         if (javax != null) {
             return javax.value();
         }

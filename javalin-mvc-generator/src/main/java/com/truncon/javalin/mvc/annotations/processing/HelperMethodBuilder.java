@@ -28,6 +28,7 @@ import com.truncon.javalin.mvc.api.ws.WsContext;
 import com.truncon.javalin.mvc.api.ws.WsMessageContext;
 import com.truncon.javalin.mvc.api.ws.WsRequest;
 import com.truncon.javalin.mvc.api.ws.WsValueSource;
+import io.javalin.http.Context;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.ImmutableTriple;
@@ -256,31 +257,31 @@ public final class HelperMethodBuilder {
         if (element.getAnnotation(FromPath.class) != null) {
             return ValueSource.Path;
         }
-        if (element.getAnnotation(javax.ws.rs.PathParam.class) != null) {
+        if (element.getAnnotation(jakarta.ws.rs.PathParam.class) != null) {
             return ValueSource.Path;
         }
         if (element.getAnnotation(FromQuery.class) != null) {
             return ValueSource.QueryString;
         }
-        if (element.getAnnotation(javax.ws.rs.QueryParam.class) != null) {
+        if (element.getAnnotation(jakarta.ws.rs.QueryParam.class) != null) {
             return ValueSource.QueryString;
         }
         if (element.getAnnotation(FromHeader.class) != null) {
             return ValueSource.Header;
         }
-        if (element.getAnnotation(javax.ws.rs.HeaderParam.class) != null) {
+        if (element.getAnnotation(jakarta.ws.rs.HeaderParam.class) != null) {
             return ValueSource.Header;
         }
         if (element.getAnnotation(FromCookie.class) != null) {
             return ValueSource.Cookie;
         }
-        if (element.getAnnotation(javax.ws.rs.CookieParam.class) != null) {
+        if (element.getAnnotation(jakarta.ws.rs.CookieParam.class) != null) {
             return ValueSource.Cookie;
         }
         if (element.getAnnotation(FromForm.class) != null) {
             return ValueSource.FormData;
         }
-        if (element.getAnnotation(javax.ws.rs.FormParam.class) != null) {
+        if (element.getAnnotation(jakarta.ws.rs.FormParam.class) != null) {
             return ValueSource.FormData;
         }
         return ValueSource.Any;
@@ -528,31 +529,31 @@ public final class HelperMethodBuilder {
         if (memberElement.getAnnotation(FromHeader.class) != null) {
             return ValueSource.Header;
         }
-        if (memberElement.getAnnotation(javax.ws.rs.HeaderParam.class) != null) {
+        if (memberElement.getAnnotation(jakarta.ws.rs.HeaderParam.class) != null) {
             return ValueSource.Header;
         }
         if (memberElement.getAnnotation(FromCookie.class) != null) {
             return ValueSource.Cookie;
         }
-        if (memberElement.getAnnotation(javax.ws.rs.CookieParam.class) != null) {
+        if (memberElement.getAnnotation(jakarta.ws.rs.CookieParam.class) != null) {
             return ValueSource.Cookie;
         }
         if (memberElement.getAnnotation(FromPath.class) != null) {
             return ValueSource.Path;
         }
-        if (memberElement.getAnnotation(javax.ws.rs.PathParam.class) != null) {
+        if (memberElement.getAnnotation(jakarta.ws.rs.PathParam.class) != null) {
             return ValueSource.Path;
         }
         if (memberElement.getAnnotation(FromQuery.class) != null) {
             return ValueSource.QueryString;
         }
-        if (memberElement.getAnnotation(javax.ws.rs.QueryParam.class) != null) {
+        if (memberElement.getAnnotation(jakarta.ws.rs.QueryParam.class) != null) {
             return ValueSource.QueryString;
         }
         if (memberElement.getAnnotation(FromForm.class) != null) {
             return ValueSource.FormData;
         }
-        if (memberElement.getAnnotation(javax.ws.rs.FormParam.class) != null) {
+        if (memberElement.getAnnotation(jakarta.ws.rs.FormParam.class) != null) {
             return ValueSource.FormData;
         }
         return defaultSource;
@@ -613,27 +614,27 @@ public final class HelperMethodBuilder {
     }
 
     private static String getNameFromStandardAnnotations(Element element) {
-        javax.ws.rs.CookieParam cookie = element.getAnnotation(javax.ws.rs.CookieParam.class);
+        jakarta.ws.rs.CookieParam cookie = element.getAnnotation(jakarta.ws.rs.CookieParam.class);
         String cookieName = cookie == null ? null : StringUtils.stripToNull(cookie.value());
         if (cookieName != null) {
             return cookieName;
         }
-        javax.ws.rs.FormParam form = element.getAnnotation(javax.ws.rs.FormParam.class);
+        jakarta.ws.rs.FormParam form = element.getAnnotation(jakarta.ws.rs.FormParam.class);
         String formName = form == null ? null : StringUtils.stripToNull(form.value());
         if (formName != null) {
             return formName;
         }
-        javax.ws.rs.HeaderParam header = element.getAnnotation(javax.ws.rs.HeaderParam.class);
+        jakarta.ws.rs.HeaderParam header = element.getAnnotation(jakarta.ws.rs.HeaderParam.class);
         String headerName = header == null ? null : StringUtils.stripToNull(header.value());
         if (headerName != null) {
             return headerName;
         }
-        javax.ws.rs.PathParam path = element.getAnnotation(javax.ws.rs.PathParam.class);
+        jakarta.ws.rs.PathParam path = element.getAnnotation(jakarta.ws.rs.PathParam.class);
         String pathName = path == null ? null : StringUtils.stripToNull(path.value());
         if (pathName != null) {
             return pathName;
         }
-        javax.ws.rs.QueryParam query = element.getAnnotation(javax.ws.rs.QueryParam.class);
+        jakarta.ws.rs.QueryParam query = element.getAnnotation(jakarta.ws.rs.QueryParam.class);
         return query == null ? null : StringUtils.stripToNull(query.value());
     }
 
@@ -686,15 +687,15 @@ public final class HelperMethodBuilder {
         }
         //noinspection deprecation
         return hasAnnotation(element, FromPath.class)
-            || hasAnnotation(element, javax.ws.rs.PathParam.class)
+            || hasAnnotation(element, jakarta.ws.rs.PathParam.class)
             || hasAnnotation(element, FromQuery.class)
-            || hasAnnotation(element, javax.ws.rs.QueryParam.class)
+            || hasAnnotation(element, jakarta.ws.rs.QueryParam.class)
             || hasAnnotation(element, FromHeader.class)
-            || hasAnnotation(element, javax.ws.rs.HeaderParam.class)
+            || hasAnnotation(element, jakarta.ws.rs.HeaderParam.class)
             || hasAnnotation(element, FromCookie.class)
-            || hasAnnotation(element, javax.ws.rs.CookieParam.class)
+            || hasAnnotation(element, jakarta.ws.rs.CookieParam.class)
             || hasAnnotation(element, FromForm.class)
-            || hasAnnotation(element, javax.ws.rs.FormParam.class)
+            || hasAnnotation(element, jakarta.ws.rs.FormParam.class)
             || hasAnnotation(element, FromBody.class)
             || hasAnnotation(element, FromJson.class);
     }
@@ -704,7 +705,7 @@ public final class HelperMethodBuilder {
         if (builtin != null) {
             return builtin.value();
         }
-        javax.ws.rs.DefaultValue standard = parameter.getAnnotation(javax.ws.rs.DefaultValue.class);
+        jakarta.ws.rs.DefaultValue standard = parameter.getAnnotation(jakarta.ws.rs.DefaultValue.class);
         if (standard != null) {
             return standard.value();
         }
@@ -715,25 +716,25 @@ public final class HelperMethodBuilder {
         if (element.getAnnotation(FromHeader.class) != null) {
             return WsValueSource.Header;
         }
-        if (element.getAnnotation(javax.ws.rs.HeaderParam.class) != null) {
+        if (element.getAnnotation(jakarta.ws.rs.HeaderParam.class) != null) {
             return WsValueSource.Header;
         }
         if (element.getAnnotation(FromCookie.class) != null) {
             return WsValueSource.Cookie;
         }
-        if (element.getAnnotation(javax.ws.rs.CookieParam.class) != null) {
+        if (element.getAnnotation(jakarta.ws.rs.CookieParam.class) != null) {
             return WsValueSource.Cookie;
         }
         if (element.getAnnotation(FromPath.class) != null) {
             return WsValueSource.Path;
         }
-        if (element.getAnnotation(javax.ws.rs.PathParam.class) != null) {
+        if (element.getAnnotation(jakarta.ws.rs.PathParam.class) != null) {
             return WsValueSource.Path;
         }
         if (element.getAnnotation(FromQuery.class) != null) {
             return WsValueSource.QueryString;
         }
-        if (element.getAnnotation(javax.ws.rs.QueryParam.class) != null) {
+        if (element.getAnnotation(jakarta.ws.rs.QueryParam.class) != null) {
             return WsValueSource.QueryString;
         }
         return WsValueSource.Any;
@@ -951,13 +952,13 @@ public final class HelperMethodBuilder {
         }
         //noinspection deprecation
         return hasAnnotation(element, FromPath.class)
-            || hasAnnotation(element, javax.ws.rs.PathParam.class)
+            || hasAnnotation(element, jakarta.ws.rs.PathParam.class)
             || hasAnnotation(element, FromQuery.class)
-            || hasAnnotation(element, javax.ws.rs.QueryParam.class)
+            || hasAnnotation(element, jakarta.ws.rs.QueryParam.class)
             || hasAnnotation(element, FromHeader.class)
-            || hasAnnotation(element, javax.ws.rs.HeaderParam.class)
+            || hasAnnotation(element, jakarta.ws.rs.HeaderParam.class)
             || hasAnnotation(element, FromCookie.class)
-            || hasAnnotation(element, javax.ws.rs.CookieParam.class)
+            || hasAnnotation(element, jakarta.ws.rs.CookieParam.class)
             || hasAnnotation(element, FromBody.class)
             || hasAnnotation(element, FromJson.class)
             || hasAnnotation(element, FromBinary.class);
@@ -988,25 +989,25 @@ public final class HelperMethodBuilder {
         if (memberElement.getAnnotation(FromHeader.class) != null) {
             return WsValueSource.Header;
         }
-        if (memberElement.getAnnotation(javax.ws.rs.HeaderParam.class) != null) {
+        if (memberElement.getAnnotation(jakarta.ws.rs.HeaderParam.class) != null) {
             return WsValueSource.Header;
         }
         if (memberElement.getAnnotation(FromCookie.class) != null) {
             return WsValueSource.Cookie;
         }
-        if (memberElement.getAnnotation(javax.ws.rs.CookieParam.class) != null) {
+        if (memberElement.getAnnotation(jakarta.ws.rs.CookieParam.class) != null) {
             return WsValueSource.Cookie;
         }
         if (memberElement.getAnnotation(FromPath.class) != null) {
             return WsValueSource.Path;
         }
-        if (memberElement.getAnnotation(javax.ws.rs.PathParam.class) != null) {
+        if (memberElement.getAnnotation(jakarta.ws.rs.PathParam.class) != null) {
             return WsValueSource.Path;
         }
         if (memberElement.getAnnotation(FromQuery.class) != null) {
             return WsValueSource.QueryString;
         }
-        if (memberElement.getAnnotation(javax.ws.rs.QueryParam.class) != null) {
+        if (memberElement.getAnnotation(jakarta.ws.rs.QueryParam.class) != null) {
             return WsValueSource.QueryString;
         }
         return defaultSource;
@@ -1178,6 +1179,26 @@ public final class HelperMethodBuilder {
         return !method.getModifiers().contains(Modifier.STATIC)
             && method.getParameters().size() == 1
             && StringUtils.startsWith(method.getSimpleName(), "set");
+    }
+
+    public void addRouteHandler(String methodName, CodeBlock body) {
+        MethodSpec.Builder methodBuilder = MethodSpec.methodBuilder(methodName)
+            .addModifiers(Modifier.PRIVATE)
+            .returns(void.class)
+            .addException(Exception.class)
+            .addParameter(Context.class, "ctx")
+            .addCode(body);
+        typeBuilder.addMethod(methodBuilder.build());
+    }
+
+    public void addWsRouteHandler(String methodName, Class<?> contextType, CodeBlock body) {
+        MethodSpec.Builder methodBuilder = MethodSpec.methodBuilder(methodName)
+            .addModifiers(Modifier.PRIVATE)
+            .returns(void.class)
+            .addException(Exception.class)
+            .addParameter(contextType, "ctx")
+            .addCode(body);
+        typeBuilder.addMethod(methodBuilder.build());
     }
 
     // region ConversionHelper

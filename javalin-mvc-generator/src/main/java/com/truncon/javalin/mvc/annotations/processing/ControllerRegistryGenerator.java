@@ -12,9 +12,10 @@ import com.squareup.javapoet.TypeSpec;
 import com.truncon.javalin.mvc.ControllerRegistry;
 import com.truncon.javalin.mvc.api.Injector;
 import io.javalin.Javalin;
+import org.apache.commons.lang3.mutable.MutableInt;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 
-import javax.annotation.Generated;
+import jakarta.annotation.Generated;
 import javax.annotation.processing.Filer;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.Modifier;
@@ -30,7 +31,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -143,7 +143,7 @@ final class ControllerRegistryGenerator {
     }
 
     private CodeBlock createHttpRouteHandlers(HelperMethodBuilder helperBuilder) {
-        AtomicInteger index = new AtomicInteger();
+        MutableInt index = new MutableInt();
         Collection<RouteGenerator> generators = controllers.stream()
             .map(ControllerSource::getRouteGenerators)
             .flatMap(Collection::stream)
@@ -151,7 +151,7 @@ final class ControllerRegistryGenerator {
         detectDuplicateRoutes(generators);
         return generators.stream()
             .map(g -> g.generateRouteHandler(index.getAndIncrement(), helperBuilder, converterLookup))
-            .collect(CodeBlock.joining("\n"));
+            .collect(CodeBlock.joining(""));
     }
 
     private static void detectDuplicateRoutes(Collection<RouteGenerator> generators) {
@@ -190,9 +190,10 @@ final class ControllerRegistryGenerator {
     }
 
     private CodeBlock createWsRouteHandlers(HelperMethodBuilder helperBuilder) throws ProcessingException {
+        MutableInt index = new MutableInt();
         return wsControllers.stream()
-            .map(s -> s.generateRouteHandler(helperBuilder, converterLookup))
+            .map(s -> s.generateRouteHandler(index.getAndIncrement(), helperBuilder, converterLookup))
             .filter(Objects::nonNull)
-            .collect(CodeBlock.joining("\n"));
+            .collect(CodeBlock.joining(""));
     }
 }
