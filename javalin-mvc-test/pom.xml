@@ -8,14 +8,14 @@
     <parent>
         <groupId>com.truncon</groupId>
         <artifactId>javalin-mvc</artifactId>
-        <version>4.3.0</version>
+        <version>5.0.0</version>
     </parent>
     <dependencies>
         <!-- Dependency Injection: Example only - only one would really be used -->
         <dependency>
             <groupId>com.google.dagger</groupId>
             <artifactId>dagger</artifactId>
-            <version>2.42</version>
+            <version>2.44</version>
         </dependency>
         <dependency>
             <groupId>com.google.inject</groupId>
@@ -26,71 +26,65 @@
         <dependency>
             <groupId>com.truncon</groupId>
             <artifactId>javalin-mvc-api</artifactId>
-            <version>4.3.0</version>
+            <version>5.0.0</version>
         </dependency>
         <dependency>
             <groupId>com.truncon</groupId>
             <artifactId>javalin-mvc-core</artifactId>
-            <version>4.3.0</version>
+            <version>5.0.0</version>
         </dependency>
         <!-- Javalin -->
         <dependency>
             <groupId>io.javalin</groupId>
             <artifactId>javalin</artifactId>
-            <version>4.6.3</version>
+            <version>5.1.3</version>
         </dependency>
         <dependency>
             <groupId>io.javalin</groupId>
             <artifactId>javalin-openapi</artifactId>
-            <version>4.6.3</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.webjars.npm</groupId>
-                    <artifactId>redoc</artifactId>
-                </exclusion>
-            </exclusions>
+            <version>4.6.7</version>
         </dependency>
         <!-- JSON -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>2.13.3</version>
+            <version>2.13.4.2</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.module</groupId>
             <artifactId>jackson-module-parameter-names</artifactId>
-            <version>2.13.3</version>
+            <version>2.13.4</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-jdk8</artifactId>
-            <version>2.13.3</version>
+            <version>2.13.4</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-jsr310</artifactId>
-            <version>2.13.3</version>
+            <version>2.13.4</version>
         </dependency>
         <!-- Logging -->
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-api</artifactId>
-            <version>2.17.2</version>
+            <version>2.19.0</version>
         </dependency>
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-core</artifactId>
-            <version>2.17.2</version>
+            <version>2.19.0</version>
         </dependency>
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-slf4j-impl</artifactId>
-            <version>2.17.2</version>
+            <version>2.19.0</version>
         </dependency>
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-1.2-api</artifactId>
-            <version>2.17.2</version>
+            <version>2.19.0</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -130,7 +124,7 @@
         <dependency>
             <groupId>org.eclipse.jetty.websocket</groupId>
             <artifactId>websocket-client</artifactId>
-            <version>9.4.46.v20220331</version>
+            <version>9.4.49.v20220914</version>
             <scope>test</scope>
         </dependency>
         <!-- Standard Rest Service API Annotations -->

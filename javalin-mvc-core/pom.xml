@@ -8,20 +8,20 @@
   <parent>
     <groupId>com.truncon</groupId>
     <artifactId>javalin-mvc</artifactId>
-    <version>4.3.0</version>
+    <version>5.0.0</version>
   </parent>
   <dependencies>
     <!-- API definitions -->
     <dependency>
       <groupId>com.truncon</groupId>
       <artifactId>javalin-mvc-api</artifactId>
-      <version>4.3.0</version>
+      <version>5.0.0</version>
     </dependency>
     <!-- Javalin -->
     <dependency>
         <groupId>io.javalin</groupId>
         <artifactId>javalin</artifactId>
-        <version>[4.0.0,5.0.0)</version>
+        <version>[5.0.0,6.0.0)</version>
     </dependency>
   </dependencies>
 </project>
