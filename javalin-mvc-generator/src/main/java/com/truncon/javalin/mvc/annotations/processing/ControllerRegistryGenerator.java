@@ -12,8 +12,6 @@ import com.squareup.javapoet.TypeSpec;
 import com.truncon.javalin.mvc.ControllerRegistry;
 import com.truncon.javalin.mvc.api.Injector;
 import io.javalin.Javalin;
-import org.apache.commons.lang3.mutable.MutableInt;
-import org.apache.commons.lang3.tuple.ImmutablePair;
 
 import jakarta.annotation.Generated;
 import javax.annotation.processing.Filer;
@@ -155,27 +153,27 @@ final class ControllerRegistryGenerator {
     }
 
     private static void detectDuplicateRoutes(Collection<RouteGenerator> generators) {
-        Map<ImmutablePair<String, String>, Set<RouteGenerator>> pairs = new HashMap<>();
+        Map<RouteKey, Set<RouteGenerator>> pairs = new HashMap<>();
         for (RouteGenerator generator : generators) {
-            ImmutablePair<String, String> pair = ImmutablePair.of(generator.getMethodType(), generator.getRoute());
+            RouteKey pair = RouteKey.of(generator.getMethodType(), generator.getRoute());
             pairs.computeIfAbsent(pair, k -> new HashSet<>()).add(generator);
         }
-        Map<ImmutablePair<String, String>, Set<RouteGenerator>> duplicates = new HashMap<>();
-        for (Map.Entry<ImmutablePair<String, String>, Set<RouteGenerator>> pair: pairs.entrySet()) {
+        Map<RouteKey, Set<RouteGenerator>> duplicates = new HashMap<>();
+        for (Map.Entry<RouteKey, Set<RouteGenerator>> pair: pairs.entrySet()) {
             if (pair.getValue().size() > 1) {
                 duplicates.put(pair.getKey(), pair.getValue());
             }
         }
         if (!duplicates.isEmpty()) {
             List<ProcessingException> exceptions = new ArrayList<>(duplicates.size());
-            for (Map.Entry<ImmutablePair<String, String>, Set<RouteGenerator>> pair : duplicates.entrySet()) {
+            for (Map.Entry<RouteKey, Set<RouteGenerator>> pair : duplicates.entrySet()) {
                 String methods = pair.getValue().stream()
                     .map(RouteGenerator::getQualifiedMethodName)
                     .collect(Collectors.joining(", "));
                 String subMessage = "Multiple handlers exist for: "
-                    + pair.getKey().getLeft().toUpperCase() // Method
+                    + pair.getKey().getMethodType().toUpperCase()
                     + " "
-                    + pair.getKey().getRight() // Route
+                    + pair.getKey().getRoute()
                     + ". Implementations found: "
                     + methods
                     + ".";
@@ -195,5 +193,44 @@ final class ControllerRegistryGenerator {
             .map(s -> s.generateRouteHandler(index.getAndIncrement(), helperBuilder, converterLookup))
             .filter(Objects::nonNull)
             .collect(CodeBlock.joining(""));
+    }
+
+    private static final class RouteKey {
+        private final String methodType;
+        private final String route;
+
+        private RouteKey(String methodType, String route) {
+            this.methodType = methodType;
+            this.route = route;
+        }
+
+        public static RouteKey of(String methodType, String route) {
+            return new RouteKey(methodType, route);
+        }
+
+        public String getMethodType() {
+            return methodType;
+        }
+
+        public String getRoute() {
+            return route;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            RouteKey routeKey = (RouteKey) o;
+            return methodType.equals(routeKey.methodType) && route.equals(routeKey.route);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(methodType, route);
+        }
     }
 }

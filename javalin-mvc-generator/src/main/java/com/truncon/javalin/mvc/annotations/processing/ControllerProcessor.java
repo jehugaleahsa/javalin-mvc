@@ -17,7 +17,6 @@ import com.truncon.javalin.mvc.api.MvcComponent;
 import com.truncon.javalin.mvc.api.Converter;
 import com.truncon.javalin.mvc.api.UseConverter;
 import com.truncon.javalin.mvc.api.ws.WsController;
-import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import java.io.BufferedReader;
 import java.io.IOException;

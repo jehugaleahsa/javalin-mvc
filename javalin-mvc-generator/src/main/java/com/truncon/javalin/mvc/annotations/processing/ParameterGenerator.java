@@ -26,7 +26,6 @@ import com.truncon.javalin.mvc.api.ws.WsRequest;
 import com.truncon.javalin.mvc.api.ws.WsResponse;
 import com.truncon.javalin.mvc.api.ws.WsValueSource;
 import io.javalin.http.Context;
-import org.apache.commons.lang3.StringUtils;
 
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;

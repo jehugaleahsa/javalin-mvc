@@ -29,9 +29,6 @@ import com.truncon.javalin.mvc.api.ws.WsMessageContext;
 import com.truncon.javalin.mvc.api.ws.WsRequest;
 import com.truncon.javalin.mvc.api.ws.WsValueSource;
 import io.javalin.http.Context;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.commons.lang3.tuple.ImmutableTriple;
 
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
@@ -171,8 +168,8 @@ public final class HelperMethodBuilder {
     private final Set<String> addedFields = new HashSet<>();
     private final Set<WsScalarSourceKey> addedWsScalarSourceHelpers = new HashSet<>();
     private final Set<WsCollectionSourceKey> addedCollectionWsSourceHelpers = new HashSet<>();
-    private final Map<ImmutablePair<ValueSource, String>, String> complexConversionLookup = new HashMap<>();
-    private final Map<ImmutableTriple<WsValueSource, String, String>, String> complexWsConversionLookup = new HashMap<>();
+    private final Map<ConversionTypeKey, String> complexConversionLookup = new HashMap<>();
+    private final Map<WsConversionTypeKey, String> complexWsConversionLookup = new HashMap<>();
     private final Map<String, Integer> complexConversionCounts = new HashMap<>();
     private final Set<Class<?>> jsonMethods = new HashSet<>();
     private final Set<Class<?>> binaryMethods = new HashSet<>();
@@ -299,7 +296,7 @@ public final class HelperMethodBuilder {
             TypeElement element,
             ValueSource defaultSource,
             Set<String> visitedTypes) {
-        ImmutablePair<ValueSource, String> key = ImmutablePair.of(defaultSource, element.getQualifiedName().toString());
+        ConversionTypeKey key = ConversionTypeKey.of(defaultSource, element);
         String methodName = complexConversionLookup.get(key);
         if (methodName != null) {
             return new ConversionMethodResult(methodName, false);
@@ -756,10 +753,7 @@ public final class HelperMethodBuilder {
             WsValueSource defaultSource,
             Class<? extends WsContext> contextType,
             Set<String> visitedTypes) {
-        ImmutableTriple<WsValueSource, String, String> key = ImmutableTriple.of(
-            defaultSource,
-            element.getQualifiedName().toString(),
-            contextType.getSimpleName());
+        WsConversionTypeKey key = WsConversionTypeKey.of(defaultSource, element, contextType);
         String methodName = complexWsConversionLookup.get(key);
         if (methodName != null) {
             return new ConversionMethodResult(methodName, false);
@@ -1178,7 +1172,7 @@ public final class HelperMethodBuilder {
     private static boolean isSetter(ExecutableElement method) {
         return !method.getModifiers().contains(Modifier.STATIC)
             && method.getParameters().size() == 1
-            && StringUtils.startsWith(method.getSimpleName(), "set");
+            && StringUtils.startsWith(method.getSimpleName().toString(), "set");
     }
 
     public void addRouteHandler(String methodName, CodeBlock body) {
@@ -4199,4 +4193,101 @@ public final class HelperMethodBuilder {
     }
 
     // endregion
+
+    private static final class ConversionTypeKey {
+        private final ValueSource source;
+        private final TypeElement element;
+        
+        private ConversionTypeKey(ValueSource source, TypeElement element) {
+            this.source = source;
+            this.element = element;
+        }
+
+        public static ConversionTypeKey of(ValueSource source, TypeElement element) {
+            return new ConversionTypeKey(source, element);
+        }
+
+        public ValueSource getSource() {
+            return source;
+        }
+
+        public TypeElement getElement() {
+            return element;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            ConversionTypeKey that = (ConversionTypeKey) o;
+            return source.equals(that.source)
+                && element.getQualifiedName().toString().equals(that.element.getQualifiedName().toString());
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(source, element.getQualifiedName().toString());
+        }
+    }
+
+    private static final class WsConversionTypeKey {
+        private final WsValueSource source;
+        private final TypeElement element;
+        private final Class<? extends WsContext> contextType;
+
+        private WsConversionTypeKey(
+                WsValueSource source,
+                TypeElement element,
+                Class<? extends WsContext> contextType) {
+            this.source = source;
+            this.element = element;
+            this.contextType = contextType;
+        }
+
+        public static WsConversionTypeKey of(
+                WsValueSource source,
+                TypeElement element,
+                Class<? extends WsContext> contextType) {
+            return new WsConversionTypeKey(source, element, contextType);
+        }
+
+        public WsValueSource getSource() {
+            return source;
+        }
+
+        public TypeElement getElement() {
+            return element;
+        }
+
+        public Class<? extends WsContext> getContextType() {
+            return contextType;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            WsConversionTypeKey that = (WsConversionTypeKey) o;
+            return source.equals(that.source)
+                && element.getQualifiedName().toString().equals(that.element.getQualifiedName().toString())
+                && contextType.getSimpleName().equals(that.contextType.getSimpleName());
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(
+                source,
+                element.getQualifiedName().toString(),
+                contextType.getSimpleName()
+            );
+        }
+    }
 }

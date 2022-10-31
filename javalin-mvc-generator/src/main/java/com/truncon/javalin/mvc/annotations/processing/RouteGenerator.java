@@ -13,7 +13,6 @@ import com.truncon.javalin.mvc.api.HttpPost;
 import com.truncon.javalin.mvc.api.HttpPut;
 import com.truncon.javalin.mvc.api.JsonResult;
 import com.truncon.javalin.mvc.JavalinHttpContext;
-import org.apache.commons.lang3.StringUtils;
 
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
