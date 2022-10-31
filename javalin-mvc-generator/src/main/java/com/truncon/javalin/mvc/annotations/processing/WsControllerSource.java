@@ -283,31 +283,46 @@ final class WsControllerSource {
             restBuilder.addStatement("controller.$N(" + parameterResult.getArgumentList() + ")", method.getSimpleName());
         } else if (methodUtils.hasWsActionResultReturnType(method)) {
             restBuilder.addStatement(
-                "$T result = controller.$N(" + parameterResult.getArgumentList() + ")",
+                "$T result = controller.$N($L)",
                 WsActionResult.class,
-                method.getSimpleName());
+                method.getSimpleName(),
+                parameterResult.getArgumentList()
+            );
             restBuilder.addStatement("result.execute($N)", wrapper);
         } else if (methodUtils.hasFutureVoidReturnType(method)) {
             restBuilder.addStatement(
-                "controller.$N(" + parameterResult.getArgumentList() + ")",
-                method.getSimpleName());
+                "controller.$N($L)",
+                method.getSimpleName(),
+                parameterResult.getArgumentList()
+            );
+        } else if (methodUtils.hasFutureActionResultReturnType(method)) {
+            restBuilder.addStatement(
+                "controller.$N($L).thenAccept(p -> p.execute($N))",
+                method.getSimpleName(),
+                parameterResult.getArgumentList(),
+                WsActionResult.class,
+                WsActionResult.class,
+                WsJsonResult.class,
+                wrapper
+            );
         } else if (methodUtils.hasFutureReturnType(method)) {
             // Since the return type can be any reference type, we must first cast to
             // Object to avoid potential compiler errors.
             restBuilder.addStatement(
-                "$T future = controller.$N(" + parameterResult.getArgumentList() + ")",
-                method.getReturnType(),
-                method.getSimpleName());
-            restBuilder.addStatement(
-                "future.thenAccept(p -> ((Object) p instanceof $T ? ($T)(Object) p : new $T(p)).execute($N))",
+                "controller.$N($L).thenAccept(p -> ((Object) p instanceof $T ? ($T)(Object) p : new $T(p)).execute($N))",
+                method.getSimpleName(),
+                parameterResult.getArgumentList(),
                 WsActionResult.class,
                 WsActionResult.class,
                 WsJsonResult.class,
-                wrapper);
+                wrapper
+            );
         } else {
             restBuilder.addStatement(
-                "Object result = controller.$N(" + parameterResult.getArgumentList() + ")",
-                method.getSimpleName());
+                "Object result = controller.$N($L)",
+                method.getSimpleName(),
+                parameterResult.getArgumentList()
+            );
             restBuilder.addStatement(
                 "(result instanceof $T ? ($T) result : new $T(result)).execute($N)",
                 WsActionResult.class,

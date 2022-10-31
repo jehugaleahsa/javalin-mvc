@@ -219,47 +219,52 @@ final class RouteGenerator {
         MethodUtils methodUtils = new MethodUtils(typeUtils);
         if (methodUtils.hasVoidReturnType(method)) {
             restBuilder.addStatement(
-                "controller.$N(" + parameterResult.getArgumentList() + ")",
-                method.getSimpleName());
+                "controller.$N($L)",
+                method.getSimpleName(),
+                parameterResult.getArgumentList()
+            );
         } else if (methodUtils.hasActionResultReturnType(method)) {
             restBuilder.addStatement(
-                "$T result = controller.$N(" + parameterResult.getArgumentList() + ")",
+                "$T result = controller.$N($L)",
                 ActionResult.class,
-                method.getSimpleName());
+                method.getSimpleName(),
+                parameterResult.getArgumentList()
+            );
             restBuilder.addStatement("result.execute(wrapper)");
         } else if (methodUtils.hasFutureVoidReturnType(method)) {
             restBuilder.addStatement(
-                "$T future = controller.$N(" + parameterResult.getArgumentList() + ")",
-                method.getReturnType(),
-                method.getSimpleName()
+                "$N.future(() -> controller.$N($L))",
+                "ctx",
+                method.getSimpleName(),
+                parameterResult.getArgumentList()
             );
-            restBuilder.addStatement("$N.future(() -> future)", "ctx");
         } else if (methodUtils.hasFutureActionResultReturnType(method)) {
             restBuilder.addStatement(
-                "$T future = controller.$N(" + parameterResult.getArgumentList() + ")",
-                method.getReturnType(),
-                method.getSimpleName()
-            );
-            restBuilder.addStatement(
-                "$N.future(() -> future.thenAccept(r -> r.execute($N)))",
+                "$N.future(() -> controller.$N($L).thenAccept(r -> r.execute($N)))",
                 "ctx",
+                method.getSimpleName(),
+                parameterResult.getArgumentList(),
                 "wrapper"
             );
         } else if (methodUtils.hasFutureReturnType(method)) {
+            // Since the return type can be any reference type, we must first cast to
+            // Object to avoid potential compiler errors.
             restBuilder.addStatement(
-                "$T future = controller.$N(" + parameterResult.getArgumentList() + ")",
-                method.getReturnType(),
-                method.getSimpleName()
-            );
-            restBuilder.addStatement(
-                "$N.future(() -> future.thenAccept(r -> new JsonResult((Object) r).execute($N)))",
+                "$N.future(() -> controller.$N($L).thenAccept(r -> ((Object) r instanceof $T ? ($T)(Object) r : new $T(r)).execute($N)))",
                 "ctx",
+                method.getSimpleName(),
+                parameterResult.getArgumentList(),
+                ActionResult.class,
+                ActionResult.class,
+                JsonResult.class,
                 "wrapper"
             );
         }  else {
             restBuilder.addStatement(
-                "Object result = controller.$N(" + parameterResult.getArgumentList() + ")",
-                method.getSimpleName());
+                "Object result = controller.$N($L)",
+                method.getSimpleName(),
+                parameterResult.getArgumentList()
+            );
             restBuilder.addStatement("(result instanceof $T ? ($T) result : new $T(result)).execute($N)",
                 ActionResult.class,
                 ActionResult.class,
