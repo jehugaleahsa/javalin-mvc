@@ -30,7 +30,6 @@ import com.truncon.javalin.mvc.api.ws.WsMessageContext;
 import com.truncon.javalin.mvc.api.ws.WsRequest;
 import com.truncon.javalin.mvc.api.ws.WsValueSource;
 import io.javalin.http.Context;
-import io.javalin.openapi.OpenApi;
 
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
@@ -1177,17 +1176,13 @@ public final class HelperMethodBuilder {
             && StringUtils.startsWith(method.getSimpleName().toString(), "set");
     }
 
-    public void addRouteHandler(String methodName, CodeBlock body, OpenApi openApiAnnotation) {
+    public void addRouteHandler(String methodName, CodeBlock body) {
         MethodSpec.Builder methodBuilder = MethodSpec.methodBuilder(methodName)
             .addModifiers(Modifier.PRIVATE)
             .returns(void.class)
             .addException(Exception.class)
             .addParameter(Context.class, "ctx")
             .addCode(body);
-        if (openApiAnnotation != null) {
-            AnnotationSpec spec = AnnotationUtils.cloneAnnotation(openApiAnnotation);
-            methodBuilder.addAnnotation(spec);
-        }
         typeBuilder.addMethod(methodBuilder.build());
     }
 

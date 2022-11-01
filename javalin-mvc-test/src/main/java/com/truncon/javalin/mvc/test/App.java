@@ -79,8 +79,10 @@ public final class App {
     private static OpenApiConfiguration getOpenApiOptions() {
         OpenApiConfiguration configuration = new OpenApiConfiguration();
         OpenApiInfo info = configuration.getInfo();
+        info.setTitle("Pickle Web API");
         info.setVersion("1.0");
-        info.setDescription("Pickle Web");
+        info.setSummary("Official Pickle Web API");
+        info.setDescription("The official API for accessing the Pickle Web system");
         return configuration;
     }
 }
