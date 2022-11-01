@@ -16,8 +16,6 @@ import io.javalin.http.staticfiles.Location;
 import io.javalin.openapi.OpenApiInfo;
 import io.javalin.openapi.plugin.OpenApiConfiguration;
 import io.javalin.openapi.plugin.OpenApiPlugin;
-import io.javalin.openapi.plugin.redoc.ReDocConfiguration;
-import io.javalin.openapi.plugin.redoc.ReDocPlugin;
 import io.javalin.openapi.plugin.swagger.SwaggerConfiguration;
 import io.javalin.openapi.plugin.swagger.SwaggerPlugin;
 import org.apache.log4j.Logger;
@@ -46,8 +44,7 @@ public final class App {
             config.jsonMapper(jsonMapper);
 
             config.plugins.register(new OpenApiPlugin(getOpenApiOptions()));
-            config.plugins.register(new SwaggerPlugin(getSwaggerOptions()));
-            config.plugins.register(new ReDocPlugin(getReDocOptions()));
+            config.plugins.register(new SwaggerPlugin(new SwaggerConfiguration()));
 
             config.staticFiles.add("./public", Location.EXTERNAL);
             config.spaRoot.addFile("/", "./public/index.html", Location.EXTERNAL);
@@ -84,19 +81,6 @@ public final class App {
         OpenApiInfo info = configuration.getInfo();
         info.setVersion("1.0");
         info.setDescription("Pickle Web");
-        configuration.setDocumentationPath("/openapi");
-        return configuration;
-    }
-
-    private static SwaggerConfiguration getSwaggerOptions() {
-        SwaggerConfiguration configuration = new SwaggerConfiguration();
-        configuration.setUiPath("/swagger");
-        return configuration;
-    }
-
-    private static ReDocConfiguration getReDocOptions() {
-        ReDocConfiguration configuration = new ReDocConfiguration();
-        configuration.setUiPath("/redoc");
         return configuration;
     }
 }

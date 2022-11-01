@@ -1,5 +1,6 @@
 package com.truncon.javalin.mvc.annotations.processing;
 
+import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
@@ -29,6 +30,7 @@ import com.truncon.javalin.mvc.api.ws.WsMessageContext;
 import com.truncon.javalin.mvc.api.ws.WsRequest;
 import com.truncon.javalin.mvc.api.ws.WsValueSource;
 import io.javalin.http.Context;
+import io.javalin.openapi.OpenApi;
 
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
@@ -76,7 +78,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public final class HelperMethodBuilder {
-    public static final Map<Class<?>, Function<Boolean, ConversionHelper>> CONVERSION_HELPER_LOOKUP = getConversionHelperLookup();
+    private static final Map<Class<?>, Function<Boolean, ConversionHelper>> CONVERSION_HELPER_LOOKUP = getConversionHelperLookup();
     private static final Map<Class<?>, Function<ConversionHelper, ConversionHelper>> COLLECTION_HELPER_LOOKUP = getCollectionHelperLookup();
     private static final Map<ValueSource, SourceHelper> SOURCE_HELPER_LOOKUP = getSourceHelperLookup();
     private static final Map<WsValueSource, WsSourceHelper> WS_SOURCE_HELPER_LOOKUP = getWsSourceHelperLookup();
@@ -1175,13 +1177,17 @@ public final class HelperMethodBuilder {
             && StringUtils.startsWith(method.getSimpleName().toString(), "set");
     }
 
-    public void addRouteHandler(String methodName, CodeBlock body) {
+    public void addRouteHandler(String methodName, CodeBlock body, OpenApi openApiAnnotation) {
         MethodSpec.Builder methodBuilder = MethodSpec.methodBuilder(methodName)
             .addModifiers(Modifier.PRIVATE)
             .returns(void.class)
             .addException(Exception.class)
             .addParameter(Context.class, "ctx")
             .addCode(body);
+        if (openApiAnnotation != null) {
+            AnnotationSpec spec = AnnotationUtils.cloneAnnotation(openApiAnnotation);
+            methodBuilder.addAnnotation(spec);
+        }
         typeBuilder.addMethod(methodBuilder.build());
     }
 

@@ -6,7 +6,11 @@ public final class ProcessingException extends RuntimeException {
     private final Element[] elements;
 
     public ProcessingException(String message, Element ...elements) {
-        super(message);
+        this(message, null, elements);
+    }
+
+    public ProcessingException(String message, Throwable cause, Element ...elements) {
+        super(message, cause);
         this.elements = elements;
     }
 

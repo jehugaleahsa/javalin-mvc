@@ -13,6 +13,7 @@ import com.truncon.javalin.mvc.api.HttpPost;
 import com.truncon.javalin.mvc.api.HttpPut;
 import com.truncon.javalin.mvc.api.JsonResult;
 import com.truncon.javalin.mvc.JavalinHttpContext;
+import io.javalin.openapi.OpenApi;
 
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
@@ -294,9 +295,8 @@ final class RouteGenerator {
         handlerBuilder.add(restBuilder.build());
 
         String methodName = "httpHandler" + index;
-        helperBuilder.addRouteHandler(methodName, handlerBuilder.build());
-
-        // TODO - Clone OpenAPI annotations to handler method
+        OpenApi openApiAnnotation = method.getAnnotation(OpenApi.class);
+        helperBuilder.addRouteHandler(methodName, handlerBuilder.build(), openApiAnnotation);
 
         return CodeBlock.builder()
             .addStatement(

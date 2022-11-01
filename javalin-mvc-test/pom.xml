@@ -52,22 +52,6 @@
             <artifactId>javalin-swagger-plugin</artifactId>
             <version>${dependency.javalin.version}</version>
         </dependency>
-        <dependency>
-            <groupId>io.javalin.community.openapi</groupId>
-            <artifactId>javalin-redoc-plugin</artifactId>
-            <version>${dependency.javalin.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.webjars.npm</groupId>
-            <artifactId>redoc</artifactId>
-            <version>2.0.0-rc.70</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>*</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
         <!-- JSON -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
