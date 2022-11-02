@@ -14,30 +14,8 @@ public interface HttpRequest {
      * Specifies whether a parameter with the given name exists in the URL.
      * @param name The name of the parameter to search for.
      * @return true if the parameter is found; otherwise, false.
-     * @deprecated Replaced by {@link #hasPathValue(String)}.
-     */
-    @Deprecated
-    default boolean hasPathParameter(String name) {
-        return hasPathValue(name);
-    }
-
-    /**
-     * Specifies whether a parameter with the given name exists in the URL.
-     * @param name The name of the parameter to search for.
-     * @return true if the parameter is found; otherwise, false.
      */
     boolean hasPathValue(String name);
-
-    /**
-     * Gets the value of the parameter in the URL.
-     * @param name The name of the parameter to search for.
-     * @return the value of the parameter or null if it does not exist.
-     * @deprecated Replaced by {@link #getPathValue(String)}.
-     */
-    @Deprecated
-    default String getPathParameter(String name) {
-        return getPathValue(name);
-    }
 
     /**
      * Gets the value of the parameter in the URL.
@@ -85,30 +63,8 @@ public interface HttpRequest {
      * Specifies whether a query parameter with the given name exists in the URL.
      * @param name The name of the parameter to search for.
      * @return true if the parameter is found; otherwise, false.
-     * @deprecated Replaced by {@link #hasQueryValue(String)}.
-     */
-    @Deprecated
-    default boolean hasQueryParameter(String name) {
-        return hasQueryValue(name);
-    }
-
-    /**
-     * Specifies whether a query parameter with the given name exists in the URL.
-     * @param name The name of the parameter to search for.
-     * @return true if the parameter is found; otherwise, false.
      */
     boolean hasQueryValue(String name);
-
-    /**
-     * Gets the value of the parameter in the query string.
-     * @param name The name of the parameter to search for.
-     * @return the value of the parameter or null if it does not exist.
-     * @deprecated Replaced by {@link #getQueryValue(String)}.
-     */
-    @Deprecated
-    default String getQueryParameter(String name) {
-        return getQueryValue(name);
-    }
 
     /**
      * Gets the value of the parameter in the query string.
@@ -136,17 +92,6 @@ public interface HttpRequest {
      * Gets the values of the parameter in the query string.
      * @param name The name of the parameter to search for.
      * @return The value of the parameter or an empty list if it does not exist.
-     * @deprecated Replaced by {@link #getQueryValues(String)}.
-     */
-    @Deprecated
-    default List<String> getQueryParameters(String name) {
-        return getQueryValues(name);
-    }
-
-    /**
-     * Gets the values of the parameter in the query string.
-     * @param name The name of the parameter to search for.
-     * @return The value of the parameter or an empty list if it does not exist.
      */
     List<String> getQueryValues(String name);
 
@@ -155,17 +100,6 @@ public interface HttpRequest {
      * @return the key/value pair lookup of the parameters.
      */
     Map<String, List<String>> getQueryLookup();
-
-    /**
-     * Specifies whether a form field (URL encoded) with the given name exists in the URL.
-     * @param name The name of the parameter to search for.
-     * @return true if the parameter is found; otherwise, false.
-     * @deprecated Replaced by {@link #hasFormValue(String)}.
-     */
-    @Deprecated
-    default boolean hasFormParameter(String name) {
-        return hasFormValue(name);
-    }
 
     /**
      * Specifies whether a form field (URL encoded) with the given name exists in the URL.
@@ -208,17 +142,6 @@ public interface HttpRequest {
      * @return the key/value pair lookup of the form fields.
      */
     Map<String, List<String>> getFormLookup();
-
-    /**
-     * Specifies whether a header with the given name exists.
-     * @param name The name of the header to search for.
-     * @return true if the parameter is found; otherwise, false.
-     * @deprecated Replaced by {@link #getHeaderValue(String)}.
-     */
-    @Deprecated
-    default boolean hasHeader(String name) {
-        return hasHeaderValue(name);
-    }
 
     /**
      * Specifies whether a header with the given name exists.
@@ -268,17 +191,6 @@ public interface HttpRequest {
      * @return the key/value pair lookup of the headers.
      */
     Map<String, List<String>> getHeaderLookup();
-
-    /**
-     * Indicates whether a cookie with the given name exists.
-     * @param name The name of the cookie to search for.
-     * @return true if the cookie is found; otherwise false.
-     * @deprecated Replaced by {@link #getCookieValue(String)}.
-     */
-    @Deprecated
-    default boolean hasCookie(String name) {
-        return hasCookieValue(name);
-    }
 
     /**
      * Indicates whether a cookie with the given name exists.
