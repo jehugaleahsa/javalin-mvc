@@ -1,22 +1,21 @@
 package com.truncon.javalin.mvc.test.handlers;
 
+import com.truncon.javalin.mvc.api.AfterActionContext;
 import com.truncon.javalin.mvc.api.AfterActionHandler;
+import com.truncon.javalin.mvc.api.BeforeActionContext;
 import com.truncon.javalin.mvc.api.BeforeActionHandler;
-import com.truncon.javalin.mvc.api.HttpContext;
 
 public final class Log implements BeforeActionHandler, AfterActionHandler {
     @Override
-    public boolean executeBefore(HttpContext context, String[] arguments) {
-        System.out.println("Before: " + String.join(",", arguments));
-        return true;
+    public void executeBefore(BeforeActionContext context) {
+        System.out.println("Before: " + String.join(",", context.getArguments()));
     }
 
     @Override
-    public Exception executeAfter(HttpContext context, String[] arguments, Exception exception) {
-        System.out.println("After: " + String.join(", ", arguments));
-        if (exception != null) {
-            System.err.println(exception.toString());
+    public void executeAfter(AfterActionContext context) {
+        System.out.println("After: " + String.join(", ", context.getArguments()));
+        if (context.getException() != null) {
+            System.err.println(context.getException().toString());
         }
-        return exception;
     }
 }

@@ -1,8 +1,9 @@
 package com.truncon.javalin.mvc.test.handlers;
 
+import com.truncon.javalin.mvc.api.AfterActionContext;
 import com.truncon.javalin.mvc.api.AfterActionHandler;
+import com.truncon.javalin.mvc.api.BeforeActionContext;
 import com.truncon.javalin.mvc.api.BeforeActionHandler;
-import com.truncon.javalin.mvc.api.HttpContext;
 import com.truncon.javalin.mvc.test.utils.Dependency;
 
 import javax.inject.Inject;
@@ -16,14 +17,14 @@ public final class InjectionHandler implements BeforeActionHandler, AfterActionH
     }
 
     @Override
-    public boolean executeBefore(HttpContext context, String[] arguments) {
-        context.getResponse().setTextBody(dependency.getValue());
-        return false;
+    public void executeBefore(BeforeActionContext context) {
+        context.getHttpContext().getResponse().setTextBody(dependency.getValue());
+        context.setCancelled(true);
     }
 
     @Override
-    public Exception executeAfter(HttpContext context, String[] arguments, Exception exception) {
-        context.getResponse().setTextBody(dependency.getValue());
-        return null;
+    public void executeAfter(AfterActionContext context) {
+        context.getHttpContext().getResponse().setTextBody(dependency.getValue());
+        context.setHandled(true);
     }
 }

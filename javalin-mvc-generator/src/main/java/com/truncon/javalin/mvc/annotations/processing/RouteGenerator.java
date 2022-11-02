@@ -211,7 +211,7 @@ final class RouteGenerator {
             container.isFound() ? "injector" : null);
         injectorNeeded |= beforeInjectorNeeded;
         List<AfterGenerator> afterGenerators = AfterGenerator.getAfterGenerators(container, this);
-        if (afterGenerators.size() > 0) {
+        if (!afterGenerators.isEmpty()) {
             restBuilder.addStatement("Exception caughtException = null;");
             restBuilder.beginControlFlow("try");
         }
@@ -273,7 +273,7 @@ final class RouteGenerator {
         }
         injectorNeeded |= parameterResult.isInjectorNeeded();
 
-        if (afterGenerators.size() > 0) {
+        if (!afterGenerators.isEmpty()) {
             restBuilder.nextControlFlow("catch (Exception exception)");
             restBuilder.addStatement("caughtException = exception");
             restBuilder.endControlFlow();
@@ -318,10 +318,15 @@ final class RouteGenerator {
             String contextName,
             List<BeforeGenerator> generators,
             String injectorName) {
+        if (generators.isEmpty()) {
+            return false;
+        }
         boolean injectorNeeded = false;
+        int index = 0;
         for (BeforeGenerator generator : generators) {
-            boolean beforeInjectorNeeded = generator.generateBefore(routeBuilder, injectorName, contextName);
+            boolean beforeInjectorNeeded = generator.generateBefore(routeBuilder, injectorName, contextName, index);
             injectorNeeded |= beforeInjectorNeeded;
+            ++index;
         }
         return injectorNeeded;
     }
@@ -343,15 +348,19 @@ final class RouteGenerator {
             List<AfterGenerator> generators,
             String injectorName) {
         boolean injectorNeeded = false;
+        int index = 0;
+        routeBuilder.addStatement("boolean handled = false");
         for (AfterGenerator generator : generators) {
             boolean afterInjectorNeeded = generator.generateAfter(
                 routeBuilder,
                 injectorName,
                 contextName,
-                exceptionName);
+                exceptionName,
+                index);
             injectorNeeded |= afterInjectorNeeded;
+            ++index;
         }
-        routeBuilder.beginControlFlow("if (caughtException != null)")
+        routeBuilder.beginControlFlow("if (caughtException != null && !handled)")
                 .addStatement("throw caughtException")
                 .endControlFlow();
         return injectorNeeded;

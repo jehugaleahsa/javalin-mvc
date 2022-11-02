@@ -1,7 +1,9 @@
 package com.truncon.javalin.mvc.annotations.processing;
 
 import com.squareup.javapoet.CodeBlock;
+import com.truncon.javalin.mvc.JavalinAfterActionContext;
 import com.truncon.javalin.mvc.api.After;
+import com.truncon.javalin.mvc.api.AfterActionContext;
 import com.truncon.javalin.mvc.api.AfterContainer;
 
 import javax.lang.model.type.MirroredTypeException;
@@ -37,15 +39,24 @@ final class AfterGenerator {
             CodeBlock.Builder routeBuilder,
             String injectorName,
             String contextName,
-            String exceptionName) {
+            String exceptionName,
+            int index) {
         String arguments = getArguments();
         InjectionResult result = container.getInstanceCall(getTypeMirror(), injectorName);
-        routeBuilder.addStatement("$L = $L.executeAfter($L, $L, $L)",
-            exceptionName,
-            result.getInstanceCall(),
+        String handlerName = "afterHandler" + index;
+        routeBuilder.addStatement(
+            "$T $N = new $T($N, $L, $N, handled)",
+            AfterActionContext.class,
+            handlerName,
+            JavalinAfterActionContext.class,
             contextName,
             arguments,
-            exceptionName);
+            exceptionName
+        );
+        routeBuilder.addStatement("$L.executeAfter($N)", result.getInstanceCall(), handlerName);
+        routeBuilder.beginControlFlow("if ($N != null && $N.isHandled())", exceptionName, handlerName)
+            .addStatement("handled = true", exceptionName)
+            .endControlFlow();
         return result.isInjectorNeeded();
     }
 
