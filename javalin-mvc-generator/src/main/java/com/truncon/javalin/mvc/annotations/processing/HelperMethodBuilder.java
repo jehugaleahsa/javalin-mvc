@@ -14,7 +14,6 @@ import com.truncon.javalin.mvc.api.FromBody;
 import com.truncon.javalin.mvc.api.FromCookie;
 import com.truncon.javalin.mvc.api.FromForm;
 import com.truncon.javalin.mvc.api.FromHeader;
-import com.truncon.javalin.mvc.api.FromJson;
 import com.truncon.javalin.mvc.api.FromPath;
 import com.truncon.javalin.mvc.api.FromQuery;
 import com.truncon.javalin.mvc.api.HttpContext;
@@ -23,7 +22,6 @@ import com.truncon.javalin.mvc.api.Named;
 import com.truncon.javalin.mvc.api.NoBinding;
 import com.truncon.javalin.mvc.api.UseConverter;
 import com.truncon.javalin.mvc.api.ValueSource;
-import com.truncon.javalin.mvc.api.ws.FromBinary;
 import com.truncon.javalin.mvc.api.ws.WsBinaryMessageContext;
 import com.truncon.javalin.mvc.api.ws.WsContext;
 import com.truncon.javalin.mvc.api.ws.WsMessageContext;
@@ -463,11 +461,6 @@ public final class HelperMethodBuilder {
     }
 
     private static boolean hasFromBodyAnnotation(Element element) {
-        //noinspection deprecation
-        FromJson json = element.getAnnotation(FromJson.class);
-        if (json != null) {
-            return true;
-        }
         FromBody body = element.getAnnotation(FromBody.class);
         if (body != null) {
             return true;
@@ -683,7 +676,6 @@ public final class HelperMethodBuilder {
         if (hasAnnotation(element, NoBinding.class)) {
             return false;
         }
-        //noinspection deprecation
         return hasAnnotation(element, FromPath.class)
             || hasAnnotation(element, jakarta.ws.rs.PathParam.class)
             || hasAnnotation(element, FromQuery.class)
@@ -694,8 +686,7 @@ public final class HelperMethodBuilder {
             || hasAnnotation(element, jakarta.ws.rs.CookieParam.class)
             || hasAnnotation(element, FromForm.class)
             || hasAnnotation(element, jakarta.ws.rs.FormParam.class)
-            || hasAnnotation(element, FromBody.class)
-            || hasAnnotation(element, FromJson.class);
+            || hasAnnotation(element, FromBody.class);
     }
 
     public static String getDefaultValue(Element parameter) {
@@ -899,8 +890,7 @@ public final class HelperMethodBuilder {
         // We only bind from the binary message if there's an explicit FromBinary annotation or
         // there's no other default/explicit source specified.
         //noinspection deprecation
-        boolean hasBinaryAnnotation = hasAnnotation(memberElement, FromBinary.class)
-            || hasAnnotation(memberElement, FromBody.class);
+        boolean hasBinaryAnnotation = hasAnnotation(memberElement, FromBody.class);
         if (defaultSource != WsValueSource.Any || !hasBinaryAnnotation) {
             return false;
         }
@@ -945,7 +935,6 @@ public final class HelperMethodBuilder {
         if (hasAnnotation(element, NoBinding.class)) {
             return false;
         }
-        //noinspection deprecation
         return hasAnnotation(element, FromPath.class)
             || hasAnnotation(element, jakarta.ws.rs.PathParam.class)
             || hasAnnotation(element, FromQuery.class)
@@ -954,9 +943,7 @@ public final class HelperMethodBuilder {
             || hasAnnotation(element, jakarta.ws.rs.HeaderParam.class)
             || hasAnnotation(element, FromCookie.class)
             || hasAnnotation(element, jakarta.ws.rs.CookieParam.class)
-            || hasAnnotation(element, FromBody.class)
-            || hasAnnotation(element, FromJson.class)
-            || hasAnnotation(element, FromBinary.class);
+            || hasAnnotation(element, FromBody.class);
     }
 
     private boolean addPrimitiveSetter(

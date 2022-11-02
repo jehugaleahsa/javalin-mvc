@@ -6,7 +6,6 @@ import com.truncon.javalin.mvc.api.FromBody;
 import com.truncon.javalin.mvc.api.FromCookie;
 import com.truncon.javalin.mvc.api.FromForm;
 import com.truncon.javalin.mvc.api.FromHeader;
-import com.truncon.javalin.mvc.api.FromJson;
 import com.truncon.javalin.mvc.api.FromPath;
 import com.truncon.javalin.mvc.api.FromQuery;
 import com.truncon.javalin.mvc.api.HttpContext;
@@ -15,7 +14,6 @@ import com.truncon.javalin.mvc.api.HttpResponse;
 import com.truncon.javalin.mvc.api.NoBinding;
 import com.truncon.javalin.mvc.api.UseConverter;
 import com.truncon.javalin.mvc.api.ValueSource;
-import com.truncon.javalin.mvc.api.ws.FromBinary;
 import com.truncon.javalin.mvc.api.ws.WsBinaryMessageContext;
 import com.truncon.javalin.mvc.api.ws.WsConnectContext;
 import com.truncon.javalin.mvc.api.ws.WsContext;
@@ -463,23 +461,11 @@ final class ParameterGenerator {
         if (parameter.getAnnotation(FromBody.class) != null) {
             return ValueSource.Json;
         }
-        //noinspection deprecation
-        if (parameter.getAnnotation(FromJson.class) != null) {
-            return ValueSource.Json;
-        }
         return ValueSource.Any;
     }
 
     private static WsValueSource getWsValueSource(Element parameter) {
         if (parameter.getAnnotation(FromBody.class) != null) {
-            return WsValueSource.Message;
-        }
-        //noinspection deprecation
-        if (parameter.getAnnotation(FromJson.class) != null) {
-            return WsValueSource.Message;
-        }
-        //noinspection deprecation
-        if (parameter.getAnnotation(FromBinary.class) != null) {
             return WsValueSource.Message;
         }
         if (parameter.getAnnotation(FromHeader.class) != null) {
