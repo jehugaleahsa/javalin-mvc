@@ -1,12 +1,12 @@
 package com.truncon.javalin.mvc.test.controllers.ws.reference;
 
 import com.truncon.javalin.mvc.api.ws.WsActionResult;
+import com.truncon.javalin.mvc.api.ws.WsCloseContext;
 import com.truncon.javalin.mvc.api.ws.WsConnect;
 import com.truncon.javalin.mvc.api.ws.WsConnectContext;
 import com.truncon.javalin.mvc.api.ws.WsContentResult;
 import com.truncon.javalin.mvc.api.ws.WsController;
-import com.truncon.javalin.mvc.api.ws.WsDisconnect;
-import com.truncon.javalin.mvc.api.ws.WsDisconnectContext;
+import com.truncon.javalin.mvc.api.ws.WsClose;
 import com.truncon.javalin.mvc.api.ws.WsError;
 import com.truncon.javalin.mvc.api.ws.WsErrorContext;
 import com.truncon.javalin.mvc.api.ws.WsMessage;
@@ -22,8 +22,8 @@ public final class BigIntegerParameterController {
     public void connect(WsConnectContext context, BigInteger value) {
     }
 
-    @WsDisconnect
-    public void disconnect(WsDisconnectContext context, BigInteger value) {
+    @WsClose
+    public void close(WsCloseContext context, BigInteger value) {
     }
 
     @WsError

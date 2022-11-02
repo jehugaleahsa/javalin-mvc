@@ -4,7 +4,7 @@ import com.truncon.javalin.mvc.api.FromQuery;
 import com.truncon.javalin.mvc.api.ws.WsActionResult;
 import com.truncon.javalin.mvc.api.ws.WsConnect;
 import com.truncon.javalin.mvc.api.ws.WsController;
-import com.truncon.javalin.mvc.api.ws.WsDisconnect;
+import com.truncon.javalin.mvc.api.ws.WsClose;
 import com.truncon.javalin.mvc.api.ws.WsError;
 import com.truncon.javalin.mvc.api.ws.WsJsonResult;
 import com.truncon.javalin.mvc.api.ws.WsMessage;
@@ -18,8 +18,8 @@ public final class BindSettersFromQueryModelController {
     public void onConnect(@FromQuery PrimitiveModel model) {
     }
 
-    @WsDisconnect
-    public void onDisconnect(@FromQuery PrimitiveModel model) {
+    @WsClose
+    public void onClose(@FromQuery PrimitiveModel model) {
     }
 
     @WsError

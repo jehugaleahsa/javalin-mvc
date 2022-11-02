@@ -2,7 +2,7 @@ package com.truncon.javalin.mvc.test.controllers.ws.returns;
 
 import com.truncon.javalin.mvc.api.ws.WsConnect;
 import com.truncon.javalin.mvc.api.ws.WsController;
-import com.truncon.javalin.mvc.api.ws.WsDisconnect;
+import com.truncon.javalin.mvc.api.ws.WsClose;
 import com.truncon.javalin.mvc.api.ws.WsError;
 import com.truncon.javalin.mvc.api.ws.WsMessage;
 import com.truncon.javalin.mvc.api.ws.WsResponse;
@@ -15,8 +15,8 @@ public final class VoidController {
     public void onConnect() {
     }
 
-    @WsDisconnect
-    public void onDisconnect() {
+    @WsClose
+    public void onClose() {
     }
 
     @WsError

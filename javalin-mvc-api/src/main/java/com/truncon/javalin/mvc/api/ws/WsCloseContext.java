@@ -1,9 +1,9 @@
 package com.truncon.javalin.mvc.api.ws;
 
 /**
- * Provides information about a WebSocket disconnection.
+ * Provides information about a WebSocket disconnect.
  */
-public interface WsDisconnectContext extends WsContext {
+public interface WsCloseContext extends WsContext {
     /**
      * Gets the status code on close.
      * @return The status code.

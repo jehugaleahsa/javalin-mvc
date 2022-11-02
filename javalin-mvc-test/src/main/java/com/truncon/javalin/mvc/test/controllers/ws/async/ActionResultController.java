@@ -4,8 +4,8 @@ import com.truncon.javalin.mvc.api.ws.WsActionResult;
 import com.truncon.javalin.mvc.api.ws.WsConnect;
 import com.truncon.javalin.mvc.api.ws.WsConnectContext;
 import com.truncon.javalin.mvc.api.ws.WsController;
-import com.truncon.javalin.mvc.api.ws.WsDisconnect;
-import com.truncon.javalin.mvc.api.ws.WsDisconnectContext;
+import com.truncon.javalin.mvc.api.ws.WsClose;
+import com.truncon.javalin.mvc.api.ws.WsCloseContext;
 import com.truncon.javalin.mvc.api.ws.WsError;
 import com.truncon.javalin.mvc.api.ws.WsErrorContext;
 import com.truncon.javalin.mvc.api.ws.WsJsonResult;
@@ -23,8 +23,8 @@ public final class ActionResultController {
         return CompletableFuture.completedFuture(null);
     }
 
-    @WsDisconnect
-    public CompletableFuture<Void> onDisconnect(WsDisconnectContext ctx) {
+    @WsClose
+    public CompletableFuture<Void> onClose(WsCloseContext ctx) {
         return CompletableFuture.completedFuture(null);
     }
 

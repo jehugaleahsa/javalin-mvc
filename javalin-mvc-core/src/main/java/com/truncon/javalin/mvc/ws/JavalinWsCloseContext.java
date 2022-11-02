@@ -1,11 +1,11 @@
 package com.truncon.javalin.mvc.ws;
 
-import com.truncon.javalin.mvc.api.ws.WsDisconnectContext;
+import com.truncon.javalin.mvc.api.ws.WsCloseContext;
 
-public final class JavalinWsDisconnectContext extends JavalinWsContext implements WsDisconnectContext {
+public final class JavalinWsCloseContext extends JavalinWsContext implements WsCloseContext {
     private final io.javalin.websocket.WsCloseContext context;
 
-    public JavalinWsDisconnectContext(io.javalin.websocket.WsCloseContext context) {
+    public JavalinWsCloseContext(io.javalin.websocket.WsCloseContext context) {
         super(context);
         this.context = context;
     }

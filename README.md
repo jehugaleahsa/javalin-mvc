@@ -250,7 +250,7 @@ Here is a list of supported and/or desired features. An `x` means it is already 
     * [x] Uses built-in Javalin OpenAPI annotations
 * [x] WebSockets
     * [x] Specify routes via `@WsController`
-    * [x] Support `@WsConnect`, `@WsDisconnect`, `@WsError`, `@WsMessage` and `@WsBinaryMessage` annotations
+    * [x] Support `@WsConnect`, `@WsClose`, `@WsError`, `@WsMessage` and `@WsBinaryMessage` annotations
     * [x] Support for data binding
     * [x] Support for `@Before` and `@After` handlers
     * [x] Support returning `CompletableFuture<T>`
@@ -517,7 +517,7 @@ public ActionResult index() {
 One caveat is that you must ensure method names in your controllers are unique; otherwise, which documentation goes to which controller action becomes ambiguous. This is a good practice anyway.
 
 ## WebSockets
-WebSockets are handled by marking classes with the `@WsController` annotation. Unlike HTTP controllers, a WebSocket controller only handles a single route. Each WebSocket controller can process client connections, disconnections, errors, and messages (text or binary). The route the controller will handle is passed as a parameter to the `@WsController` annotation. The methods within the controller can be marked with the `@WsConnect`, `@WsDisconnect`, `@WsError`, `@WsMessage`, or `@WsBinaryMessage` annotations. Only one instance of each annotation can appear within a class; however, the same method can have multiple annotations.
+WebSockets are handled by marking classes with the `@WsController` annotation. Unlike HTTP controllers, a WebSocket controller only handles a single route. Each WebSocket controller can process client connections, disconnects, errors, and messages (text or binary). The route the controller will handle is passed as a parameter to the `@WsController` annotation. The methods within the controller can be marked with the `@WsConnect`, `@WsClose`, `@WsError`, `@WsMessage`, or `@WsBinaryMessage` annotations. Only one instance of each annotation can appear within a class; however, the same method can have multiple annotations.
 
 Similar to HTTP controllers, method parameters can be bound from query strings, path parameters, 
 headers, and cookies. Note, there's no support for URL-encoded form data as this does not exist 
@@ -526,7 +526,7 @@ same `@From*` annotations, just like for HTTP. In addition, you can use the `@Fr
 to bind parameters directly from the message. You can also use `@FromBody` to bind binary messages 
 to `byte[]`, `ByteBuffer`, or `InputStream` parameters.
 
-If a method accepts a `WsContext` object, it will have direct access to the context object. Similarly, you can bind to `WsRequest` and `WsResponse` objects. A method-specific sub-interface exists for each method, so there is a `WsConnectContext`, `WsDisconnectContext`, `WsErrorContext`, `WsMessageContext`, and `WsBinaryMessageContext` that can be used as parameters, as well; however, these will only be initialized if used on the appropriate method.
+If a method accepts a `WsContext` object, it will have direct access to the context object. Similarly, you can bind to `WsRequest` and `WsResponse` objects. A method-specific sub-interface exists for each method, so there is a `WsConnectContext`, `WsCloseContext`, `WsErrorContext`, `WsMessageContext`, and `WsBinaryMessageContext` that can be used as parameters, as well; however, these will only be initialized if used on the appropriate method.
 
 You can send responses to the client using the `WsResponse.send` methods; however, you can also return an instance of `WsActionResult` from the `WsMessage` handler. Currently, the only supported result types are `WsContentResult` for sending plain text, `WsJsonResult` for sending JSON results, and `WsByteArrayResult` and `WsByteBufferResult` for sending binary results. Similar to HTTP controllers, you can also just return from your method, and it will be serialized appropriately.
 
@@ -542,8 +542,8 @@ public final class WsPickleController {
         // Do something...
     }
 
-    @WsDisconnect
-    public void onDisconnect(WsDisconnectContext context) {
+    @WsClose
+    public void onClose(WsCloseContext context) {
         // Do something...
     }
 

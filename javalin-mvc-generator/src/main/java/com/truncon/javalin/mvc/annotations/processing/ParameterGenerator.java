@@ -17,7 +17,7 @@ import com.truncon.javalin.mvc.api.ValueSource;
 import com.truncon.javalin.mvc.api.ws.WsBinaryMessageContext;
 import com.truncon.javalin.mvc.api.ws.WsConnectContext;
 import com.truncon.javalin.mvc.api.ws.WsContext;
-import com.truncon.javalin.mvc.api.ws.WsDisconnectContext;
+import com.truncon.javalin.mvc.api.ws.WsCloseContext;
 import com.truncon.javalin.mvc.api.ws.WsErrorContext;
 import com.truncon.javalin.mvc.api.ws.WsMessageContext;
 import com.truncon.javalin.mvc.api.ws.WsRequest;
@@ -402,7 +402,7 @@ final class ParameterGenerator {
         } else if (wrapperType.equals(WsConnectContext.class)
             && typeUtils.isSameType(parameterType, io.javalin.websocket.WsConnectContext.class)) {
             return true;
-        } else if (wrapperType.equals(WsDisconnectContext.class)
+        } else if (wrapperType.equals(WsCloseContext.class)
             && typeUtils.isSameType(parameterType, io.javalin.websocket.WsCloseContext.class)) {
             return true;
         } else if (wrapperType.equals(WsErrorContext.class)

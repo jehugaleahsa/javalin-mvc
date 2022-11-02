@@ -7,7 +7,7 @@ import com.truncon.javalin.mvc.api.HttpRequest;
 import com.truncon.javalin.mvc.api.ValueSource;
 import com.truncon.javalin.mvc.api.ws.WsConnectContext;
 import com.truncon.javalin.mvc.api.ws.WsContext;
-import com.truncon.javalin.mvc.api.ws.WsDisconnectContext;
+import com.truncon.javalin.mvc.api.ws.WsCloseContext;
 import com.truncon.javalin.mvc.api.ws.WsErrorContext;
 import com.truncon.javalin.mvc.api.ws.WsMessageContext;
 import com.truncon.javalin.mvc.api.ws.WsRequest;
@@ -18,7 +18,6 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
-import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeMirror;
@@ -128,7 +127,7 @@ public final class ConverterBuilder {
             || typeUtils.isSameType(variableElement.asType(), HttpRequest.class)
             || typeUtils.isSameType(variableElement.asType(), WsContext.class)
             || typeUtils.isSameType(variableElement.asType(), WsConnectContext.class)
-            || typeUtils.isSameType(variableElement.asType(), WsDisconnectContext.class)
+            || typeUtils.isSameType(variableElement.asType(), WsCloseContext.class)
             || typeUtils.isSameType(variableElement.asType(), WsErrorContext.class)
             || typeUtils.isSameType(variableElement.asType(), WsMessageContext.class)
             || typeUtils.isSameType(variableElement.asType(), WsRequest.class);

@@ -5,8 +5,8 @@ import com.truncon.javalin.mvc.api.ws.WsConnect;
 import com.truncon.javalin.mvc.api.ws.WsConnectContext;
 import com.truncon.javalin.mvc.api.ws.WsContentResult;
 import com.truncon.javalin.mvc.api.ws.WsController;
-import com.truncon.javalin.mvc.api.ws.WsDisconnect;
-import com.truncon.javalin.mvc.api.ws.WsDisconnectContext;
+import com.truncon.javalin.mvc.api.ws.WsClose;
+import com.truncon.javalin.mvc.api.ws.WsCloseContext;
 import com.truncon.javalin.mvc.api.ws.WsError;
 import com.truncon.javalin.mvc.api.ws.WsErrorContext;
 import com.truncon.javalin.mvc.api.ws.WsMessage;
@@ -23,8 +23,8 @@ public final class OffsetDateTimeParameterController {
     public void connect(WsConnectContext context, OffsetDateTime value) {
     }
 
-    @WsDisconnect
-    public void disconnect(WsDisconnectContext context, OffsetDateTime value) {
+    @WsClose
+    public void close(WsCloseContext context, OffsetDateTime value) {
     }
 
     @WsError

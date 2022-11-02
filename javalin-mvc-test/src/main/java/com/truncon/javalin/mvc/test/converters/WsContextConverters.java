@@ -1,9 +1,9 @@
 package com.truncon.javalin.mvc.test.converters;
 
 import com.truncon.javalin.mvc.api.Converter;
+import com.truncon.javalin.mvc.api.ws.WsCloseContext;
 import com.truncon.javalin.mvc.api.ws.WsConnectContext;
 import com.truncon.javalin.mvc.api.ws.WsContext;
-import com.truncon.javalin.mvc.api.ws.WsDisconnectContext;
 import com.truncon.javalin.mvc.api.ws.WsErrorContext;
 import com.truncon.javalin.mvc.api.ws.WsMessageContext;
 import com.truncon.javalin.mvc.api.ws.WsRequest;
@@ -23,8 +23,8 @@ public final class WsContextConverters {
         return getConversionModel(context);
     }
 
-    @Converter("ws-disconnect-context-converter")
-    public ConversionModel convertDisconnect(WsDisconnectContext context) {
+    @Converter("ws-close-context-converter")
+    public ConversionModel convertClose(WsCloseContext context) {
         return getConversionModel(context);
     }
 

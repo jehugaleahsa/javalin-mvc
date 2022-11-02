@@ -4,20 +4,20 @@ import com.squareup.javapoet.CodeBlock;
 import com.truncon.javalin.mvc.api.ws.WsActionResult;
 import com.truncon.javalin.mvc.api.ws.WsBinaryMessage;
 import com.truncon.javalin.mvc.api.ws.WsBinaryMessageContext;
+import com.truncon.javalin.mvc.api.ws.WsCloseContext;
 import com.truncon.javalin.mvc.api.ws.WsConnect;
 import com.truncon.javalin.mvc.api.ws.WsConnectContext;
 import com.truncon.javalin.mvc.api.ws.WsContext;
 import com.truncon.javalin.mvc.api.ws.WsController;
-import com.truncon.javalin.mvc.api.ws.WsDisconnect;
-import com.truncon.javalin.mvc.api.ws.WsDisconnectContext;
+import com.truncon.javalin.mvc.api.ws.WsClose;
 import com.truncon.javalin.mvc.api.ws.WsError;
 import com.truncon.javalin.mvc.api.ws.WsErrorContext;
 import com.truncon.javalin.mvc.api.ws.WsJsonResult;
 import com.truncon.javalin.mvc.api.ws.WsMessage;
 import com.truncon.javalin.mvc.api.ws.WsMessageContext;
 import com.truncon.javalin.mvc.ws.JavalinWsBinaryMessageContext;
+import com.truncon.javalin.mvc.ws.JavalinWsCloseContext;
 import com.truncon.javalin.mvc.ws.JavalinWsConnectContext;
-import com.truncon.javalin.mvc.ws.JavalinWsDisconnectContext;
 import com.truncon.javalin.mvc.ws.JavalinWsErrorContext;
 import com.truncon.javalin.mvc.ws.JavalinWsMessageContext;
 
@@ -25,7 +25,6 @@ import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 import java.lang.annotation.Annotation;
 import java.util.Collection;
@@ -90,12 +89,12 @@ final class WsControllerSource {
             HelperMethodBuilder helperBuilder,
             Map<String, ConverterBuilder> converterLookup) throws ProcessingException {
         ExecutableElement connectMethod = getAnnotatedMethod(WsConnect.class);
-        ExecutableElement disconnectMethod = getAnnotatedMethod(WsDisconnect.class);
+        ExecutableElement closeMethod = getAnnotatedMethod(WsClose.class);
         ExecutableElement errorMethod = getAnnotatedMethod(WsError.class);
         ExecutableElement messageMethod = getAnnotatedMethod(WsMessage.class);
         ExecutableElement binaryMessageMethod = getAnnotatedMethod(WsBinaryMessage.class);
         if (connectMethod == null
-                && disconnectMethod == null
+                && closeMethod == null
                 && errorMethod == null
                 && messageMethod == null
                 && binaryMessageMethod == null) {
@@ -106,7 +105,7 @@ final class WsControllerSource {
         handlerBuilder.beginControlFlow("$N.ws($S, (ws) ->", ControllerRegistryGenerator.APP_NAME, getRoute());
 
         addOnConnectHandler(index, handlerBuilder, connectMethod, helperBuilder, converterLookup);
-        addOnDisconnectHandler(index, handlerBuilder, disconnectMethod, helperBuilder, converterLookup);
+        addOnCloseHandler(index, handlerBuilder, closeMethod, helperBuilder, converterLookup);
         addOnErrorHandler(index, handlerBuilder, errorMethod, helperBuilder, converterLookup);
         addOnMessageHandler(index, handlerBuilder, messageMethod, helperBuilder, converterLookup);
         addOnBinaryMessageHandler(index, handlerBuilder, binaryMessageMethod, helperBuilder, converterLookup);
@@ -160,7 +159,7 @@ final class WsControllerSource {
             converterLookup);
     }
 
-    private void addOnDisconnectHandler(
+    private void addOnCloseHandler(
             int index,
             CodeBlock.Builder handlerBuilder,
             ExecutableElement method,
@@ -171,8 +170,8 @@ final class WsControllerSource {
             handlerBuilder,
             "onClose",
             io.javalin.websocket.WsCloseContext.class,
-            WsDisconnectContext.class,
-            JavalinWsDisconnectContext.class,
+            WsCloseContext.class,
+            JavalinWsCloseContext.class,
             method,
             helperBuilder,
             converterLookup);
