@@ -25,6 +25,13 @@ public interface AfterActionContext {
     Exception getException();
 
     /**
+     * Sets the exception, which will be passed to the next handler, or
+     * thrown if no more handlers are present and the error is not marked as handled.
+     * @param exception The exception to send to the next handler or be thrown.
+     */
+    void setException(Exception exception);
+
+    /**
      * Gets whether the exception was handled by a previous handler. If
      * no exception was thrown, {@code true} will be returned.
      * @return Whether the exception has been handled.

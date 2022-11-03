@@ -54,8 +54,9 @@ final class AfterGenerator {
             exceptionName
         );
         routeBuilder.addStatement("$L.executeAfter($N)", result.getInstanceCall(), handlerName);
+        routeBuilder.addStatement("$N = $N.getException()", exceptionName, handlerName);
         routeBuilder.beginControlFlow("if ($N != null && $N.isHandled())", exceptionName, handlerName)
-            .addStatement("handled = true", exceptionName)
+            .addStatement("handled = true")
             .endControlFlow();
         return result.isInjectorNeeded();
     }

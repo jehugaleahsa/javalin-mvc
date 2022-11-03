@@ -10,7 +10,7 @@ import java.util.List;
 public final class JavalinAfterActionContext implements AfterActionContext {
     private final HttpContext context;
     private final List<String> arguments;
-    private final Exception exception;
+    private Exception exception;
     private boolean handled;
 
     public JavalinAfterActionContext(HttpContext context, String[] arguments, Exception exception, boolean handled) {
@@ -33,6 +33,11 @@ public final class JavalinAfterActionContext implements AfterActionContext {
     @Override
     public Exception getException() {
         return exception;
+    }
+
+    @Override
+    public void setException(Exception exception) {
+        this.exception = exception;
     }
 
     @Override
