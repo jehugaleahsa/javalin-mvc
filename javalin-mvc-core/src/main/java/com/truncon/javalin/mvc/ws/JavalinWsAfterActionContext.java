@@ -1,19 +1,19 @@
-package com.truncon.javalin.mvc;
+package com.truncon.javalin.mvc.ws;
 
-import com.truncon.javalin.mvc.api.AfterActionContext;
-import com.truncon.javalin.mvc.api.HttpContext;
+import com.truncon.javalin.mvc.api.ws.WsAfterActionContext;
+import com.truncon.javalin.mvc.api.ws.WsContext;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public final class JavalinAfterActionContext implements AfterActionContext {
-    private final HttpContext context;
+public final class JavalinWsAfterActionContext implements WsAfterActionContext {
+    private final WsContext context;
     private final List<String> arguments;
     private Exception exception;
     private boolean handled;
 
-    public JavalinAfterActionContext(HttpContext context, String[] arguments, Exception exception, boolean handled) {
+    public JavalinWsAfterActionContext(WsContext context, String[] arguments, Exception exception, boolean handled) {
         this.context = context;
         this.arguments = Collections.unmodifiableList(Arrays.asList(arguments));
         this.exception = exception;
@@ -21,7 +21,7 @@ public final class JavalinAfterActionContext implements AfterActionContext {
     }
 
     @Override
-    public HttpContext getHttpContext() {
+    public WsContext getWsContext() {
         return context;
     }
 

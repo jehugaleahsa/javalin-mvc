@@ -2,11 +2,11 @@ package com.truncon.javalin.mvc.annotations.processing;
 
 import com.squareup.javapoet.CodeBlock;
 import com.truncon.javalin.mvc.api.ws.WsAfter;
+import com.truncon.javalin.mvc.api.ws.WsAfterActionContext;
 import com.truncon.javalin.mvc.api.ws.WsAfterContainer;
+import com.truncon.javalin.mvc.ws.JavalinWsAfterActionContext;
 
 import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.Name;
-import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.MirroredTypeException;
 import javax.lang.model.type.TypeMirror;
 import java.util.ArrayList;
@@ -37,18 +37,26 @@ final class WsAfterGenerator {
     }
 
     public boolean generateAfter(
-            CodeBlock.Builder routeBuilder,
+            CodeBlock.Builder handlerBuilder,
             String injectorName,
             String contextName,
-            String exceptionName) {
+            String exceptionName,
+            int index) {
         String arguments = getArguments();
         InjectionResult result = container.getInstanceCall(getTypeMirror(), injectorName);
-        routeBuilder.addStatement("$L = $L.executeAfter($L, $L, $L)",
-            exceptionName,
-            result.getInstanceCall(),
+        String handlerName = "afterHandler" + index;
+        handlerBuilder.addStatement(
+            "$T $N = new $T($N, $L, $N, handled)",
+            WsAfterActionContext.class,
+            handlerName,
+            JavalinWsAfterActionContext.class,
             contextName,
             arguments,
-            exceptionName);
+            exceptionName
+        );
+        handlerBuilder.addStatement("$L.executeAfter($N)", result.getInstanceCall(), handlerName);
+        handlerBuilder.addStatement("$N = $N.getException()", exceptionName, handlerName);
+        handlerBuilder.addStatement("handled = $N.isHandled()", handlerName);
         return result.isInjectorNeeded();
     }
 

@@ -1,20 +1,20 @@
-package com.truncon.javalin.mvc.api;
+package com.truncon.javalin.mvc.api.ws;
 
 import java.util.List;
 
 /**
  * Provides the results of processing an action.
  */
-public interface AfterActionContext {
+public interface WsAfterActionContext {
     /**
      * Gets the request context being processed.
      * @return The request context.
      */
-    HttpContext getHttpContext();
+    WsContext getWsContext();
 
     /**
-     * Gets the constant arguments defined on the {@link After} annotation
-     * using {@link After#arguments()}.
+     * Gets the constant arguments defined on the {@link WsAfter} annotation
+     * using {@link WsAfter#arguments()}.
      * @return The constant arguments.
      */
     List<String> getArguments();
@@ -35,7 +35,7 @@ public interface AfterActionContext {
 
     /**
      * Gets whether the exception was handled by the current or previous handler. If
-     * no exception is {@code null}, {@code true} will be returned.
+     * the exception is {@code null}, {@code true} will be returned.
      * @return Whether the exception has been handled.
      */
     boolean isHandled();

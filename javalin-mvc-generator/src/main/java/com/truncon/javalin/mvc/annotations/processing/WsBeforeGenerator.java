@@ -2,11 +2,11 @@ package com.truncon.javalin.mvc.annotations.processing;
 
 import com.squareup.javapoet.CodeBlock;
 import com.truncon.javalin.mvc.api.ws.WsBefore;
+import com.truncon.javalin.mvc.api.ws.WsBeforeActionContext;
 import com.truncon.javalin.mvc.api.ws.WsBeforeContainer;
+import com.truncon.javalin.mvc.ws.JavalinWsBeforeActionContext;
 
 import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.Name;
-import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.MirroredTypeException;
 import javax.lang.model.type.TypeMirror;
 import java.util.ArrayList;
@@ -39,14 +39,21 @@ final class WsBeforeGenerator {
     public boolean generateBefore(
             CodeBlock.Builder routeBuilder,
             String injectorName,
-            String contextName) {
+            String contextName,
+            int index) {
         String arguments = getArguments();
         InjectionResult result = container.getInstanceCall(getTypeMirror(), injectorName);
-        routeBuilder.beginControlFlow(
-            "if (!$L.executeBefore($L, $L))",
-            result.getInstanceCall(),
+        String handlerName = "beforeHandler" + index;
+        routeBuilder.addStatement(
+            "$T $N = new $T($N, $L)",
+            WsBeforeActionContext.class,
+            handlerName,
+            JavalinWsBeforeActionContext.class,
             contextName,
-            arguments)
+            arguments
+        );
+        routeBuilder.addStatement("$L.executeBefore($N)", result.getInstanceCall(), handlerName);
+        routeBuilder.beginControlFlow("if ($N.isCancelled())", handlerName)
             .addStatement("return")
             .endControlFlow();
         return result.isInjectorNeeded();

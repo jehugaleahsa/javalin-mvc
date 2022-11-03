@@ -36,7 +36,7 @@ final class AfterGenerator {
     }
 
     public boolean generateAfter(
-            CodeBlock.Builder routeBuilder,
+            CodeBlock.Builder handlerBuilder,
             String injectorName,
             String contextName,
             String exceptionName,
@@ -44,7 +44,7 @@ final class AfterGenerator {
         String arguments = getArguments();
         InjectionResult result = container.getInstanceCall(getTypeMirror(), injectorName);
         String handlerName = "afterHandler" + index;
-        routeBuilder.addStatement(
+        handlerBuilder.addStatement(
             "$T $N = new $T($N, $L, $N, handled)",
             AfterActionContext.class,
             handlerName,
@@ -53,11 +53,9 @@ final class AfterGenerator {
             arguments,
             exceptionName
         );
-        routeBuilder.addStatement("$L.executeAfter($N)", result.getInstanceCall(), handlerName);
-        routeBuilder.addStatement("$N = $N.getException()", exceptionName, handlerName);
-        routeBuilder.beginControlFlow("if ($N != null && $N.isHandled())", exceptionName, handlerName)
-            .addStatement("handled = true")
-            .endControlFlow();
+        handlerBuilder.addStatement("$L.executeAfter($N)", result.getInstanceCall(), handlerName);
+        handlerBuilder.addStatement("$N = $N.getException()", exceptionName, handlerName);
+        handlerBuilder.addStatement("handled = $N.isHandled()", handlerName);
         return result.isInjectorNeeded();
     }
 

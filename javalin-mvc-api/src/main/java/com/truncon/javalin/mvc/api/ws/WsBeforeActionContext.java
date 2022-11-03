@@ -1,20 +1,20 @@
-package com.truncon.javalin.mvc.api;
+package com.truncon.javalin.mvc.api.ws;
 
 import java.util.List;
 
 /**
  * Provides information about a pending request and allows for cancellation.
  */
-public interface BeforeActionContext {
+public interface WsBeforeActionContext {
     /**
      * Gets the request context being processed.
      * @return The request context.
      */
-    HttpContext getHttpContext();
+    WsContext getWsContext();
 
     /**
-     * Gets the constant arguments defined on the {@link Before} annotation
-     * using {@link Before#arguments()}.
+     * Gets the constant arguments defined on the {@link WsBefore} annotation
+     * using {@link WsBefore#arguments()}.
      * @return The constant arguments.
      */
     List<String> getArguments();

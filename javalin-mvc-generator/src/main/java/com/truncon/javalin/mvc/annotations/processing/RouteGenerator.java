@@ -342,17 +342,17 @@ final class RouteGenerator {
     }
 
     private static boolean generateAfterHandlers(
-            CodeBlock.Builder routeBuilder,
+            CodeBlock.Builder handleBuilder,
             String contextName,
             String exceptionName,
             List<AfterGenerator> generators,
             String injectorName) {
         boolean injectorNeeded = false;
         int index = 0;
-        routeBuilder.addStatement("boolean handled = false");
+        handleBuilder.addStatement("boolean handled = false");
         for (AfterGenerator generator : generators) {
             boolean afterInjectorNeeded = generator.generateAfter(
-                routeBuilder,
+                handleBuilder,
                 injectorName,
                 contextName,
                 exceptionName,
@@ -360,7 +360,7 @@ final class RouteGenerator {
             injectorNeeded |= afterInjectorNeeded;
             ++index;
         }
-        routeBuilder.beginControlFlow("if (caughtException != null && !handled)")
+        handleBuilder.beginControlFlow("if (caughtException != null && !handled)")
                 .addStatement("throw caughtException")
                 .endControlFlow();
         return injectorNeeded;

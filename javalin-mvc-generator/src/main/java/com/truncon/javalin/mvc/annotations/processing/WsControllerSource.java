@@ -118,7 +118,7 @@ final class WsControllerSource {
         List<ExecutableElement> methods = controllerElement.getEnclosedElements().stream()
             .filter(e -> e.getKind() == ElementKind.METHOD)
             .filter(e -> e.getAnnotation(annotationType) != null)
-            .map(e -> (ExecutableElement) e)
+            .map(ExecutableElement.class::cast)
             .collect(Collectors.toList());
         if (methods.isEmpty()) {
             return null;
@@ -362,10 +362,15 @@ final class WsControllerSource {
             String contextName,
             List<WsBeforeGenerator> generators,
             String injectorName) {
+        if (generators.isEmpty()) {
+            return false;
+        }
         boolean injectorNeeded = false;
+        int index = 0;
         for (WsBeforeGenerator generator : generators) {
-            boolean beforeInjectorNeeded = generator.generateBefore(handlerBuilder, injectorName, contextName);
+            boolean beforeInjectorNeeded = generator.generateBefore(handlerBuilder, injectorName, contextName, index);
             injectorNeeded |= beforeInjectorNeeded;
+            ++index;
         }
         return injectorNeeded;
     }
@@ -377,15 +382,19 @@ final class WsControllerSource {
             List<WsAfterGenerator> generators,
             String injectorName) {
         boolean injectorNeeded = false;
+        int index = 0;
+        handlerBuilder.addStatement("boolean handled = false");
         for (WsAfterGenerator generator : generators) {
             boolean afterInjectorNeeded = generator.generateAfter(
                 handlerBuilder,
                 injectorName,
                 contextName,
-                exceptionName);
+                exceptionName,
+                index);
             injectorNeeded |= afterInjectorNeeded;
+            ++index;
         }
-        handlerBuilder.beginControlFlow("if (caughtException != null)")
+        handlerBuilder.beginControlFlow("if (caughtException != null && !handled)")
             .addStatement("throw caughtException")
             .endControlFlow();
         return injectorNeeded;

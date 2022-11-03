@@ -6,9 +6,7 @@ package com.truncon.javalin.mvc.api.ws;
 public interface WsBeforeActionHandler {
     /**
      * Performs a task before a controller action executes. The request can be cancelled by returning false.
-     * @param context The request context being processed.
-     * @param arguments The String constant arguments defined on the annotation.
-     * @return false if the request should be cancelled; otherwise, true.
+     * @param context Provides information about the request to be performed.
      */
-    boolean executeBefore(WsContext context, String[] arguments);
+    void executeBefore(WsBeforeActionContext context);
 }
