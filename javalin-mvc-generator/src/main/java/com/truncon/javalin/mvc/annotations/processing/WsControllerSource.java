@@ -249,20 +249,16 @@ final class WsControllerSource {
         CodeBlock.Builder restBuilder = CodeBlock.builder();
         ContainerSource container = helperBuilder.getContainer();
         boolean injectorNeeded = addController(container, restBuilder);
-        if (injectorNeeded) {
-            handlerBuilder.addStatement("$T injector = $N.get()", container.getInjectorType(), ControllerRegistryGenerator.SCOPE_FACTORY_NAME);
-        }
         restBuilder.addStatement("$T $N = new $T($N)", contextInterface, wrapper, contextImpl, context);
 
-
         List<WsBeforeGenerator> beforeGenerators = WsBeforeGenerator.getBeforeGenerators(container, method);
-        List<WsAfterGenerator> afterGenerators = WsAfterGenerator.getAfterGenerators(container, method);
         String injector = "injector";
         boolean beforeInjectorNeeded = generateBeforeHandlers(
             restBuilder,
             wrapper,
             beforeGenerators,
             container.isFound() ? injector : null);
+        List<WsAfterGenerator> afterGenerators = WsAfterGenerator.getAfterGenerators(container, method);
         injectorNeeded |= beforeInjectorNeeded;
         if (!afterGenerators.isEmpty()) {
             restBuilder.addStatement("Exception caughtException = null;");
@@ -344,10 +340,13 @@ final class WsControllerSource {
             injectorNeeded |= afterInjectorNeeded;
         }
 
+        // Only create injector if needed
+        if (injectorNeeded) {
+            handlerBuilder.addStatement("$T injector = $N.get()", container.getInjectorType(), ControllerRegistryGenerator.SCOPE_FACTORY_NAME);
+        }
         String methodName = javalinHandler + "WsHandler" + index;
         helperBuilder.addWsRouteHandler(methodName, javalinContext, restBuilder.build());
 
-        // only create injector if needed
         handlerBuilder.addStatement("ws.$N(this::$N)", javalinHandler, methodName);
     }
 
