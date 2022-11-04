@@ -340,12 +340,8 @@ final class WsControllerSource {
             injectorNeeded |= afterInjectorNeeded;
         }
 
-        // Only create injector if needed
-        if (injectorNeeded) {
-            handlerBuilder.addStatement("$T injector = $N.get()", container.getInjectorType(), ControllerRegistryGenerator.SCOPE_FACTORY_NAME);
-        }
         String methodName = javalinHandler + "WsHandler" + index;
-        helperBuilder.addWsRouteHandler(methodName, javalinContext, restBuilder.build());
+        helperBuilder.addWsRouteHandler(methodName, javalinContext, injectorNeeded, restBuilder.build());
 
         handlerBuilder.addStatement("ws.$N(this::$N)", javalinHandler, methodName);
     }

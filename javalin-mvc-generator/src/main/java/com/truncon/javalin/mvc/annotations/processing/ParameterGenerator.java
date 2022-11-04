@@ -349,11 +349,10 @@ final class ParameterGenerator {
             TypeElement element = typeUtils.getTypeElement(parameterType);
             if (element != null && typeUtils.getCollectionComponentType(parameterType) == null) {
                 ConversionMethodResult methodResult = helperBuilder.addConversionMethod(element, defaultBinding, wrapperType);
-                String argument = CodeBlock.builder()
-                    .add("$N($N)", methodResult.getMethod(), wrapper)
-                    .build()
-                    .toString();
-                result.addArgument(argument);
+                CodeBlock argument = methodResult.isInjectorNeeded()
+                    ? CodeBlock.builder().add("$N($N, $N)", methodResult.getMethod(), wrapper, injector).build()
+                    : CodeBlock.builder().add("$N($N)", methodResult.getMethod(), wrapper).build();
+                result.addArgument(argument.toString());
                 result.markInjectorNeeded(methodResult.isInjectorNeeded());
                 return;
             }

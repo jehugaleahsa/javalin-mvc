@@ -343,8 +343,7 @@ public final class HelperMethodBuilder {
         int count = complexConversionCounts.getOrDefault(simpleName, 0);
         methodName = "to" + simpleName + (count + 1);
         MethodSpec.Builder methodBuilder = MethodSpec.methodBuilder(methodName)
-            .addModifiers(Modifier.PRIVATE)
-            .addModifiers(Modifier.STATIC)
+            .addModifiers(Modifier.PRIVATE, Modifier.STATIC)
             .returns(TypeName.get(element.asType()))
             .addParameter(HttpContext.class, "context")
             .addCode(methodBodyBuilder.build());
@@ -750,11 +749,9 @@ public final class HelperMethodBuilder {
         if (methodName != null) {
             return new ConversionMethodResult(methodName, false);
         }
-
         CodeBlock.Builder methodBodyBuilder = CodeBlock.builder();
-        InjectionResult result = container.getInstanceCall(element.asType(), "injector");
-        boolean injectorNeeded = result.isInjectorNeeded();
-        methodBodyBuilder.addStatement("$T model = $L", element, result.getInstanceCall());
+        boolean injectorNeeded = addModelBuilderCreation(methodBodyBuilder, element);
+
         Collection<Element> memberElements = getBoundMemberElements(
             element,
             e -> defaultSource != WsValueSource.Any || hasWsFromAnnotation(e) || hasWsMemberBinding(e)
@@ -782,14 +779,13 @@ public final class HelperMethodBuilder {
             WsValueSource defaultSubSource = getDefaultWsFromBinding(memberElement);
             if (defaultSubSource != WsValueSource.Any || hasWsMemberBinding(memberElement)) {
                 TypeElement subElement = container.getTypeUtils().getTypeElement(getParameterType(memberElement));
-                if (!visitedTypes.contains(subElement.getQualifiedName().toString())) {
+                if (subElement != null && !visitedTypes.contains(subElement.getQualifiedName().toString())) {
                     visitedTypes.add(subElement.getQualifiedName().toString());
                     ConversionMethodResult methodResult = addConversionMethodInternal(subElement, defaultSource, contextType, visitedTypes);
-                    String valueExpression = CodeBlock.builder()
-                        .add("$N($N)", methodResult.getMethod(), "context")
-                        .build()
-                        .toString();
-                    setMember(memberElement, methodBodyBuilder, valueExpression);
+                    CodeBlock value = methodResult.isInjectorNeeded()
+                        ? CodeBlock.builder().add("$N($N, $N)", methodResult.getMethod(), "context", "injector").build()
+                        : CodeBlock.builder().add("$N($N)", methodResult.getMethod(), "context").build();
+                    setMember(memberElement, methodBodyBuilder, value.toString());
                     injectorNeeded |= methodResult.isInjectorNeeded();
                 }
             }
@@ -799,13 +795,17 @@ public final class HelperMethodBuilder {
         String simpleName = element.getSimpleName().toString();
         int count = complexConversionCounts.getOrDefault(simpleName, 0);
         methodName = "to" + simpleName + (count + 1);
-        MethodSpec method = MethodSpec.methodBuilder(methodName)
+        MethodSpec.Builder methodBuilder = MethodSpec.methodBuilder(methodName)
             .addModifiers(Modifier.PRIVATE, Modifier.STATIC)
             .returns(TypeName.get(element.asType()))
             .addParameter(contextType, "context")
-            .addCode(methodBodyBuilder.build())
-            .build();
-        typeBuilder.addMethod(method);
+            .addCode(methodBodyBuilder.build());
+        if (injectorNeeded) {
+            methodBuilder.addParameter(
+                TypeName.get(container.getInjectorType()),
+                "injector");
+        }
+        typeBuilder.addMethod(methodBuilder.build());
         complexWsConversionLookup.put(key, methodName);
         complexConversionCounts.put(simpleName, count + 1);
 
@@ -1173,13 +1173,19 @@ public final class HelperMethodBuilder {
         typeBuilder.addMethod(methodBuilder.build());
     }
 
-    public void addWsRouteHandler(String methodName, Class<?> contextType, CodeBlock body) {
+    public void addWsRouteHandler(String methodName, Class<?> contextType, boolean injectorNeeded, CodeBlock content) {
+        // Only create injector if needed
+        CodeBlock.Builder bodyBuilder = CodeBlock.builder();
+        if (injectorNeeded) {
+            bodyBuilder.addStatement("$T injector = $N.get()", container.getInjectorType(), ControllerRegistryGenerator.SCOPE_FACTORY_NAME);
+        }
+        bodyBuilder.add(content);
         MethodSpec.Builder methodBuilder = MethodSpec.methodBuilder(methodName)
             .addModifiers(Modifier.PRIVATE)
             .returns(void.class)
             .addException(Exception.class)
             .addParameter(contextType, "ctx")
-            .addCode(body);
+            .addCode(bodyBuilder.build());
         typeBuilder.addMethod(methodBuilder.build());
     }
 

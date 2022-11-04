@@ -94,7 +94,7 @@ final class ControllerSource {
     public List<RouteGenerator> getRouteGenerators() {
         return controllerElement.getEnclosedElements().stream()
             .filter(e -> e.getKind() == ElementKind.METHOD)
-            .map(e -> (ExecutableElement) e)
+            .map(ExecutableElement.class::cast)
             .flatMap(e -> RouteGenerator.getGenerators(this, e).stream())
             .filter(Objects::nonNull)
             .collect(Collectors.toList());
