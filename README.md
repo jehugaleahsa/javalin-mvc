@@ -473,11 +473,13 @@ public ActionResult update(Customer customer) {
 You can have as many `@Before` and `@After` annotations on a single action method as you need. They will be executed in the order they appear (top-down).
 
 ## OpenAPI/Swagger Support
-You can directly use Javalin OpenAPI annotations on controller methods, and they will appear in swagger/Swagger-UI. You must first configure Javalin to use swagger (see the example main above). Below is an absurd example demonstrating the majority of the annotations you can use.
+You can directly use Javalin OpenAPI annotations on controller methods, and they will appear in openapi/swagger. You must first configure Javalin to use openapi (see the example main above). Below is an absurd example demonstrating the majority of the annotations you can use:
 
 ```java
 @HttpGet(route="/api/pickles")
 @OpenApi(
+    path = "/api/pickles",
+    methods = { HttpMethod.GET },
     requestBody = @OpenApiRequestBody(
         content = @OpenApiContent(from = byte[].class),
         description = "Get all the pickles",
@@ -505,7 +507,8 @@ You can directly use Javalin OpenAPI annotations on controller methods, and they
     },
     cookies = {
         @OpenApiParam(name = "Num num, me eat", required = true, description = "A cookie")
-    }
+    },
+    operationId = "getAllPickles"
 )
 public ActionResult index() {
     // ... crazy API implementation
@@ -518,11 +521,12 @@ One caveat is that you must ensure method names in your controllers are unique; 
 WebSockets are handled by marking classes with the `@WsController` annotation. Unlike HTTP controllers, a WebSocket controller only handles a single route. Each WebSocket controller can process client connections, disconnects, errors, and messages (text or binary). The route the controller will handle is passed as a parameter to the `@WsController` annotation. The methods within the controller can be marked with the `@WsConnect`, `@WsClose`, `@WsError`, `@WsMessage`, or `@WsBinaryMessage` annotations. Only one instance of each annotation can appear within a class; however, the same method can have multiple annotations.
 
 Similar to HTTP controllers, method parameters can be bound from query strings, path parameters, 
-headers, and cookies. Note, there's no support for URL-encoded form data as this does not exist 
-for WebSockets. If you want to explicitly bind a value from a particular source, you can use the 
+headers, and cookies. If you want to explicitly bind a value from a particular source, you can use the 
 same `@From*` annotations, just like for HTTP. In addition, you can use the `@FromBody` annotation 
 to bind parameters directly from the message. You can also use `@FromBody` to bind binary messages 
 to `byte[]`, `ByteBuffer`, or `InputStream` parameters.
+
+> Note, there is no support for URL-encoded form data as this does not exist for WebSockets.
 
 If a method accepts a `WsContext` object, it will have direct access to the context object. Similarly, you can bind to `WsRequest` and `WsResponse` objects. A method-specific sub-interface exists for each method, so there is a `WsConnectContext`, `WsCloseContext`, `WsErrorContext`, `WsMessageContext`, and `WsBinaryMessageContext` that can be used as parameters, as well; however, these will only be initialized if used on the appropriate method.
 
@@ -531,10 +535,6 @@ You can send responses to the client using the `WsResponse.send` methods; howeve
 ```java
 @WsController(route="/ws/pickles")
 public final class WsPickleController {
-    @Inject
-    public WsPickleController() {
-    }
-
     @WsConnect
     public void onConnect(WsConnectContext context) {
         // Do something...
@@ -558,7 +558,7 @@ public final class WsPickleController {
 ```
 
 ## Model Binding
-Data can come from a lot of places: the route (e.g., `/users/{userId}`), query strings (e.g., `/users?name=John%20Smith`), headers, cookies, form fields (URL encoded form data), body JSON, etc. Since Javalin MVC 2.x, you are allowed to bind your data to objects, as well. Consider a page that listed all your users with a server-side paging and searching. You might have a model that looks like this:
+Data can come from a lot of places: the route (e.g., `/users/{userId}`), query strings (e.g., `/users?name=John%20Smith`), headers, cookies, form fields (URL-encoded form data), body JSON, etc. You are allowed to bind your data to objects, as well. Consider a page that listed all your users with server-side paging and searching. You might have a model that looks like this:
 
 ```java
 public final class UserSearch {
@@ -644,7 +644,7 @@ Because the `UserSearch` model has `@From*` annotations, Javalin MVC automatical
 ### Valid Binding Targets
 At this time, only public fields and setters can be bound. Private, protected and package-level access is not supported. You also cannot place the annotations on the getters, since the logic to for looking up the corresponding setter can be a bit ambiguous in some cases. Furthermore, setters must begin with "set" and have exactly one argument.
 
-In the future, I might add support for binding getters or package-level members. I may also generate compile errors if you place `@From*` annotations on non-public fields and setters, but right now Javalin MVC just ignores them.
+> In the future, I might add support for binding getters or package-level members. I may also generate compile errors if you place `@From*` annotations on non-public fields and setters, but right now Javalin MVC just ignores them.
 
 ### Naming
 Notice that Javalin MVC respects the `@Named` annotations so your class fields/setters don't have to match your path/query string/etc. names exactly.
@@ -760,16 +760,15 @@ public final class UserSearch {
 }
 ```
 
-Javalin MVC is smart enough to look at inherited members as well as search recursively within class model members for `@From*` annotations. This allows you to nest your models however you see fit. Note: in the second example above, you can mark the `setPagination` method with a `@From*` annotation to overwrite the default binding source, similar to the `@From*` annotation on the action method parameter.
+Javalin MVC is smart enough to look at inherited members as well as search recursively within class model members for `@From*` annotations. This allows you to nest your models however you see fit.
+
+> Note: in the second example above, you can mark the `setPagination` method with a `@From*` annotation to overwrite the default binding source, similar to the `@From*` annotation on the action method parameter.
 
 ### Dependency Injection
-By default, Javalin MVC will try to initialize your models using the default constructor; 
-however, if you registered your model with DI container, Javalin MVC will use it to initialize your 
-model.
+By default, Javalin MVC will try to initialize your models using the default constructor; however, if you registered your model with a DI container, Javalin MVC will use it to initialize your model.
 
 ### JSON and binary binding
-Javalin MVC also allows you to use the `@FromBody` annotation on model members. 
-Just be aware that binding the same binary data multiple times can result in unexpected behavior.
+Javalin MVC also allows you to use the `@FromBody` annotation on model members. Just be aware that binding the same binary data multiple times can result in unexpected behavior.
 
 ## Custom Conversion
 One of the big enhancements with Javalin MVC 2.x is the introduction of custom converters. Custom conversions are performed using a pair of new annotations: `@Converter` and `@UseConverter`. Static and instance methods can be annotated with `@Converter`, so long as they use the correct signature. For example:
@@ -818,9 +817,7 @@ public final class Pair {
 Javalin MVC always checks for `@UseConverter` first before trying to perform any other built-in conversion.
 
 ### Dependency Injection
-For instance method converters (a.k.a, non-`static`), Javalin MVC will try to create the 
-converter objects using the default constructor, by default. However, if you register your class 
-with a DI container, Javalin MVC will use it to instantiate the converter.
+For instance method converters (a.k.a, non-`static`), Javalin MVC will try to create the converter objects using the default constructor, by default. However, if you register your class with a DI container, Javalin MVC will use it to instantiate the converter.
 
 ### Incremental Compilation Support
 As of Javalin MVC 4.x, there is very early, basic support for incremental builds. In IDE environments, like IntelliJ, compile times are improved by only compiling files that changed. However, the sources that are generated at compile-time by Javalin MVC require looking at every decorated controller class, etc. Javalin MVC solves this by keeping track of which files were previously used so the full output can be generated. Keep in mind that this is very experimental, and if you encounter any issues, please let me know. My expectation is that support for incremental builds will eliminate some of the more mystifying errors reported in the past.
@@ -828,23 +825,18 @@ As of Javalin MVC 4.x, there is very early, basic support for incremental builds
 Often, if you can't figure out why the build is failing, try cleaning the project (like deleting the `target` directory or whatever). In IntelliJ, you can also right-click on the module and select Rebuild to perform a full compilation.
 
 ## JAX-RS Support
-If you are familiar with the JAX-RS API, specifically it's annotations, you should feel free to 
-use them instead of the equivalent annotations provided by Javalin MVC. Simply add the following 
-dependency:
+If you are familiar with the JAX-RS API, specifically it's annotations, feel free to use them instead of the equivalent annotations provided by Javalin MVC. Simply add the following dependency:
 
 ```xml
 <dependency>
-    <groupId>javax.ws.rs</groupId>
-    <artifactId>javax.ws.rs-api</artifactId>
-    <version>2.1.1</version>
-    <scope>compile</scope>
+    <groupId>jakarta.ws.rs</groupId>
+    <artifactId>jakarta.ws.rs-api</artifactId>
+    <version>3.1.0</version>
 </dependency>
 ```
 
-Until Javalin MVC is changed to target Java 9+, you must use the `javax.*` annotations instead 
-of `jakarta.*`. Due to Javalin targeting Java 8+, Javalin MVC also targets Java 8+ and the 
-jakarta annotations require a newer Java version. Fortunately, switching from javax to jakarta 
-is a simple find/replace operation.
+As of Javalin MVC 5.0.0, you must use the `jakarta.*` annotations instead 
+of `javax.*`. Due to Javalin 5 targeting Java 11+, Javalin MVC also targets Java 11+ and the jakarta annotations are required in newer Java versions.
 
 ## Known Limitations
 Also, note some IDEs incorrectly run the Dagger and Javalin MVC annotation processors out-of-order or at random. Dagger should always run first - otherwise Javalin MVC can't see that a dependency is provided. This often manifests itself as Javalin MVC trying to default-construct a class without a default constructor. 😬 
