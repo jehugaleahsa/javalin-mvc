@@ -1,20 +1,20 @@
 package com.truncon.javalin.mvc.api;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-public final class StatusCodeResultTest {
+final class StatusCodeResultTest {
     @Test
-    public void testCtor() {
+    void testCtor() {
         StatusCodeResult result = new StatusCodeResult(200);
-        Assert.assertEquals(200, result.getStatusCode());
+        Assertions.assertEquals(200, result.getStatusCode());
     }
 
     @Test
-    public void testExecute() {
+    void testExecute() {
         StatusCodeResult result = new StatusCodeResult(400);
         MockHttpContext context = new MockHttpContext();
         result.execute(context);
-        Assert.assertEquals(400, context.getResponse().getStatusCode());
+        Assertions.assertEquals(400, context.getResponse().getStatusCode());
     }
 }

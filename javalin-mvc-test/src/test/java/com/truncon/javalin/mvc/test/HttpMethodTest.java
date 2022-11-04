@@ -1,18 +1,18 @@
 package com.truncon.javalin.mvc.test;
 
 import com.truncon.javalin.mvc.test.controllers.HttpMethodController;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import static com.truncon.javalin.mvc.test.QueryUtils.getStringForGet;
 
-public class HttpMethodTest {
+class HttpMethodTest {
     @Test
-    public void testGet() {
+    void testGet() {
         AsyncTestUtils.runTest(app -> {
             String route = RouteBuilder.buildRoute(HttpMethodController.GET_ROUTE);
             String response = getStringForGet(route);
-            Assert.assertEquals("GET", response);
+            Assertions.assertEquals("GET", response);
         });
     }
 }

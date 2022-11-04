@@ -1,159 +1,171 @@
 package com.truncon.javalin.mvc.api;
 
 import org.apache.commons.io.IOUtils;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-public final class DownloadResultTest {
+final class DownloadResultTest {
     @Test
-    public void testCtor_stream() {
+    void testCtor_stream() {
         InputStream stream = new ByteArrayInputStream(new byte[] { 1, 2, 3 });
         DownloadResult result = new DownloadResult(stream);
-        Assert.assertSame(stream, result.getInputStream());
-        Assert.assertEquals("application/octet-stream", result.getContentType());
-    }
-
-    @Test(expected = NullPointerException.class)
-    public void testCtor_stream_nullStream_throws() {
-        new DownloadResult((InputStream) null);
+        Assertions.assertSame(stream, result.getInputStream());
+        Assertions.assertEquals("application/octet-stream", result.getContentType());
     }
 
     @Test
-    public void testCtor_streamContentType() {
+    void testCtor_stream_nullStream_throws() {
+        Assertions.assertThrows(NullPointerException.class, () -> new DownloadResult((InputStream) null));
+    }
+
+    @Test
+    void testCtor_streamContentType() {
         InputStream stream = new ByteArrayInputStream(new byte[] { 1, 2, 3 });
         DownloadResult result = new DownloadResult(stream, "text/plain");
-        Assert.assertSame(stream, result.getInputStream());
-        Assert.assertEquals("text/plain", result.getContentType());
-    }
-
-    @Test(expected = NullPointerException.class)
-    public void testCtor_streamContentType_nullStream_throws() {
-        new DownloadResult((InputStream) null, "text/plain");
+        Assertions.assertSame(stream, result.getInputStream());
+        Assertions.assertEquals("text/plain", result.getContentType());
     }
 
     @Test
-    public void testCtor_byteArray() throws IOException {
+    void testCtor_streamContentType_nullStream_throws() {
+        Assertions.assertThrows(NullPointerException.class, () -> new DownloadResult((InputStream) null, "text/plain"));
+    }
+
+    @Test
+    void testCtor_byteArray() throws IOException {
         byte[] data = new byte[] { 1, 2, 3 };
         DownloadResult result = new DownloadResult(data);
         byte[] actual = IOUtils.toByteArray(result.getInputStream());
-        Assert.assertArrayEquals(data, actual);
-        Assert.assertEquals("application/octet-stream", result.getContentType());
-    }
-
-    @Test(expected = NullPointerException.class)
-    public void testCtor_byteArray_nullData_throws() {
-        new DownloadResult((byte[]) null);
+        Assertions.assertArrayEquals(data, actual);
+        Assertions.assertEquals("application/octet-stream", result.getContentType());
     }
 
     @Test
-    public void testCtor_byteArrayContentType() throws IOException {
+    void testCtor_byteArray_nullData_throws() {
+        Assertions.assertThrows(NullPointerException.class, () -> new DownloadResult((byte[]) null));
+    }
+
+    @Test
+    void testCtor_byteArrayContentType() throws IOException {
         byte[] data = new byte[] { 1, 2, 3 };
         DownloadResult result = new DownloadResult(data, "text/plain");
         byte[] actual = IOUtils.toByteArray(result.getInputStream());
-        Assert.assertArrayEquals(data, actual);
-        Assert.assertEquals("text/plain", result.getContentType());
-    }
-
-    @Test(expected = NullPointerException.class)
-    public void testCtor_byteArrayContentType_nullData_throws() {
-        new DownloadResult((byte[]) null, "text/plain");
+        Assertions.assertArrayEquals(data, actual);
+        Assertions.assertEquals("text/plain", result.getContentType());
     }
 
     @Test
-    public void testCtor_rangedByteArray() throws IOException {
+    void testCtor_byteArrayContentType_nullData_throws() {
+        Assertions.assertThrows(NullPointerException.class, () -> new DownloadResult((byte[]) null, "text/plain"));
+    }
+
+    @Test
+    void testCtor_rangedByteArray() throws IOException {
         byte[] data = new byte[] { 1, 2, 3 };
         DownloadResult result = new DownloadResult(data, 1, 1);
         byte[] actual = IOUtils.toByteArray(result.getInputStream());
-        Assert.assertArrayEquals(new byte[] { 2 }, actual);
-        Assert.assertEquals("application/octet-stream", result.getContentType());
-    }
-
-    @Test(expected = NullPointerException.class)
-    public void testCtor_rangedByteArray_nullData_throws() {
-        new DownloadResult(null, 0, 0);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testCtor_rangedByteArray_negativeOffset_throws() {
-        new DownloadResult(new byte[0], -1, 0);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testCtor_rangedByteArray_negativeLength_throws() {
-        new DownloadResult(new byte[0], 0, -1);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testCtor_rangedByteArray_lengthTooLong_throws() {
-        new DownloadResult(new byte[0], 0, 1);
+        Assertions.assertArrayEquals(new byte[] { 2 }, actual);
+        Assertions.assertEquals("application/octet-stream", result.getContentType());
     }
 
     @Test
-    public void testCtor_rangedByteArrayContentType() throws IOException {
+    void testCtor_rangedByteArray_nullData_throws() {
+        Assertions.assertThrows(NullPointerException.class, () -> new DownloadResult(null, 0, 0));
+    }
+
+    @Test
+    void testCtor_rangedByteArray_negativeOffset_throws() {
+        Assertions.assertThrows(IllegalArgumentException.class, () -> new DownloadResult(new byte[0], -1, 0));
+    }
+
+    @Test
+    void testCtor_rangedByteArray_negativeLength_throws() {
+        Assertions.assertThrows(IllegalArgumentException.class, () -> new DownloadResult(new byte[0], 0, -1));
+    }
+
+    @Test
+    void testCtor_rangedByteArray_lengthTooLong_throws() {
+        Assertions.assertThrows(IllegalArgumentException.class, () -> new DownloadResult(new byte[0], 0, 1));
+    }
+
+    @Test
+    void testCtor_rangedByteArrayContentType() throws IOException {
         byte[] data = new byte[] { 1, 2, 3 };
         DownloadResult result = new DownloadResult(data, 1, 1, "text/plain");
         byte[] actual = IOUtils.toByteArray(result.getInputStream());
-        Assert.assertArrayEquals(new byte[] { 2 }, actual);
-        Assert.assertEquals("text/plain", result.getContentType());
-    }
-
-    @Test(expected = NullPointerException.class)
-    public void testCtor_rangedByteArrayContentType_nullData_throws() {
-        new DownloadResult(null, 0, 0, "plain/text");
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testCtor_rangedByteArrayContentType_negativeOffset_throws() {
-        new DownloadResult(new byte[0], -1, 0, "plain/text");
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testCtor_rangedByteArrayContentType_negativeLength_throws() {
-        new DownloadResult(new byte[0], 0, -1, "plain/text");
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testCtor_rangedByteArrayContentType_lengthTooLong_throws() {
-        new DownloadResult(new byte[0], 0, 1, "plain/text");
+        Assertions.assertArrayEquals(new byte[] { 2 }, actual);
+        Assertions.assertEquals("text/plain", result.getContentType());
     }
 
     @Test
-    public void testSetContentType() {
+    void testCtor_rangedByteArrayContentType_nullData_throws() {
+        Assertions.assertThrows(
+            NullPointerException.class,
+            () -> new DownloadResult(null, 0, 0, "plain/text")
+        );
+    }
+
+    @Test
+    void testCtor_rangedByteArrayContentType_negativeOffset_throws() {
+        Assertions.assertThrows(
+            IllegalArgumentException.class,
+            () -> new DownloadResult(new byte[0], -1, 0, "plain/text")
+        );
+    }
+
+    @Test
+    void testCtor_rangedByteArrayContentType_negativeLength_throws() {
+        Assertions.assertThrows(
+            IllegalArgumentException.class,
+            () -> new DownloadResult(new byte[0], 0, -1, "plain/text")
+        );
+    }
+
+    @Test
+    void testCtor_rangedByteArrayContentType_lengthTooLong_throws() {
+        Assertions.assertThrows(
+            IllegalArgumentException.class,
+            () -> new DownloadResult(new byte[0], 0, 1, "plain/text")
+        );
+    }
+
+    @Test
+    void testSetContentType() {
         DownloadResult result = new DownloadResult(new byte[0]);
-        Assert.assertEquals("application/octet-stream", result.getContentType());
+        Assertions.assertEquals("application/octet-stream", result.getContentType());
         result.setContentType("text/plain");
-        Assert.assertEquals("text/plain", result.getContentType());
+        Assertions.assertEquals("text/plain", result.getContentType());
     }
 
     @Test
-    public void testSetFilename() {
+    void testSetFilename() {
         DownloadResult result = new DownloadResult(new byte[0]);
         result.setFileName("input.txt");
-        Assert.assertEquals("input.txt", result.getFileName());
+        Assertions.assertEquals("input.txt", result.getFileName());
     }
 
     // Do I need to test for file names containing slashes?
 
     @Test
-    public void testExecute_noFileName() {
+    void testExecute_noFileName() {
         InputStream inputStream = new ByteArrayInputStream(new byte[0]);
         DownloadResult result = new DownloadResult(inputStream);
         result.setContentType("text/plain");
         MockHttpContext context = new MockHttpContext();
         result.execute(context);
         MockHttpResponse response = context.getResponse();
-        Assert.assertEquals(inputStream, response.getStreamBody());
-        Assert.assertEquals("text/plain", response.getContentType());
+        Assertions.assertEquals(inputStream, response.getStreamBody());
+        Assertions.assertEquals("text/plain", response.getContentType());
         String header = response.getHeader("Content-Disposition");
-        Assert.assertEquals("attachment;", header);
+        Assertions.assertEquals("attachment;", header);
     }
 
     @Test
-    public void testExecute_withFileName() {
+    void testExecute_withFileName() {
         InputStream inputStream = new ByteArrayInputStream(new byte[0]);
         DownloadResult result = new DownloadResult(inputStream);
         result.setContentType("text/plain");
@@ -161,9 +173,9 @@ public final class DownloadResultTest {
         MockHttpContext context = new MockHttpContext();
         result.execute(context);
         MockHttpResponse response = context.getResponse();
-        Assert.assertEquals(inputStream, response.getStreamBody());
-        Assert.assertEquals("text/plain", response.getContentType());
+        Assertions.assertEquals(inputStream, response.getStreamBody());
+        Assertions.assertEquals("text/plain", response.getContentType());
         String header = response.getHeader("Content-Disposition");
-        Assert.assertEquals("attachment;fileName=text.txt", header);
+        Assertions.assertEquals("attachment;fileName=text.txt", header);
     }
 }

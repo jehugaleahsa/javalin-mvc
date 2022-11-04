@@ -10,8 +10,8 @@ import com.truncon.javalin.mvc.test.controllers.ws.parameters.collections.ListCo
 import com.truncon.javalin.mvc.test.controllers.ws.parameters.collections.SetController;
 import com.truncon.javalin.mvc.test.controllers.ws.parameters.collections.SortedSetController;
 import com.truncon.javalin.mvc.test.controllers.ws.parameters.collections.TreeSetController;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.math.BigInteger;
 import java.time.LocalDateTime;
@@ -23,9 +23,9 @@ import java.util.UUID;
 import static com.truncon.javalin.mvc.test.RouteBuilder.param;
 import static com.truncon.javalin.mvc.test.RouteBuilder.queryParams;
 
-public final class WsCollectionParamTest {
+final class WsCollectionParamTest {
     @Test
-    public void testIterable() {
+    void testIterable() {
         AsyncTestUtils.runTest(app -> {
             String route = RouteBuilder.buildWsRouteWithQueryParams(
                 IterableController.ROUTE,
@@ -33,14 +33,14 @@ public final class WsCollectionParamTest {
             WsTestUtils.ws(route, sessionManager ->
                 sessionManager.sendStringAndAwaitJsonResponse("", Integer[].class).thenAccept((actual) -> {
                     Integer[] expected = new Integer[] { 1, null, 2 };
-                    Assert.assertArrayEquals(expected, actual);
+                    Assertions.assertArrayEquals(expected, actual);
                 })
             );
         });
     }
 
     @Test
-    public void testCollection() {
+    void testCollection() {
         AsyncTestUtils.runTest(app -> {
             String route = RouteBuilder.buildWsRouteWithQueryParams(
                 CollectionController.ROUTE,
@@ -48,14 +48,14 @@ public final class WsCollectionParamTest {
             WsTestUtils.ws(route, sessionManager ->
                 sessionManager.sendStringAndAwaitJsonResponse("", Double[].class).thenAccept((actual) -> {
                     Double[] expected = new Double[] { 1.23, null, 2.34 };
-                    Assert.assertArrayEquals(expected, actual);
+                    Assertions.assertArrayEquals(expected, actual);
                 })
             );
         });
     }
 
     @Test
-    public void testList() {
+    void testList() {
         AsyncTestUtils.runTest(app -> {
             String route = RouteBuilder.buildWsRouteWithQueryParams(
                 ListController.ROUTE,
@@ -63,14 +63,14 @@ public final class WsCollectionParamTest {
             WsTestUtils.ws(route, sessionManager ->
                 sessionManager.sendStringAndAwaitJsonResponse("", String[].class).thenAccept((actual) -> {
                     String[] expected = new String[] { "one", null, "two" };
-                    Assert.assertArrayEquals(expected, actual);
+                    Assertions.assertArrayEquals(expected, actual);
                 })
             );
         });
     }
 
     @Test
-    public void testSet() {
+    void testSet() {
         AsyncTestUtils.runTest(app -> {
             String route = RouteBuilder.buildWsRouteWithQueryParams(
                 SetController.ROUTE,
@@ -78,14 +78,14 @@ public final class WsCollectionParamTest {
             WsTestUtils.ws(route, sessionManager ->
                 sessionManager.sendStringAndAwaitJsonResponse("", String[].class).thenAccept((actual) -> {
                     String[] expected = new String[] { "hello", null, "goodbye" };
-                    Assert.assertArrayEquals(expected, actual);
+                    Assertions.assertArrayEquals(expected, actual);
                 })
             );
         });
     }
 
     @Test
-    public void testArrayList() {
+    void testArrayList() {
         AsyncTestUtils.runTest(app -> {
             UUID first = UUID.randomUUID();
             UUID second = UUID.randomUUID();
@@ -95,14 +95,14 @@ public final class WsCollectionParamTest {
             WsTestUtils.ws(route, sessionManager ->
                 sessionManager.sendStringAndAwaitJsonResponse("", UUID[].class).thenAccept((actual) -> {
                     UUID[] expected = new UUID[] { first, null, second };
-                    Assert.assertArrayEquals(expected, actual);
+                    Assertions.assertArrayEquals(expected, actual);
                 })
             );
         });
     }
 
     @Test
-    public void testLinkedList() {
+    void testLinkedList() {
         AsyncTestUtils.runTest(app -> {
             DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
             LocalDateTime first = LocalDateTime.of(2022, 6, 27, 22, 55, 0);
@@ -118,14 +118,14 @@ public final class WsCollectionParamTest {
             WsTestUtils.ws(route, sessionManager ->
                 sessionManager.sendStringAndAwaitJsonResponse("", LocalDateTime[].class).thenAccept((actual) -> {
                     LocalDateTime[] expected = new LocalDateTime[] { first, null, second };
-                    Assert.assertArrayEquals(expected, actual);
+                    Assertions.assertArrayEquals(expected, actual);
                 })
             );
         });
     }
 
     @Test
-    public void testHashSet() {
+    void testHashSet() {
         AsyncTestUtils.runTest(app -> {
             String route = RouteBuilder.buildWsRouteWithQueryParams(
                 HashSetController.ROUTE,
@@ -139,14 +139,14 @@ public final class WsCollectionParamTest {
                 sessionManager.sendStringAndAwaitJsonResponse("", String[].class).thenAccept((actual) -> {
                     Arrays.sort(actual, Comparator.nullsFirst(Comparator.naturalOrder()));
                     String[] expected = new String[] { null, "goodbye", "hello" };
-                    Assert.assertArrayEquals(expected, actual);
+                    Assertions.assertArrayEquals(expected, actual);
                 })
             );
         });
     }
 
     @Test
-    public void testLinkedHashSet() {
+    void testLinkedHashSet() {
         AsyncTestUtils.runTest(app -> {
             String route = RouteBuilder.buildWsRouteWithQueryParams(
                 LinkedHashSetController.ROUTE,
@@ -161,14 +161,14 @@ public final class WsCollectionParamTest {
                     BigInteger[] expected = new BigInteger[] {
                         new BigInteger("1234567890"), null, new BigInteger("2345678901")
                     };
-                    Assert.assertArrayEquals(expected, actual);
+                    Assertions.assertArrayEquals(expected, actual);
                 })
             );
         });
     }
 
     @Test
-    public void testSortedSet() {
+    void testSortedSet() {
         AsyncTestUtils.runTest(app -> {
             // Cannot handle null parameters
             String route = RouteBuilder.buildWsRouteWithQueryParams(
@@ -181,14 +181,14 @@ public final class WsCollectionParamTest {
             WsTestUtils.ws(route, sessionManager ->
                 sessionManager.sendStringAndAwaitJsonResponse("", String[].class).thenAccept((actual) -> {
                     String[] expected = new String[] { "goodbye", "hello" };
-                    Assert.assertArrayEquals(expected, actual);
+                    Assertions.assertArrayEquals(expected, actual);
                 })
             );
         });
     }
 
     @Test
-    public void testTreeSet() {
+    void testTreeSet() {
         AsyncTestUtils.runTest(app -> {
             // Cannot handle null parameters
             String route = RouteBuilder.buildWsRouteWithQueryParams(
@@ -201,7 +201,7 @@ public final class WsCollectionParamTest {
             WsTestUtils.ws(route, sessionManager ->
                 sessionManager.sendStringAndAwaitJsonResponse("", String[].class).thenAccept((actual) -> {
                     String[] expected = new String[] { "goodbye", "hello" };
-                    Assert.assertArrayEquals(expected, actual);
+                    Assertions.assertArrayEquals(expected, actual);
                 })
             );
         });

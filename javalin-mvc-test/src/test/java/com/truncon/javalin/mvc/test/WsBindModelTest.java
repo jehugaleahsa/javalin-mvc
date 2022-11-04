@@ -4,8 +4,8 @@ import com.truncon.javalin.mvc.test.controllers.ws.models.BindFromJsonModelContr
 import com.truncon.javalin.mvc.test.controllers.ws.models.BindSettersFromQueryModelController;
 import com.truncon.javalin.mvc.test.controllers.ws.models.ExplicitBindFromJsonModelController;
 import com.truncon.javalin.mvc.test.models.PrimitiveModel;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
@@ -15,9 +15,9 @@ import static com.truncon.javalin.mvc.test.RouteBuilder.buildWsRouteWithQueryPar
 import static com.truncon.javalin.mvc.test.RouteBuilder.param;
 import static com.truncon.javalin.mvc.test.RouteBuilder.queryParams;
 
-public final class WsBindModelTest {
+final class WsBindModelTest {
     @Test
-    public void testBindSettersFromQuery() throws IOException {
+    void testBindSettersFromQuery() throws IOException {
         String route = buildWsRouteWithQueryParams(BindSettersFromQueryModelController.ROUTE, queryParams(
             param("integer", Integer.toString(Integer.MAX_VALUE)),
             param("boolean", Boolean.toString(true)),
@@ -31,21 +31,21 @@ public final class WsBindModelTest {
         AsyncTestUtils.runTestAsync(app ->
             WsTestUtils.ws(route, session -> session.sendStringAndAwaitResponse("").thenAccept(response -> {
                 PrimitiveModel model = parseJson(response, PrimitiveModel.class);
-                Assert.assertNotNull(model);
-                Assert.assertEquals(Integer.MAX_VALUE, model.getInteger());
-                Assert.assertTrue(model.getBoolean());
-                Assert.assertEquals(Double.MAX_VALUE, model.getDouble(), 0.0);
-                Assert.assertEquals(Byte.MAX_VALUE, model.getByte());
-                Assert.assertEquals(Short.MAX_VALUE, model.getShort());
-                Assert.assertEquals(Float.MAX_VALUE, model.getFloat(), 0.0);
-                Assert.assertEquals('a', model.getChar());
-                Assert.assertEquals(Long.MAX_VALUE, model.getLong());
+                Assertions.assertNotNull(model);
+                Assertions.assertEquals(Integer.MAX_VALUE, model.getInteger());
+                Assertions.assertTrue(model.getBoolean());
+                Assertions.assertEquals(Double.MAX_VALUE, model.getDouble(), 0.0);
+                Assertions.assertEquals(Byte.MAX_VALUE, model.getByte());
+                Assertions.assertEquals(Short.MAX_VALUE, model.getShort());
+                Assertions.assertEquals(Float.MAX_VALUE, model.getFloat(), 0.0);
+                Assertions.assertEquals('a', model.getChar());
+                Assertions.assertEquals(Long.MAX_VALUE, model.getLong());
             }))
         );
     }
 
     @Test
-    public void testBindFromJson() throws IOException {
+    void testBindFromJson() throws IOException {
         String route = buildWsRoute(BindFromJsonModelController.ROUTE);
         PrimitiveModel model = getPrimitiveModel();
         AsyncTestUtils.runTestAsync(app -> {
@@ -58,7 +58,7 @@ public final class WsBindModelTest {
     }
 
     @Test
-    public void testBindFromJson_explicit() throws IOException {
+    void testBindFromJson_explicit() throws IOException {
         String route = buildWsRoute(ExplicitBindFromJsonModelController.ROUTE);
         PrimitiveModel model = getPrimitiveModel();
         AsyncTestUtils.runTestAsync(app -> {
@@ -84,14 +84,14 @@ public final class WsBindModelTest {
     }
 
     private static void assertPrimitiveModel(PrimitiveModel expected, PrimitiveModel actual) {
-        Assert.assertNotNull(actual);
-        Assert.assertEquals(expected.getByte(), actual.getByte());
-        Assert.assertEquals(expected.getShort(), actual.getShort());
-        Assert.assertEquals(expected.getInteger(), actual.getInteger());
-        Assert.assertEquals(expected.getLong(), actual.getLong());
-        Assert.assertEquals(expected.getFloat(), actual.getFloat(), 0.0);
-        Assert.assertEquals(expected.getDouble(), actual.getDouble(), 0.0);
-        Assert.assertEquals(expected.getChar(), actual.getChar());
-        Assert.assertEquals(expected.getBoolean(), actual.getBoolean());
+        Assertions.assertNotNull(actual);
+        Assertions.assertEquals(expected.getByte(), actual.getByte());
+        Assertions.assertEquals(expected.getShort(), actual.getShort());
+        Assertions.assertEquals(expected.getInteger(), actual.getInteger());
+        Assertions.assertEquals(expected.getLong(), actual.getLong());
+        Assertions.assertEquals(expected.getFloat(), actual.getFloat(), 0.0);
+        Assertions.assertEquals(expected.getDouble(), actual.getDouble(), 0.0);
+        Assertions.assertEquals(expected.getChar(), actual.getChar());
+        Assertions.assertEquals(expected.getBoolean(), actual.getBoolean());
     }
 }

@@ -1,22 +1,22 @@
 package com.truncon.javalin.mvc.api.ws;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-public final class WsJsonResultTest {
+final class WsJsonResultTest {
     @Test
-    public void testCtor() {
+    void testCtor() {
         Object data = new Object();
         WsJsonResult result = new WsJsonResult(data);
-        Assert.assertSame(data, result.getData());
+        Assertions.assertSame(data, result.getData());
     }
 
     @Test
-    public void testExecute() {
+    void testExecute() {
         Object data = new Object();
         WsJsonResult result = new WsJsonResult(data);
         MockWsContext context = new MockWsContext();
         result.execute(context);
-        Assert.assertSame(data, context.getResponse().getJsonData());
+        Assertions.assertSame(data, context.getResponse().getJsonData());
     }
 }

@@ -6,12 +6,12 @@ import com.truncon.javalin.mvc.test.controllers.ws.returns.ObjectController;
 import com.truncon.javalin.mvc.test.controllers.ws.returns.PrimitiveIntController;
 import com.truncon.javalin.mvc.test.controllers.ws.returns.VoidController;
 import com.truncon.javalin.mvc.test.models.PrimitiveModel;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-public final class WsReturnValueTest {
+final class WsReturnValueTest {
     @Test
-    public void testAsync_getWsActionResult() {
+    void testAsync_getWsActionResult() {
         String route = RouteBuilder.buildWsRoute(ActionResultController.ROUTE);
         PrimitiveModel model = new PrimitiveModel();
         model.setInteger(123);
@@ -19,12 +19,12 @@ public final class WsReturnValueTest {
             WsTestUtils.ws(route, sessionManager -> sessionManager.sendJsonAndAwaitJsonResponse(
                 model,
                 PrimitiveModel.class
-            ).thenAccept(response -> Assert.assertEquals(123, response.getInteger())))
+            ).thenAccept(response -> Assertions.assertEquals(123, response.getInteger())))
         );
     }
 
     @Test
-    public void testAsync_getObject() {
+    void testAsync_getObject() {
         String route = RouteBuilder.buildWsRoute(ObjectController.ROUTE);
         PrimitiveModel model = new PrimitiveModel();
         model.setInteger(123);
@@ -32,39 +32,39 @@ public final class WsReturnValueTest {
             WsTestUtils.ws(route, sessionManager -> sessionManager.sendJsonAndAwaitJsonResponse(
                 model,
                 PrimitiveModel.class
-            ).thenAccept(response -> Assert.assertEquals(123, response.getInteger())))
+            ).thenAccept(response -> Assertions.assertEquals(123, response.getInteger())))
         );
     }
 
     @Test
-    public void testAsync_getInteger() {
+    void testAsync_getInteger() {
         String route = RouteBuilder.buildWsRoute(IntegerController.ROUTE);
         AsyncTestUtils.runTestAsync(app ->
             WsTestUtils.ws(route, sessionManager -> sessionManager.sendStringAndAwaitJsonResponse(
                 "",
                 Integer.class
-            ).thenAccept(response -> Assert.assertEquals((Integer) 123, response)))
+            ).thenAccept(response -> Assertions.assertEquals((Integer) 123, response)))
         );
     }
 
     @Test
-    public void testAsync_getPrimitiveInt() {
+    void testAsync_getPrimitiveInt() {
         String route = RouteBuilder.buildWsRoute(PrimitiveIntController.ROUTE);
         AsyncTestUtils.runTestAsync(app ->
             WsTestUtils.ws(route, sessionManager -> sessionManager.sendStringAndAwaitJsonResponse(
                 "",
                 int.class
-            ).thenAccept(response -> Assert.assertEquals((Integer) 123, response)))
+            ).thenAccept(response -> Assertions.assertEquals((Integer) 123, response)))
         );
     }
 
     @Test
-    public void testAsync_getVoid() {
+    void testAsync_getVoid() {
         String route = RouteBuilder.buildWsRoute(VoidController.ROUTE);
         AsyncTestUtils.runTestAsync(app ->
             WsTestUtils.ws(route, sessionManager -> sessionManager.sendStringAndAwaitResponse(
                 ""
-            ).thenAccept(response -> Assert.assertEquals("A-okay!", response)))
+            ).thenAccept(response -> Assertions.assertEquals("A-okay!", response)))
         );
     }
 }

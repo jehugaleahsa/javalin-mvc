@@ -12,8 +12,8 @@ import com.truncon.javalin.mvc.test.controllers.ws.conversion.WsRequestNameSourc
 import com.truncon.javalin.mvc.test.controllers.ws.conversion.WsRequestSourceController;
 import com.truncon.javalin.mvc.test.models.ConversionModel;
 import com.truncon.javalin.mvc.test.models.HttpModelWithConversionModel;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
@@ -22,51 +22,51 @@ import static com.truncon.javalin.mvc.test.RouteBuilder.buildWsRouteWithQueryPar
 import static com.truncon.javalin.mvc.test.RouteBuilder.param;
 import static com.truncon.javalin.mvc.test.RouteBuilder.queryParams;
 
-public final class WsConversionTest {
+final class WsConversionTest {
     @Test
-    public void testConverter_context_query() throws IOException {
+    void testConverter_context_query() throws IOException {
         String baseRoute = WsContextController.ROUTE;
         testRoute(baseRoute);
     }
 
     @Test
-    public void testConverter_contextName_query() throws IOException {
+    void testConverter_contextName_query() throws IOException {
         String baseRoute = WsContextNameController.ROUTE;
         testRoute(baseRoute);
     }
 
     @Test
-    public void testConverter_contextSource_query() throws IOException {
+    void testConverter_contextSource_query() throws IOException {
         String baseRoute = WsContextSourceController.ROUTE;
         testRoute(baseRoute);
     }
 
     @Test
-    public void testConverter_contextNameSource_query() throws IOException {
+    void testConverter_contextNameSource_query() throws IOException {
         String baseRoute = WsContextNameSourceController.ROUTE;
         testRoute(baseRoute);
     }
 
     @Test
-    public void testConverter_request_query() throws IOException {
+    void testConverter_request_query() throws IOException {
         String baseRoute = WsRequestController.ROUTE;
         testRoute(baseRoute);
     }
 
     @Test
-    public void testConverter_requestName_query() throws IOException {
+    void testConverter_requestName_query() throws IOException {
         String baseRoute = WsRequestNameController.ROUTE;
         testRoute(baseRoute);
     }
 
     @Test
-    public void testConverter_requestSource_query() throws IOException {
+    void testConverter_requestSource_query() throws IOException {
         String baseRoute = WsRequestSourceController.ROUTE;
         testRoute(baseRoute);
     }
 
     @Test
-    public void testConverter_requestNameSource_query() throws IOException {
+    void testConverter_requestNameSource_query() throws IOException {
         String baseRoute = WsRequestNameSourceController.ROUTE;
         testRoute(baseRoute);
     }
@@ -91,7 +91,7 @@ public final class WsConversionTest {
     }
 
     @Test
-    public void testConverter_nested_query() throws IOException {
+    void testConverter_nested_query() throws IOException {
         String baseRoute = WsNestedController.ROUTE;
         testNestedRoute(baseRoute);
     }
@@ -110,7 +110,7 @@ public final class WsConversionTest {
         AsyncTestUtils.runTest(app ->
             WsTestUtils.ws(route, session -> session.sendStringAndAwaitResponse("").thenAccept(response -> {
                 HttpModelWithConversionModel model = parseJson(response, HttpModelWithConversionModel.class);
-                Assert.assertNotNull(model);
+                Assertions.assertNotNull(model);
                 assertConversionModel(model.field);
                 assertConversionModel(model.getModel1());
                 assertConversionModel(model.getModel2());
@@ -119,19 +119,19 @@ public final class WsConversionTest {
     }
 
     private void assertConversionModel(ConversionModel model) {
-        Assert.assertNotNull(model);
-        Assert.assertTrue(model.getBoolean());
-        Assert.assertEquals((byte) 22, model.getByte());
-        Assert.assertEquals('A', model.getChar());
-        Assert.assertEquals(2.22, model.getDouble(), 0.0);
-        Assert.assertEquals(4.44f, model.getFloat(), 0.0);
-        Assert.assertEquals(22222222, model.getInteger());
-        Assert.assertEquals(4444444444L, model.getLong());
-        Assert.assertEquals((short) 22222, model.getShort());
+        Assertions.assertNotNull(model);
+        Assertions.assertTrue(model.getBoolean());
+        Assertions.assertEquals((byte) 22, model.getByte());
+        Assertions.assertEquals('A', model.getChar());
+        Assertions.assertEquals(2.22, model.getDouble(), 0.0);
+        Assertions.assertEquals(4.44f, model.getFloat(), 0.0);
+        Assertions.assertEquals(22222222, model.getInteger());
+        Assertions.assertEquals(4444444444L, model.getLong());
+        Assertions.assertEquals((short) 22222, model.getShort());
     }
 
     @Test
-    public void testConverter_multiContextTypes() throws IOException {
+    void testConverter_multiContextTypes() throws IOException {
         String baseRoute = WsMultipleContextTypeController.ROUTE;
         testMultipleTypesRoute(baseRoute);
     }
@@ -156,14 +156,14 @@ public final class WsConversionTest {
     }
 
     private void assertUnmodifiedConversionModel(ConversionModel model) {
-        Assert.assertNotNull(model);
-        Assert.assertTrue(model.getBoolean());
-        Assert.assertEquals((byte) 11, model.getByte());
-        Assert.assertEquals('a', model.getChar());
-        Assert.assertEquals(1.11, model.getDouble(), 0.0);
-        Assert.assertEquals(2.22f, model.getFloat(), 0.0);
-        Assert.assertEquals(11111111, model.getInteger());
-        Assert.assertEquals(2222222222L, model.getLong());
-        Assert.assertEquals((short) 11111, model.getShort());
+        Assertions.assertNotNull(model);
+        Assertions.assertTrue(model.getBoolean());
+        Assertions.assertEquals((byte) 11, model.getByte());
+        Assertions.assertEquals('a', model.getChar());
+        Assertions.assertEquals(1.11, model.getDouble(), 0.0);
+        Assertions.assertEquals(2.22f, model.getFloat(), 0.0);
+        Assertions.assertEquals(11111111, model.getInteger());
+        Assertions.assertEquals(2222222222L, model.getLong());
+        Assertions.assertEquals((short) 11111, model.getShort());
     }
 }

@@ -3,23 +3,29 @@ package com.truncon.javalin.mvc.test;
 import com.truncon.javalin.mvc.test.controllers.ObjectBodyController;
 import com.truncon.javalin.mvc.test.models.BoxedModel;
 import com.truncon.javalin.mvc.test.models.PrimitiveModel;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.time.*;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.Year;
+import java.time.YearMonth;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.UUID;
 
 import static com.truncon.javalin.mvc.test.QueryUtils.getJsonResponseForPost;
-import static com.truncon.javalin.mvc.test.QueryUtils.getStringForPost;
 import static com.truncon.javalin.mvc.test.QueryUtils.getStringForStringBodyPost;
 import static com.truncon.javalin.mvc.test.RouteBuilder.*;
 
-public final class ObjectBodyTest {
+final class ObjectBodyTest {
     @Test
-    public void testPrimitiveModel() {
+    void testPrimitiveModel() {
         AsyncTestUtils.runTest(app -> {
             PrimitiveModel model = getPrimitiveModel();
             String route = buildRoute(ObjectBodyController.PRIMITIVE_BODY_ROUTE);
@@ -29,7 +35,7 @@ public final class ObjectBodyTest {
     }
 
     @Test
-    public void testPrimitiveModel_explicit() {
+    void testPrimitiveModel_explicit() {
         AsyncTestUtils.runTest(app -> {
             PrimitiveModel model = getPrimitiveModel();
             String route = buildRoute(ObjectBodyController.EXPLICIT_PRIMITIVE_BODY_ROUTE);
@@ -52,19 +58,19 @@ public final class ObjectBodyTest {
     }
 
     private static void assertPrimitiveModel(PrimitiveModel expected, PrimitiveModel actual) {
-        Assert.assertNotNull(actual);
-        Assert.assertEquals(expected.getBoolean(), actual.getBoolean());
-        Assert.assertEquals(expected.getInteger(), actual.getInteger());
-        Assert.assertEquals(expected.getDouble(), actual.getDouble(), 1);
-        Assert.assertEquals(expected.getByte(), actual.getByte());
-        Assert.assertEquals(expected.getShort(), actual.getShort());
-        Assert.assertEquals(expected.getFloat(), actual.getFloat(), 1);
-        Assert.assertEquals(expected.getChar(), actual.getChar());
-        Assert.assertEquals(expected.getLong(), actual.getLong());
+        Assertions.assertNotNull(actual);
+        Assertions.assertEquals(expected.getBoolean(), actual.getBoolean());
+        Assertions.assertEquals(expected.getInteger(), actual.getInteger());
+        Assertions.assertEquals(expected.getDouble(), actual.getDouble(), 1);
+        Assertions.assertEquals(expected.getByte(), actual.getByte());
+        Assertions.assertEquals(expected.getShort(), actual.getShort());
+        Assertions.assertEquals(expected.getFloat(), actual.getFloat(), 1);
+        Assertions.assertEquals(expected.getChar(), actual.getChar());
+        Assertions.assertEquals(expected.getLong(), actual.getLong());
     }
 
     @Test
-    public void testBoxedModel() {
+    void testBoxedModel() {
         AsyncTestUtils.runTest(app -> {
             BoxedModel model = getBoxedModel();
             String route = buildRoute(ObjectBodyController.BOXED_BODY_ROUTE);
@@ -74,7 +80,7 @@ public final class ObjectBodyTest {
     }
 
     @Test
-    public void testBoxedModel_explicit() {
+    void testBoxedModel_explicit() {
         AsyncTestUtils.runTest(app -> {
             BoxedModel model = getBoxedModel();
             String route = buildRoute(ObjectBodyController.EXPLICIT_BOXED_BODY_ROUTE);
@@ -84,27 +90,27 @@ public final class ObjectBodyTest {
     }
 
     private void assertBoxedModel(BoxedModel expected, BoxedModel actual) {
-        Assert.assertNotNull(actual);
-        Assert.assertEquals(expected.getString(), actual.getString());
-        Assert.assertEquals(expected.getBoolean(), actual.getBoolean());
-        Assert.assertEquals(expected.getInteger(), actual.getInteger());
-        Assert.assertEquals(expected.getDouble(), actual.getDouble());
-        Assert.assertEquals(expected.getByte(), actual.getByte());
-        Assert.assertEquals(expected.getShort(), actual.getShort());
-        Assert.assertEquals(expected.getFloat(), actual.getFloat());
-        Assert.assertEquals(expected.getCharacter(), actual.getCharacter());
-        Assert.assertEquals(expected.getLong(), actual.getLong());
-        Assert.assertEquals(expected.getDate(), actual.getDate());
-        Assert.assertEquals(expected.getInstant(), actual.getInstant());
-        Assert.assertEquals(expected.getZonedDateTime(), actual.getZonedDateTime());
-        Assert.assertEquals(expected.getOffsetDateTime(), actual.getOffsetDateTime());
-        Assert.assertEquals(expected.getLocalDateTime(), actual.getLocalDateTime());
-        Assert.assertEquals(expected.getLocalDate(), actual.getLocalDate());
-        Assert.assertEquals(expected.getYearMonth(), actual.getYearMonth());
-        Assert.assertEquals(expected.getYear(), actual.getYear());
-        Assert.assertEquals(expected.getBigInteger(), actual.getBigInteger());
-        Assert.assertEquals(expected.getBigDecimal(), actual.getBigDecimal());
-        Assert.assertEquals(expected.getUuid(), actual.getUuid());
+        Assertions.assertNotNull(actual);
+        Assertions.assertEquals(expected.getString(), actual.getString());
+        Assertions.assertEquals(expected.getBoolean(), actual.getBoolean());
+        Assertions.assertEquals(expected.getInteger(), actual.getInteger());
+        Assertions.assertEquals(expected.getDouble(), actual.getDouble());
+        Assertions.assertEquals(expected.getByte(), actual.getByte());
+        Assertions.assertEquals(expected.getShort(), actual.getShort());
+        Assertions.assertEquals(expected.getFloat(), actual.getFloat());
+        Assertions.assertEquals(expected.getCharacter(), actual.getCharacter());
+        Assertions.assertEquals(expected.getLong(), actual.getLong());
+        Assertions.assertEquals(expected.getDate(), actual.getDate());
+        Assertions.assertEquals(expected.getInstant(), actual.getInstant());
+        Assertions.assertEquals(expected.getZonedDateTime(), actual.getZonedDateTime());
+        Assertions.assertEquals(expected.getOffsetDateTime(), actual.getOffsetDateTime());
+        Assertions.assertEquals(expected.getLocalDateTime(), actual.getLocalDateTime());
+        Assertions.assertEquals(expected.getLocalDate(), actual.getLocalDate());
+        Assertions.assertEquals(expected.getYearMonth(), actual.getYearMonth());
+        Assertions.assertEquals(expected.getYear(), actual.getYear());
+        Assertions.assertEquals(expected.getBigInteger(), actual.getBigInteger());
+        Assertions.assertEquals(expected.getBigDecimal(), actual.getBigDecimal());
+        Assertions.assertEquals(expected.getUuid(), actual.getUuid());
     }
 
     private BoxedModel getBoxedModel() {
@@ -135,11 +141,11 @@ public final class ObjectBodyTest {
     }
 
     @Test
-    public void testInputStreamParameter() {
+    void testInputStreamParameter() {
         AsyncTestUtils.runTest(app -> {
             String route = buildRoute(ObjectBodyController.INPUT_STREAM_BODY_ROUTE);
             String actual = getStringForStringBodyPost(route, "Hello, world!!!");
-            Assert.assertEquals("Hello, world!!!", actual);
+            Assertions.assertEquals("Hello, world!!!", actual);
         });
     }
 }

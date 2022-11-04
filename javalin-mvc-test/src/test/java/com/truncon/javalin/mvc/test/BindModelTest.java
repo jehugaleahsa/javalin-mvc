@@ -14,8 +14,8 @@ import com.truncon.javalin.mvc.test.models.PrimitiveQueryParamFieldModel;
 import com.truncon.javalin.mvc.test.models.PrimitiveQueryParamFieldNamedModel;
 import com.truncon.javalin.mvc.test.models.PrimitiveQueryParamMethodModel;
 import com.truncon.javalin.mvc.test.models.PrimitiveQueryParamMethodNamedModel;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -40,9 +40,9 @@ import static com.truncon.javalin.mvc.test.RouteBuilder.buildRouteWithQueryParam
 import static com.truncon.javalin.mvc.test.RouteBuilder.param;
 import static com.truncon.javalin.mvc.test.RouteBuilder.queryParams;
 
-public final class BindModelTest {
+final class BindModelTest {
     @Test
-    public void testGet_path_setters_withSource() {
+    void testGet_path_setters_withSource() {
         AsyncTestUtils.runTest(app -> {
             String route = buildRouteWithQueryParams(BindModelController.GET_SETTERS_WITH_SOURCE_ROUTE, queryParams(
                 param("integer", Integer.toString(Integer.MAX_VALUE)),
@@ -55,20 +55,20 @@ public final class BindModelTest {
                 param("long", Long.toString(Long.MAX_VALUE))
             ));
             PrimitiveParamMethodModel model = getJsonResponseForGet(route, PrimitiveParamMethodModel.class);
-            Assert.assertNotNull(model);
-            Assert.assertEquals(Integer.MAX_VALUE, model.getInteger());
-            Assert.assertTrue(model.getBoolean());
-            Assert.assertEquals(Double.MAX_VALUE, model.getDouble(), 0.0);
-            Assert.assertEquals(Byte.MAX_VALUE, model.getByte());
-            Assert.assertEquals(Short.MAX_VALUE, model.getShort());
-            Assert.assertEquals(Float.MAX_VALUE, model.getFloat(), 0.0f);
-            Assert.assertEquals(Character.MAX_VALUE, model.getChar());
-            Assert.assertEquals(Long.MAX_VALUE, model.getLong());
+            Assertions.assertNotNull(model);
+            Assertions.assertEquals(Integer.MAX_VALUE, model.getInteger());
+            Assertions.assertTrue(model.getBoolean());
+            Assertions.assertEquals(Double.MAX_VALUE, model.getDouble(), 0.0);
+            Assertions.assertEquals(Byte.MAX_VALUE, model.getByte());
+            Assertions.assertEquals(Short.MAX_VALUE, model.getShort());
+            Assertions.assertEquals(Float.MAX_VALUE, model.getFloat(), 0.0f);
+            Assertions.assertEquals(Character.MAX_VALUE, model.getChar());
+            Assertions.assertEquals(Long.MAX_VALUE, model.getLong());
         });
     }
 
     @Test
-    public void testGet_path_setters_named_withSource() {
+    void testGet_path_setters_named_withSource() {
         AsyncTestUtils.runTest(app -> {
             String route = buildRouteWithQueryParams(BindModelController.GET_SETTERS_NAMED_WITH_SOURCE_ROUTE, queryParams(
                 param("aInteger", Integer.toString(Integer.MAX_VALUE)),
@@ -81,20 +81,20 @@ public final class BindModelTest {
                 param("aLong", Long.toString(Long.MAX_VALUE))
             ));
             PrimitiveParamMethodNamedModel model = getJsonResponseForGet(route, PrimitiveParamMethodNamedModel.class);
-            Assert.assertNotNull(model);
-            Assert.assertEquals(Integer.MAX_VALUE, model.getInteger());
-            Assert.assertTrue(model.getBoolean());
-            Assert.assertEquals(Double.MAX_VALUE, model.getDouble(), 0.0);
-            Assert.assertEquals(Byte.MAX_VALUE, model.getByte());
-            Assert.assertEquals(Short.MAX_VALUE, model.getShort());
-            Assert.assertEquals(Float.MAX_VALUE, model.getFloat(), 0.0f);
-            Assert.assertEquals(Character.MAX_VALUE, model.getChar());
-            Assert.assertEquals(Long.MAX_VALUE, model.getLong());
+            Assertions.assertNotNull(model);
+            Assertions.assertEquals(Integer.MAX_VALUE, model.getInteger());
+            Assertions.assertTrue(model.getBoolean());
+            Assertions.assertEquals(Double.MAX_VALUE, model.getDouble(), 0.0);
+            Assertions.assertEquals(Byte.MAX_VALUE, model.getByte());
+            Assertions.assertEquals(Short.MAX_VALUE, model.getShort());
+            Assertions.assertEquals(Float.MAX_VALUE, model.getFloat(), 0.0f);
+            Assertions.assertEquals(Character.MAX_VALUE, model.getChar());
+            Assertions.assertEquals(Long.MAX_VALUE, model.getLong());
         });
     }
 
     @Test
-    public void testGet_path_fields_named_withSource() {
+    void testGet_path_fields_named_withSource() {
         AsyncTestUtils.runTest(app -> {
             String route = buildRouteWithQueryParams(BindModelController.GET_FIELDS_NAMED_WITH_SOURCE_ROUTE, queryParams(
                 param("aInteger", Integer.toString(Integer.MAX_VALUE)),
@@ -107,20 +107,20 @@ public final class BindModelTest {
                 param("aLong", Long.toString(Long.MAX_VALUE))
             ));
             PrimitiveParamFieldNamedModel model = getJsonResponseForGet(route, PrimitiveParamFieldNamedModel.class);
-            Assert.assertNotNull(model);
-            Assert.assertEquals(Integer.MAX_VALUE, model.intValue);
-            Assert.assertTrue(model.booleanValue);
-            Assert.assertEquals(Double.MAX_VALUE, model.doubleValue, 0.0);
-            Assert.assertEquals(Byte.MAX_VALUE, model.byteValue);
-            Assert.assertEquals(Short.MAX_VALUE, model.shortValue);
-            Assert.assertEquals(Float.MAX_VALUE, model.floatValue, 0.0f);
-            Assert.assertEquals(Character.MAX_VALUE, model.charValue);
-            Assert.assertEquals(Long.MAX_VALUE, model.longValue);
+            Assertions.assertNotNull(model);
+            Assertions.assertEquals(Integer.MAX_VALUE, model.intValue);
+            Assertions.assertTrue(model.booleanValue);
+            Assertions.assertEquals(Double.MAX_VALUE, model.doubleValue, 0.0);
+            Assertions.assertEquals(Byte.MAX_VALUE, model.byteValue);
+            Assertions.assertEquals(Short.MAX_VALUE, model.shortValue);
+            Assertions.assertEquals(Float.MAX_VALUE, model.floatValue, 0.0f);
+            Assertions.assertEquals(Character.MAX_VALUE, model.charValue);
+            Assertions.assertEquals(Long.MAX_VALUE, model.longValue);
         });
     }
 
     @Test
-    public void testGet_path_fields() {
+    void testGet_path_fields() {
         AsyncTestUtils.runTest(app -> {
             String route = buildRouteWithQueryParams(BindModelController.GET_FIELDS_WITH_SOURCE_ROUTE, queryParams(
                 param("intValue", Integer.toString(Integer.MAX_VALUE)),
@@ -133,20 +133,20 @@ public final class BindModelTest {
                 param("longValue", Long.toString(Long.MAX_VALUE))
             ));
             PrimitiveParamFieldModel model = getJsonResponseForGet(route, PrimitiveParamFieldModel.class);
-            Assert.assertNotNull(model);
-            Assert.assertEquals(Integer.MAX_VALUE, model.intValue);
-            Assert.assertTrue(model.booleanValue);
-            Assert.assertEquals(Double.MAX_VALUE, model.doubleValue, 0.0);
-            Assert.assertEquals(Byte.MAX_VALUE, model.byteValue);
-            Assert.assertEquals(Short.MAX_VALUE, model.shortValue);
-            Assert.assertEquals(Float.MAX_VALUE, model.floatValue, 0.0f);
-            Assert.assertEquals(Character.MAX_VALUE, model.charValue);
-            Assert.assertEquals(Long.MAX_VALUE, model.longValue);
+            Assertions.assertNotNull(model);
+            Assertions.assertEquals(Integer.MAX_VALUE, model.intValue);
+            Assertions.assertTrue(model.booleanValue);
+            Assertions.assertEquals(Double.MAX_VALUE, model.doubleValue, 0.0);
+            Assertions.assertEquals(Byte.MAX_VALUE, model.byteValue);
+            Assertions.assertEquals(Short.MAX_VALUE, model.shortValue);
+            Assertions.assertEquals(Float.MAX_VALUE, model.floatValue, 0.0f);
+            Assertions.assertEquals(Character.MAX_VALUE, model.charValue);
+            Assertions.assertEquals(Long.MAX_VALUE, model.longValue);
         });
     }
 
     @Test
-    public void testGet_path_setters_noSource() {
+    void testGet_path_setters_noSource() {
         AsyncTestUtils.runTest(app -> {
             String route = buildRouteWithQueryParams(BindModelController.GET_SETTERS_NO_SOURCE_ROUTE, queryParams(
                 param("integer", Integer.toString(Integer.MAX_VALUE)),
@@ -159,20 +159,20 @@ public final class BindModelTest {
                 param("long", Long.toString(Long.MAX_VALUE))
             ));
             PrimitiveQueryParamMethodModel model = getJsonResponseForGet(route, PrimitiveQueryParamMethodModel.class);
-            Assert.assertNotNull(model);
-            Assert.assertEquals(Integer.MAX_VALUE, model.getInteger());
-            Assert.assertTrue(model.getBoolean());
-            Assert.assertEquals(Double.MAX_VALUE, model.getDouble(), 0.0);
-            Assert.assertEquals(Byte.MAX_VALUE, model.getByte());
-            Assert.assertEquals(Short.MAX_VALUE, model.getShort());
-            Assert.assertEquals(Float.MAX_VALUE, model.getFloat(), 0.0f);
-            Assert.assertEquals(Character.MAX_VALUE, model.getChar());
-            Assert.assertEquals(Long.MAX_VALUE, model.getLong());
+            Assertions.assertNotNull(model);
+            Assertions.assertEquals(Integer.MAX_VALUE, model.getInteger());
+            Assertions.assertTrue(model.getBoolean());
+            Assertions.assertEquals(Double.MAX_VALUE, model.getDouble(), 0.0);
+            Assertions.assertEquals(Byte.MAX_VALUE, model.getByte());
+            Assertions.assertEquals(Short.MAX_VALUE, model.getShort());
+            Assertions.assertEquals(Float.MAX_VALUE, model.getFloat(), 0.0f);
+            Assertions.assertEquals(Character.MAX_VALUE, model.getChar());
+            Assertions.assertEquals(Long.MAX_VALUE, model.getLong());
         });
     }
 
     @Test
-    public void testGet_path_setters_named_noSource() {
+    void testGet_path_setters_named_noSource() {
         AsyncTestUtils.runTest(app -> {
             String route = buildRouteWithQueryParams(BindModelController.GET_SETTERS_NAMED_NO_SOURCE_ROUTE, queryParams(
                 param("aInteger", Integer.toString(Integer.MAX_VALUE)),
@@ -185,20 +185,20 @@ public final class BindModelTest {
                 param("aLong", Long.toString(Long.MAX_VALUE))
             ));
             PrimitiveQueryParamMethodNamedModel model = getJsonResponseForGet(route, PrimitiveQueryParamMethodNamedModel.class);
-            Assert.assertNotNull(model);
-            Assert.assertEquals(Integer.MAX_VALUE, model.getInteger());
-            Assert.assertTrue(model.getBoolean());
-            Assert.assertEquals(Double.MAX_VALUE, model.getDouble(), 0.0);
-            Assert.assertEquals(Byte.MAX_VALUE, model.getByte());
-            Assert.assertEquals(Short.MAX_VALUE, model.getShort());
-            Assert.assertEquals(Float.MAX_VALUE, model.getFloat(), 0.0f);
-            Assert.assertEquals(Character.MAX_VALUE, model.getChar());
-            Assert.assertEquals(Long.MAX_VALUE, model.getLong());
+            Assertions.assertNotNull(model);
+            Assertions.assertEquals(Integer.MAX_VALUE, model.getInteger());
+            Assertions.assertTrue(model.getBoolean());
+            Assertions.assertEquals(Double.MAX_VALUE, model.getDouble(), 0.0);
+            Assertions.assertEquals(Byte.MAX_VALUE, model.getByte());
+            Assertions.assertEquals(Short.MAX_VALUE, model.getShort());
+            Assertions.assertEquals(Float.MAX_VALUE, model.getFloat(), 0.0f);
+            Assertions.assertEquals(Character.MAX_VALUE, model.getChar());
+            Assertions.assertEquals(Long.MAX_VALUE, model.getLong());
         });
     }
 
     @Test
-    public void testGet_path_fields_noSource() {
+    void testGet_path_fields_noSource() {
         AsyncTestUtils.runTest(app -> {
             String route = buildRouteWithQueryParams(BindModelController.GET_FIELDS_NO_SOURCE_ROUTE, queryParams(
                 param("intValue", Integer.toString(Integer.MAX_VALUE)),
@@ -211,20 +211,20 @@ public final class BindModelTest {
                 param("longValue", Long.toString(Long.MAX_VALUE))
             ));
             PrimitiveQueryParamFieldModel model = getJsonResponseForGet(route, PrimitiveQueryParamFieldModel.class);
-            Assert.assertNotNull(model);
-            Assert.assertEquals(Integer.MAX_VALUE, model.intValue);
-            Assert.assertTrue(model.booleanValue);
-            Assert.assertEquals(Double.MAX_VALUE, model.doubleValue, 0.0);
-            Assert.assertEquals(Byte.MAX_VALUE, model.byteValue);
-            Assert.assertEquals(Short.MAX_VALUE, model.shortValue);
-            Assert.assertEquals(Float.MAX_VALUE, model.floatValue, 0.0f);
-            Assert.assertEquals(Character.MAX_VALUE, model.charValue);
-            Assert.assertEquals(Long.MAX_VALUE, model.longValue);
+            Assertions.assertNotNull(model);
+            Assertions.assertEquals(Integer.MAX_VALUE, model.intValue);
+            Assertions.assertTrue(model.booleanValue);
+            Assertions.assertEquals(Double.MAX_VALUE, model.doubleValue, 0.0);
+            Assertions.assertEquals(Byte.MAX_VALUE, model.byteValue);
+            Assertions.assertEquals(Short.MAX_VALUE, model.shortValue);
+            Assertions.assertEquals(Float.MAX_VALUE, model.floatValue, 0.0f);
+            Assertions.assertEquals(Character.MAX_VALUE, model.charValue);
+            Assertions.assertEquals(Long.MAX_VALUE, model.longValue);
         });
     }
 
     @Test
-    public void testGet_path_fields_named_noSource() {
+    void testGet_path_fields_named_noSource() {
         AsyncTestUtils.runTest(app -> {
             String route = buildRouteWithQueryParams(BindModelController.GET_FIELDS_NAMED_NO_SOURCE_ROUTE, queryParams(
                 param("aInteger", Integer.toString(Integer.MAX_VALUE)),
@@ -237,20 +237,20 @@ public final class BindModelTest {
                 param("aLong", Long.toString(Long.MAX_VALUE))
             ));
             PrimitiveQueryParamFieldNamedModel model = getJsonResponseForGet(route, PrimitiveQueryParamFieldNamedModel.class);
-            Assert.assertNotNull(model);
-            Assert.assertEquals(Integer.MAX_VALUE, model.intValue);
-            Assert.assertTrue(model.booleanValue);
-            Assert.assertEquals(Double.MAX_VALUE, model.doubleValue, 0.0);
-            Assert.assertEquals(Byte.MAX_VALUE, model.byteValue);
-            Assert.assertEquals(Short.MAX_VALUE, model.shortValue);
-            Assert.assertEquals(Float.MAX_VALUE, model.floatValue, 0.0f);
-            Assert.assertEquals(Character.MAX_VALUE, model.charValue);
-            Assert.assertEquals(Long.MAX_VALUE, model.longValue);
+            Assertions.assertNotNull(model);
+            Assertions.assertEquals(Integer.MAX_VALUE, model.intValue);
+            Assertions.assertTrue(model.booleanValue);
+            Assertions.assertEquals(Double.MAX_VALUE, model.doubleValue, 0.0);
+            Assertions.assertEquals(Byte.MAX_VALUE, model.byteValue);
+            Assertions.assertEquals(Short.MAX_VALUE, model.shortValue);
+            Assertions.assertEquals(Float.MAX_VALUE, model.floatValue, 0.0f);
+            Assertions.assertEquals(Character.MAX_VALUE, model.charValue);
+            Assertions.assertEquals(Long.MAX_VALUE, model.longValue);
         });
     }
 
     @Test
-    public void testGet_nestedModels_bindsRecursively() {
+    void testGet_nestedModels_bindsRecursively() {
         AsyncTestUtils.runTest(app -> {
             String route = buildRouteWithQueryParams(BindModelController.GET_NESTED_MODELS_ROUTE, queryParams(
                 param("container", "container"),
@@ -258,17 +258,17 @@ public final class BindModelTest {
                 param("setter", "setter")
             ));
             ContainerModel model = getJsonResponseForGet(route, ContainerModel.class);
-            Assert.assertNotNull(model);
-            Assert.assertEquals("container", model.container);
-            Assert.assertNotNull(model.field);
-            Assert.assertEquals("field", model.field.field);
-            Assert.assertNotNull(model.getSetter());
-            Assert.assertEquals("setter", model.getSetter().setter);
+            Assertions.assertNotNull(model);
+            Assertions.assertEquals("container", model.container);
+            Assertions.assertNotNull(model.field);
+            Assertions.assertEquals("field", model.field.field);
+            Assertions.assertNotNull(model.getSetter());
+            Assertions.assertEquals("setter", model.getSetter().setter);
         });
     }
 
     @Test
-    public void testPost_nestedJsonModel() {
+    void testPost_nestedJsonModel() {
         PrimitiveModel model = new PrimitiveModel();
         model.setBoolean(true);
         model.setByte(Byte.MAX_VALUE);
@@ -281,7 +281,7 @@ public final class BindModelTest {
         AsyncTestUtils.runTest(app -> {
             String route = buildRoute(BindModelController.POST_NESTED_JSON_MODEL_ROUTE);
             NestedJsonModel actual = getJsonResponseForPost(route, model, NestedJsonModel.class);
-            Assert.assertNotNull(actual);
+            Assertions.assertNotNull(actual);
             assertModel(model, actual.field);
             assertModel(model, actual.getSetter());
             assertModel(model, actual.getParameter());
@@ -289,19 +289,19 @@ public final class BindModelTest {
     }
 
     private static void assertModel(PrimitiveModel expected, PrimitiveModel actual) {
-        Assert.assertNotNull(actual);
-        Assert.assertEquals(expected.getBoolean(), actual.getBoolean());
-        Assert.assertEquals(expected.getByte(), actual.getByte());
-        Assert.assertEquals(expected.getChar(), actual.getChar());
-        Assert.assertEquals(expected.getDouble(), actual.getDouble(), 0.0);
-        Assert.assertEquals(expected.getFloat(), actual.getFloat(), 0.0f);
-        Assert.assertEquals(expected.getInteger(), actual.getInteger());
-        Assert.assertEquals(expected.getLong(), actual.getLong());
-        Assert.assertEquals(expected.getShort(), actual.getShort());
+        Assertions.assertNotNull(actual);
+        Assertions.assertEquals(expected.getBoolean(), actual.getBoolean());
+        Assertions.assertEquals(expected.getByte(), actual.getByte());
+        Assertions.assertEquals(expected.getChar(), actual.getChar());
+        Assertions.assertEquals(expected.getDouble(), actual.getDouble(), 0.0);
+        Assertions.assertEquals(expected.getFloat(), actual.getFloat(), 0.0f);
+        Assertions.assertEquals(expected.getInteger(), actual.getInteger());
+        Assertions.assertEquals(expected.getLong(), actual.getLong());
+        Assertions.assertEquals(expected.getShort(), actual.getShort());
     }
 
     @Test
-    public void testPost_noBinding() {
+    void testPost_noBinding() {
         PrimitiveModel model = new PrimitiveModel();
         model.setBoolean(true);
         model.setByte(Byte.MAX_VALUE);
@@ -314,12 +314,12 @@ public final class BindModelTest {
         AsyncTestUtils.runTest(app -> {
             String route = buildRoute(BindModelController.POST_NO_BINDING_ROUTE);
             PrimitiveModel actual = getJsonResponseForPost(route, model, PrimitiveModel.class);
-            Assert.assertNull(actual);
+            Assertions.assertNull(actual);
         });
     }
 
     @Test
-    public void testGet_arrayModel() {
+    void testGet_arrayModel() {
         AsyncTestUtils.runTest(app -> {
             UUID uuid = UUID.randomUUID();
             String route = buildRouteWithQueryParams(BindModelController.GET_ARRAY_VALUES, queryParams(
@@ -381,39 +381,39 @@ public final class BindModelTest {
                 param("UUID", null)
             ));
             ArrayModel model = getJsonResponseForGet(route, ArrayModel.class);
-            Assert.assertArrayEquals(new boolean[] { true, false }, model.getBooleanValues());
-            Assert.assertArrayEquals(new int[] { 1, 2 }, model.getIntValues());
-            Assert.assertArrayEquals(new double[] { 3.14, 4.25 }, model.getDoubleValues(), 0.0);
-            Assert.assertArrayEquals(new byte[] { 3, 4 }, model.getByteValues());
-            Assert.assertArrayEquals(new short[] { 5, 6 }, model.getShortValues());
-            Assert.assertArrayEquals(new float[] { 5.36f, 6.47f }, model.getFloatValues(), 0.0f);
-            Assert.assertArrayEquals(new char[] { 'a', 'b' }, model.getCharValues());
-            Assert.assertArrayEquals(new long[] { 7L, 8L }, model.getLongValues());
-            Assert.assertArrayEquals(new String[] { "hello", null }, model.getStringValues());
-            Assert.assertArrayEquals(new Boolean[] { true, null }, model.getBoxedBooleanValues());
-            Assert.assertArrayEquals(new Integer[] { 9, null }, model.getBoxedIntegerValues());
-            Assert.assertArrayEquals(new Double[] { 7.58, null }, model.getBoxedDoubleValues());
-            Assert.assertArrayEquals(new Byte[] { (byte) 10, null }, model.getBoxedByteValues());
-            Assert.assertArrayEquals(new Short[] { (short) 11, null }, model.getBoxedShortValues());
-            Assert.assertArrayEquals(new Float[] { 8.69f, null }, model.getBoxedFloatValues());
-            Assert.assertArrayEquals(new Character[] { 'c', null }, model.getBoxedCharacterValues());
-            Assert.assertArrayEquals(new Long[] { 12L, null }, model.getBoxedLongValues());
-            Assert.assertArrayEquals(new Date[] { Date.from(Instant.parse("2022-06-28T19:27:00Z")), null }, model.getDateValues());
-            Assert.assertArrayEquals(new Instant[] { Instant.parse("2022-06-28T19:27:59Z"), null }, model.getInstantValues());
-            Assert.assertArrayEquals(new ZonedDateTime[] { ZonedDateTime.of(2022, 6, 28, 19, 28, 0, 0, ZoneOffset.UTC), null }, model.getZonedDateTimeValues());
-            Assert.assertArrayEquals(new OffsetDateTime[] { OffsetDateTime.of(2022, 6, 28, 19, 28, 59, 0, ZoneOffset.ofHours(-4)), null }, model.getOffsetDateTimeValues());
-            Assert.assertArrayEquals(new LocalDateTime[] { LocalDateTime.of(2022, 6, 28, 19, 30, 0), null }, model.getLocalDateTimeValues());
-            Assert.assertArrayEquals(new LocalDate[] { LocalDate.of(2022, 6, 28), null }, model.getLocalDateValues());
-            Assert.assertArrayEquals(new YearMonth[] { YearMonth.of(2022, 6), null }, model.getYearMonthValues());
-            Assert.assertArrayEquals(new Year[] { Year.of(2022), null }, model.getYearValues());
-            Assert.assertArrayEquals(new BigInteger[] { new BigInteger("13"), null }, model.getBigIntegerValues());
-            Assert.assertArrayEquals(new BigDecimal[] { new BigDecimal("9.70"), null }, model.getBigDecimalValues());
-            Assert.assertArrayEquals(new UUID[] { uuid, null }, model.getUuidValues());
+            Assertions.assertArrayEquals(new boolean[] { true, false }, model.getBooleanValues());
+            Assertions.assertArrayEquals(new int[] { 1, 2 }, model.getIntValues());
+            Assertions.assertArrayEquals(new double[] { 3.14, 4.25 }, model.getDoubleValues(), 0.0);
+            Assertions.assertArrayEquals(new byte[] { 3, 4 }, model.getByteValues());
+            Assertions.assertArrayEquals(new short[] { 5, 6 }, model.getShortValues());
+            Assertions.assertArrayEquals(new float[] { 5.36f, 6.47f }, model.getFloatValues(), 0.0f);
+            Assertions.assertArrayEquals(new char[] { 'a', 'b' }, model.getCharValues());
+            Assertions.assertArrayEquals(new long[] { 7L, 8L }, model.getLongValues());
+            Assertions.assertArrayEquals(new String[] { "hello", null }, model.getStringValues());
+            Assertions.assertArrayEquals(new Boolean[] { true, null }, model.getBoxedBooleanValues());
+            Assertions.assertArrayEquals(new Integer[] { 9, null }, model.getBoxedIntegerValues());
+            Assertions.assertArrayEquals(new Double[] { 7.58, null }, model.getBoxedDoubleValues());
+            Assertions.assertArrayEquals(new Byte[] { (byte) 10, null }, model.getBoxedByteValues());
+            Assertions.assertArrayEquals(new Short[] { (short) 11, null }, model.getBoxedShortValues());
+            Assertions.assertArrayEquals(new Float[] { 8.69f, null }, model.getBoxedFloatValues());
+            Assertions.assertArrayEquals(new Character[] { 'c', null }, model.getBoxedCharacterValues());
+            Assertions.assertArrayEquals(new Long[] { 12L, null }, model.getBoxedLongValues());
+            Assertions.assertArrayEquals(new Date[] { Date.from(Instant.parse("2022-06-28T19:27:00Z")), null }, model.getDateValues());
+            Assertions.assertArrayEquals(new Instant[] { Instant.parse("2022-06-28T19:27:59Z"), null }, model.getInstantValues());
+            Assertions.assertArrayEquals(new ZonedDateTime[] { ZonedDateTime.of(2022, 6, 28, 19, 28, 0, 0, ZoneOffset.UTC), null }, model.getZonedDateTimeValues());
+            Assertions.assertArrayEquals(new OffsetDateTime[] { OffsetDateTime.of(2022, 6, 28, 19, 28, 59, 0, ZoneOffset.ofHours(-4)), null }, model.getOffsetDateTimeValues());
+            Assertions.assertArrayEquals(new LocalDateTime[] { LocalDateTime.of(2022, 6, 28, 19, 30, 0), null }, model.getLocalDateTimeValues());
+            Assertions.assertArrayEquals(new LocalDate[] { LocalDate.of(2022, 6, 28), null }, model.getLocalDateValues());
+            Assertions.assertArrayEquals(new YearMonth[] { YearMonth.of(2022, 6), null }, model.getYearMonthValues());
+            Assertions.assertArrayEquals(new Year[] { Year.of(2022), null }, model.getYearValues());
+            Assertions.assertArrayEquals(new BigInteger[] { new BigInteger("13"), null }, model.getBigIntegerValues());
+            Assertions.assertArrayEquals(new BigDecimal[] { new BigDecimal("9.70"), null }, model.getBigDecimalValues());
+            Assertions.assertArrayEquals(new UUID[] { uuid, null }, model.getUuidValues());
         });
     }
 
     @Test
-    public void testGet_collectionModel() {
+    void testGet_collectionModel() {
         AsyncTestUtils.runTest(app -> {
             UUID uuid = UUID.randomUUID();
             String route = buildRouteWithQueryParams(BindModelController.GET_COLLECTION_VALUES, queryParams(
@@ -459,26 +459,26 @@ public final class BindModelTest {
                 param("UUID", null)
             ));
             CollectionModel model = getJsonResponseForGet(route, CollectionModel.class);
-            Assert.assertEquals(Arrays.asList("hello", null), model.getStringValues());
-            Assert.assertEquals(Arrays.asList(true, null), model.getBooleanValues());
-            Assert.assertEquals(Arrays.asList(9, null), model.getIntegerValues());
-            Assert.assertEquals(new LinkedHashSet<>(Arrays.asList(7.58, null)), model.getDoubleValues());
-            Assert.assertEquals(Arrays.asList((byte) 10, null), model.getByteValues());
-            Assert.assertEquals(Arrays.asList((short) 11, null), model.getShortValues());
-            Assert.assertEquals(new HashSet<>(Arrays.asList(8.69f, null)), model.getFloatValues());
-            Assert.assertEquals(new LinkedHashSet<>(Arrays.asList('c', null)), model.getCharacterValues());
-            Assert.assertEquals(Arrays.asList(12L, null), model.getBoxedLongValues());
-            Assert.assertEquals(Arrays.asList(Date.from(Instant.parse("2022-06-28T19:27:00Z")), null), model.getDateValues());
-            Assert.assertEquals(Arrays.asList(Instant.parse("2022-06-28T19:27:59Z"), null), model.getInstantValues());
-            Assert.assertEquals(new LinkedHashSet<>(Arrays.asList(ZonedDateTime.of(2022, 6, 28, 19, 28, 0, 0, ZoneOffset.UTC), null)), model.getZonedDateTimeValues());
-            Assert.assertEquals(Arrays.asList(OffsetDateTime.of(2022, 6, 28, 19, 28, 59, 0, ZoneOffset.ofHours(-4)), null), model.getOffsetDateTimeValues());
-            Assert.assertEquals(Arrays.asList(LocalDateTime.of(2022, 6, 28, 19, 30, 0), null), model.getLocalDateTimeValues());
-            Assert.assertEquals(new HashSet<>(Arrays.asList(LocalDate.of(2022, 6, 28), null)), model.getLocalDateValues());
-            Assert.assertEquals(new LinkedHashSet<>(Arrays.asList(YearMonth.of(2022, 6), null)), model.getYearMonthValues());
-            Assert.assertEquals(Arrays.asList(Year.of(2022), null), model.getYearValues());
-            Assert.assertEquals(Arrays.asList(new BigInteger("13"), null), model.getBigIntegerValues());
-            Assert.assertEquals(Arrays.asList(new BigDecimal("9.70"), null), model.getBigDecimalValues());
-            Assert.assertEquals(new LinkedHashSet<>(Arrays.asList(uuid, null)), model.getUuidValues());
+            Assertions.assertEquals(Arrays.asList("hello", null), model.getStringValues());
+            Assertions.assertEquals(Arrays.asList(true, null), model.getBooleanValues());
+            Assertions.assertEquals(Arrays.asList(9, null), model.getIntegerValues());
+            Assertions.assertEquals(new LinkedHashSet<>(Arrays.asList(7.58, null)), model.getDoubleValues());
+            Assertions.assertEquals(Arrays.asList((byte) 10, null), model.getByteValues());
+            Assertions.assertEquals(Arrays.asList((short) 11, null), model.getShortValues());
+            Assertions.assertEquals(new HashSet<>(Arrays.asList(8.69f, null)), model.getFloatValues());
+            Assertions.assertEquals(new LinkedHashSet<>(Arrays.asList('c', null)), model.getCharacterValues());
+            Assertions.assertEquals(Arrays.asList(12L, null), model.getBoxedLongValues());
+            Assertions.assertEquals(Arrays.asList(Date.from(Instant.parse("2022-06-28T19:27:00Z")), null), model.getDateValues());
+            Assertions.assertEquals(Arrays.asList(Instant.parse("2022-06-28T19:27:59Z"), null), model.getInstantValues());
+            Assertions.assertEquals(new LinkedHashSet<>(Arrays.asList(ZonedDateTime.of(2022, 6, 28, 19, 28, 0, 0, ZoneOffset.UTC), null)), model.getZonedDateTimeValues());
+            Assertions.assertEquals(Arrays.asList(OffsetDateTime.of(2022, 6, 28, 19, 28, 59, 0, ZoneOffset.ofHours(-4)), null), model.getOffsetDateTimeValues());
+            Assertions.assertEquals(Arrays.asList(LocalDateTime.of(2022, 6, 28, 19, 30, 0), null), model.getLocalDateTimeValues());
+            Assertions.assertEquals(new HashSet<>(Arrays.asList(LocalDate.of(2022, 6, 28), null)), model.getLocalDateValues());
+            Assertions.assertEquals(new LinkedHashSet<>(Arrays.asList(YearMonth.of(2022, 6), null)), model.getYearMonthValues());
+            Assertions.assertEquals(Arrays.asList(Year.of(2022), null), model.getYearValues());
+            Assertions.assertEquals(Arrays.asList(new BigInteger("13"), null), model.getBigIntegerValues());
+            Assertions.assertEquals(Arrays.asList(new BigDecimal("9.70"), null), model.getBigDecimalValues());
+            Assertions.assertEquals(new LinkedHashSet<>(Arrays.asList(uuid, null)), model.getUuidValues());
         });
     }
 }

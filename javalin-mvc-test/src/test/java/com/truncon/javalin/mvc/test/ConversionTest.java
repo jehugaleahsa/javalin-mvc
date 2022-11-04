@@ -5,8 +5,8 @@ import com.truncon.javalin.mvc.test.controllers.PairController;
 import com.truncon.javalin.mvc.test.models.ConversionModel;
 import com.truncon.javalin.mvc.test.models.HttpModelWithConversionModel;
 import com.truncon.javalin.mvc.test.models.Pair;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
@@ -18,51 +18,51 @@ import static com.truncon.javalin.mvc.test.RouteBuilder.param;
 import static com.truncon.javalin.mvc.test.RouteBuilder.pathParams;
 import static com.truncon.javalin.mvc.test.RouteBuilder.queryParams;
 
-public final class ConversionTest {
+final class ConversionTest {
     @Test
-    public void testConversion_staticConverter_context() {
+    void testConversion_staticConverter_context() {
         String baseRoute = ConversionController.GET_CONVERSION_CONTEXT_ROUTE;
         testRoute(baseRoute);
     }
 
     @Test
-    public void testConversion_staticConverter_request() {
+    void testConversion_staticConverter_request() {
         String baseRoute = ConversionController.GET_CONVERSION_REQUEST_ROUTE;
         testRoute(baseRoute);
     }
 
     @Test
-    public void testConversion_staticConverter_contextName() {
+    void testConversion_staticConverter_contextName() {
         String baseRoute = ConversionController.GET_CONVERSION_CONTEXT_NAME_ROUTE;
         testRoute(baseRoute);
     }
 
     @Test
-    public void testConversion_staticConverter_requestName() {
+    void testConversion_staticConverter_requestName() {
         String baseRoute = ConversionController.GET_CONVERSION_REQUEST_NAME_ROUTE;
         testRoute(baseRoute);
     }
 
     @Test
-    public void testConversion_staticConverter_contextSource() {
+    void testConversion_staticConverter_contextSource() {
         String baseRoute = ConversionController.GET_CONVERSION_CONTEXT_SOURCE_ROUTE;
         testRoute(baseRoute);
     }
 
     @Test
-    public void testConversion_staticConverter_requestSource() {
+    void testConversion_staticConverter_requestSource() {
         String baseRoute = ConversionController.GET_CONVERSION_REQUEST_SOURCE_ROUTE;
         testRoute(baseRoute);
     }
 
     @Test
-    public void testConversion_staticConverter_contextNameSource() {
+    void testConversion_staticConverter_contextNameSource() {
         String baseRoute = ConversionController.GET_CONVERSION_CONTEXT_NAME_SOURCE_ROUTE;
         testRoute(baseRoute);
     }
 
     @Test
-    public void testConversion_staticConverter_requestNameSource() {
+    void testConversion_staticConverter_requestNameSource() {
         String baseRoute = ConversionController.GET_CONVERSION_REQUEST_NAME_SOURCE_ROUTE;
         testRoute(baseRoute);
     }
@@ -85,19 +85,19 @@ public final class ConversionTest {
     }
 
     private void assertConversionModel(ConversionModel model) {
-        Assert.assertNotNull(model);
-        Assert.assertTrue(model.getBoolean());
-        Assert.assertEquals((byte) 22, model.getByte());
-        Assert.assertEquals('A', model.getChar());
-        Assert.assertEquals(2.22, model.getDouble(), 0.0);
-        Assert.assertEquals(4.44f, model.getFloat(), 0.0);
-        Assert.assertEquals(22222222, model.getInteger());
-        Assert.assertEquals(4444444444L, model.getLong());
-        Assert.assertEquals((short) 22222, model.getShort());
+        Assertions.assertNotNull(model);
+        Assertions.assertTrue(model.getBoolean());
+        Assertions.assertEquals((byte) 22, model.getByte());
+        Assertions.assertEquals('A', model.getChar());
+        Assertions.assertEquals(2.22, model.getDouble(), 0.0);
+        Assertions.assertEquals(4.44f, model.getFloat(), 0.0);
+        Assertions.assertEquals(22222222, model.getInteger());
+        Assertions.assertEquals(4444444444L, model.getLong());
+        Assertions.assertEquals((short) 22222, model.getShort());
     }
 
     @Test
-    public void testConversion_staticConverter_nested() {
+    void testConversion_staticConverter_nested() {
         String baseRoute = ConversionController.GET_CONVERSION_NESTED_ROUTE;
         testNestedRoute(baseRoute);
     }
@@ -115,7 +115,7 @@ public final class ConversionTest {
                 param("short", Short.toString((short) 11111))
             ));
             HttpModelWithConversionModel model = getJsonResponseForGet(route, HttpModelWithConversionModel.class);
-            Assert.assertNotNull(model);
+            Assertions.assertNotNull(model);
             assertConversionModel(model.field);
             assertConversionModel(model.getModel1());
             assertConversionModel(model.getModel2());
@@ -123,15 +123,15 @@ public final class ConversionTest {
     }
 
     @Test
-    public void testConversion_typeSpecifiesConverter() throws IOException {
+    void testConversion_typeSpecifiesConverter() throws IOException {
         Pair pair = new Pair(123, 456);
         String route = buildRouteWithPathParams(PairController.ROUTE, pathParams(param("value", pair.toString())));
         AsyncTestUtils.runTest(app -> {
             String response = getStringForGet(route);
             Pair returnedPair = Pair.parse(response);
-            Assert.assertNotNull(returnedPair);
-            Assert.assertEquals(pair.getFirst(), returnedPair.getFirst());
-            Assert.assertEquals(pair.getSecond(), returnedPair.getSecond());
+            Assertions.assertNotNull(returnedPair);
+            Assertions.assertEquals(pair.getFirst(), returnedPair.getFirst());
+            Assertions.assertEquals(pair.getSecond(), returnedPair.getSecond());
         });
     }
 }

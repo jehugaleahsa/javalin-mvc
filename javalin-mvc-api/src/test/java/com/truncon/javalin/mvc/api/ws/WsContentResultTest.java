@@ -1,20 +1,20 @@
 package com.truncon.javalin.mvc.api.ws;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-public final class WsContentResultTest {
+final class WsContentResultTest {
     @Test
-    public void testCtor() {
+    void testCtor() {
         WsContentResult result = new WsContentResult("hello");
-        Assert.assertEquals("hello", result.getContent());
+        Assertions.assertEquals("hello", result.getContent());
     }
 
     @Test
-    public void testExecute() {
+    void testExecute() {
         WsContentResult result = new WsContentResult("hello");
         MockWsContext context = new MockWsContext();
         result.execute(context);
-        Assert.assertEquals("hello", context.getResponse().getText());
+        Assertions.assertEquals("hello", context.getResponse().getText());
     }
 }

@@ -1,84 +1,84 @@
 package com.truncon.javalin.mvc.api;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-public final class RedirectResultTest {
+final class RedirectResultTest {
     @Test
-    public void testCtor_location() {
+    void testCtor_location() {
         RedirectResult result = new RedirectResult("/index");
-        Assert.assertEquals("/index", result.getLocation());
-        Assert.assertFalse(result.isPermanent());
-        Assert.assertFalse(result.isMethodPreserved());
+        Assertions.assertEquals("/index", result.getLocation());
+        Assertions.assertFalse(result.isPermanent());
+        Assertions.assertFalse(result.isMethodPreserved());
     }
 
     @Test
-    public void testCtor_locationPermanent() {
+    void testCtor_locationPermanent() {
         RedirectResult result = new RedirectResult("/index", true);
-        Assert.assertEquals("/index", result.getLocation());
-        Assert.assertTrue(result.isPermanent());
-        Assert.assertFalse(result.isMethodPreserved());
+        Assertions.assertEquals("/index", result.getLocation());
+        Assertions.assertTrue(result.isPermanent());
+        Assertions.assertFalse(result.isMethodPreserved());
     }
 
     @Test
-    public void testCtor_locationPermanentPreserveMethod() {
+    void testCtor_locationPermanentPreserveMethod() {
         RedirectResult result = new RedirectResult("/index", false, true);
-        Assert.assertEquals("/index", result.getLocation());
-        Assert.assertFalse(result.isPermanent());
-        Assert.assertTrue(result.isMethodPreserved());
+        Assertions.assertEquals("/index", result.getLocation());
+        Assertions.assertFalse(result.isPermanent());
+        Assertions.assertTrue(result.isMethodPreserved());
     }
 
     @Test
-    public void testSetPermanent() {
+    void testSetPermanent() {
         RedirectResult result = new RedirectResult("/index");
         result.setPermanent(true);
-        Assert.assertTrue(result.isPermanent());
+        Assertions.assertTrue(result.isPermanent());
     }
 
     @Test
-    public void testSetMethodPreserved() {
+    void testSetMethodPreserved() {
         RedirectResult result = new RedirectResult("/index");
         result.setMethodPreserved(true);
-        Assert.assertTrue(result.isMethodPreserved());
+        Assertions.assertTrue(result.isMethodPreserved());
     }
 
     @Test
-    public void testExecute() {
+    void testExecute() {
         RedirectResult result = new RedirectResult("/index");
         MockHttpContext context = new MockHttpContext();
         result.execute(context);
         MockHttpResponse response = context.getResponse();
-        Assert.assertEquals("/index", response.getRedirectLocation());
-        Assert.assertEquals(302, response.getStatusCode());
+        Assertions.assertEquals("/index", response.getRedirectLocation());
+        Assertions.assertEquals(302, response.getStatusCode());
     }
 
     @Test
-    public void testExecute_permanent() {
+    void testExecute_permanent() {
         RedirectResult result = new RedirectResult("/index", true);
         MockHttpContext context = new MockHttpContext();
         result.execute(context);
         MockHttpResponse response = context.getResponse();
-        Assert.assertEquals("/index", response.getRedirectLocation());
-        Assert.assertEquals(301, response.getStatusCode());
+        Assertions.assertEquals("/index", response.getRedirectLocation());
+        Assertions.assertEquals(301, response.getStatusCode());
     }
 
     @Test
-    public void testExecute_preserveMethod() {
+    void testExecute_preserveMethod() {
         RedirectResult result = new RedirectResult("/index", false, true);
         MockHttpContext context = new MockHttpContext();
         result.execute(context);
         MockHttpResponse response = context.getResponse();
-        Assert.assertEquals("/index", response.getRedirectLocation());
-        Assert.assertEquals(307, response.getStatusCode());
+        Assertions.assertEquals("/index", response.getRedirectLocation());
+        Assertions.assertEquals(307, response.getStatusCode());
     }
 
     @Test
-    public void testExecute_permanentPreserveMethod() {
+    void testExecute_permanentPreserveMethod() {
         RedirectResult result = new RedirectResult("/index", true, true);
         MockHttpContext context = new MockHttpContext();
         result.execute(context);
         MockHttpResponse response = context.getResponse();
-        Assert.assertEquals("/index", response.getRedirectLocation());
-        Assert.assertEquals(308, response.getStatusCode());
+        Assertions.assertEquals("/index", response.getRedirectLocation());
+        Assertions.assertEquals(308, response.getStatusCode());
     }
 }

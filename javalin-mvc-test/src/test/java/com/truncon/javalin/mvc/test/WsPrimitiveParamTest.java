@@ -8,8 +8,8 @@ import com.truncon.javalin.mvc.test.controllers.ws.primitives.PrimitiveFloatPara
 import com.truncon.javalin.mvc.test.controllers.ws.primitives.PrimitiveIntegerParameterController;
 import com.truncon.javalin.mvc.test.controllers.ws.primitives.PrimitiveLongParameterController;
 import com.truncon.javalin.mvc.test.controllers.ws.primitives.PrimitiveShortParameterController;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
@@ -17,107 +17,107 @@ import static com.truncon.javalin.mvc.test.RouteBuilder.buildWsRouteWithPathPara
 import static com.truncon.javalin.mvc.test.RouteBuilder.param;
 import static com.truncon.javalin.mvc.test.RouteBuilder.pathParams;
 
-public final class WsPrimitiveParamTest {
+final class WsPrimitiveParamTest {
     @Test
-    public void testByte() throws IOException {
+    void testByte() throws IOException {
         String value = Byte.toString(Byte.MAX_VALUE);
         String route = buildWsRouteWithPathParams(PrimitiveByteParameterController.ROUTE, pathParams(
             param("value", value)
         ));
         AsyncTestUtils.runTestAsync(app ->
             WsTestUtils.ws(route, session -> session.sendStringAndAwaitResponse("").thenAccept(response ->
-                Assert.assertEquals(value, response)
+                Assertions.assertEquals(value, response)
             ))
         );
     }
 
     @Test
-    public void testShort() throws IOException {
+    void testShort() throws IOException {
         String value = Short.toString(Short.MAX_VALUE);
         String route = buildWsRouteWithPathParams(PrimitiveShortParameterController.ROUTE, pathParams(
             param("value", value)
         ));
         AsyncTestUtils.runTestAsync(app ->
             WsTestUtils.ws(route, session -> session.sendStringAndAwaitResponse("").thenAccept(response ->
-                Assert.assertEquals(value, response)
+                Assertions.assertEquals(value, response)
             ))
         );
     }
 
     @Test
-    public void testInteger() throws IOException {
+    void testInteger() throws IOException {
         String value = Integer.toString(Integer.MAX_VALUE);
         String route = buildWsRouteWithPathParams(PrimitiveIntegerParameterController.ROUTE, pathParams(
             param("value", value)
         ));
         AsyncTestUtils.runTestAsync(app ->
             WsTestUtils.ws(route, session -> session.sendStringAndAwaitResponse("").thenAccept(response ->
-                Assert.assertEquals(value, response)
+                Assertions.assertEquals(value, response)
             ))
         );
     }
 
     @Test
-    public void testLong() throws IOException {
+    void testLong() throws IOException {
         String value = Long.toString(Long.MAX_VALUE);
         String route = buildWsRouteWithPathParams(PrimitiveLongParameterController.ROUTE, pathParams(
             param("value", value)
         ));
         AsyncTestUtils.runTestAsync(app ->
             WsTestUtils.ws(route, session -> session.sendStringAndAwaitResponse("").thenAccept(response ->
-                Assert.assertEquals(value, response)
+                Assertions.assertEquals(value, response)
             ))
         );
     }
 
     @Test
-    public void testFloat() throws IOException {
+    void testFloat() throws IOException {
         String value = Float.toString(Float.MAX_VALUE);
         String route = buildWsRouteWithPathParams(PrimitiveFloatParameterController.ROUTE, pathParams(
             param("value", value)
         ));
         AsyncTestUtils.runTestAsync(app ->
             WsTestUtils.ws(route, session -> session.sendStringAndAwaitResponse("").thenAccept(response ->
-                Assert.assertEquals(value, response)
+                Assertions.assertEquals(value, response)
             ))
         );
     }
 
     @Test
-    public void testDouble() throws IOException {
+    void testDouble() throws IOException {
         String value = Double.toString(Double.MAX_VALUE);
         String route = buildWsRouteWithPathParams(PrimitiveDoubleParameterController.ROUTE, pathParams(
             param("value", value)
         ));
         AsyncTestUtils.runTestAsync(app ->
             WsTestUtils.ws(route, session -> session.sendStringAndAwaitResponse("").thenAccept(response ->
-                Assert.assertEquals(value, response)
+                Assertions.assertEquals(value, response)
             ))
         );
     }
 
     @Test
-    public void testBoolean() throws IOException {
+    void testBoolean() throws IOException {
         String value = Boolean.toString(true);
         String route = buildWsRouteWithPathParams(PrimitiveBooleanParameterController.ROUTE, pathParams(
             param("value", value)
         ));
         AsyncTestUtils.runTestAsync(app ->
             WsTestUtils.ws(route, session -> session.sendStringAndAwaitResponse("").thenAccept(response ->
-                Assert.assertEquals(value, response)
+                Assertions.assertEquals(value, response)
             ))
         );
     }
 
     @Test
-    public void testCharacter() throws IOException {
+    void testCharacter() throws IOException {
         String value = Character.toString(Character.MAX_VALUE);
         String route = buildWsRouteWithPathParams(PrimitiveCharacterParameterController.ROUTE, pathParams(
             param("value", value)
         ));
         AsyncTestUtils.runTestAsync(app ->
             WsTestUtils.ws(route, session -> session.sendStringAndAwaitResponse("").thenAccept(response ->
-                Assert.assertEquals(value, response)
+                Assertions.assertEquals(value, response)
             ))
         );
     }

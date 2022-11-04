@@ -1,64 +1,63 @@
 package com.truncon.javalin.mvc.test;
 
 import com.truncon.javalin.mvc.test.controllers.InjectionController;
-import com.truncon.javalin.mvc.test.models.InjectionModel;
 import com.truncon.javalin.mvc.test.utils.DependencyImpl;
 import org.apache.commons.lang3.tuple.Pair;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 
-public final class DependencyInjectionTest {
+final class DependencyInjectionTest {
     @Test
-    public void testInjectorUsed_controller_returnsDependencyValue() {
+    void testInjectorUsed_controller_returnsDependencyValue() {
         AsyncTestUtils.runTest(a -> {
             String route = RouteBuilder.buildRoute(InjectionController.GET_CONTROLLER_ROUTE);
             String value = QueryUtils.getStringForGet(route);
-            Assert.assertEquals(new DependencyImpl().getValue(), value);
+            Assertions.assertEquals(new DependencyImpl().getValue(), value);
         });
     }
 
     @Test
-    public void testInjectorUsed_beforeHandler_returnsDependencyValue() {
+    void testInjectorUsed_beforeHandler_returnsDependencyValue() {
         AsyncTestUtils.runTest(a -> {
             String route = RouteBuilder.buildRoute(InjectionController.GET_BEFORE_HANDLER_ROUTE);
             String value = QueryUtils.getStringForGet(route);
-            Assert.assertEquals(new DependencyImpl().getValue(), value);
+            Assertions.assertEquals(new DependencyImpl().getValue(), value);
         });
     }
 
     @Test
-    public void testInjectorUsed_afterHandler_returnsDependencyValue() {
+    void testInjectorUsed_afterHandler_returnsDependencyValue() {
         AsyncTestUtils.runTest(a -> {
             String route = RouteBuilder.buildRoute(InjectionController.GET_AFTER_HANDLER_ROUTE);
             String value = QueryUtils.getStringForGet(route);
-            Assert.assertEquals(new DependencyImpl().getValue(), value);
+            Assertions.assertEquals(new DependencyImpl().getValue(), value);
         });
     }
 
     @Test
-    public void testInjectorUsed_converter_returnsDependencyValue() {
+    void testInjectorUsed_converter_returnsDependencyValue() {
         AsyncTestUtils.runTest(a -> {
             String route = RouteBuilder.buildRouteWithQueryParams(
                 InjectionController.GET_CONVERTER_ROUTE,
                 Collections.singletonList(Pair.of("value", "if you see this, the converter wasn't used"))
             );
             String value = QueryUtils.getStringForGet(route);
-            Assert.assertEquals(new DependencyImpl().getValue(), value);
+            Assertions.assertEquals(new DependencyImpl().getValue(), value);
         });
     }
 
     @Test
-    public void testInjectorUsed_model_returnsDependencyValue() {
+    void testInjectorUsed_model_returnsDependencyValue() {
         AsyncTestUtils.runTest(a -> {
             String route = RouteBuilder.buildRouteWithQueryParams(
                 InjectionController.GET_MODEL_ROUTE,
                 Collections.singletonList(Pair.of("x", "123"))
             );
             FakeInjectionModel model = QueryUtils.getJsonResponseForGet(route, FakeInjectionModel.class);
-            Assert.assertEquals(new DependencyImpl().getValue(), model.getValue());
-            Assert.assertEquals((Integer) 123, model.getX());
+            Assertions.assertEquals(new DependencyImpl().getValue(), model.getValue());
+            Assertions.assertEquals((Integer) 123, model.getX());
         });
     }
 

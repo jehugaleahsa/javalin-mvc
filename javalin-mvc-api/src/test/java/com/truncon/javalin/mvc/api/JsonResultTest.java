@@ -1,43 +1,43 @@
 package com.truncon.javalin.mvc.api;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-public final class JsonResultTest {
+final class JsonResultTest {
     @Test
-    public void testCtor_data() {
+    void testCtor_data() {
         Object data = new Object();
         JsonResult result = new JsonResult(data);
-        Assert.assertSame(data, result.getData());
+        Assertions.assertSame(data, result.getData());
     }
 
     @Test
-    public void testCtor_dataStatusCode() {
+    void testCtor_dataStatusCode() {
         Object data = new Object();
         JsonResult result = new JsonResult(data, 400);
-        Assert.assertSame(data, result.getData());
-        Assert.assertEquals(400, result.getStatusCode());
+        Assertions.assertSame(data, result.getData());
+        Assertions.assertEquals(400, result.getStatusCode());
     }
 
     @Test
-    public void testExecute() {
+    void testExecute() {
         Object data = new Object();
         JsonResult result = new JsonResult(data, 400);
         MockHttpContext context = new MockHttpContext();
         result.execute(context);
         MockHttpResponse response = context.getResponse();
-        Assert.assertEquals(400, response.getStatusCode());
-        Assert.assertSame(data, response.getJsonBody());
+        Assertions.assertEquals(400, response.getStatusCode());
+        Assertions.assertSame(data, response.getJsonBody());
     }
 
     @Test
-    public void testExecute_streaming() {
+    void testExecute_streaming() {
         Object data = new Object();
         JsonResult result = new JsonResult(data, 400, true);
         MockHttpContext context = new MockHttpContext();
         result.execute(context);
         MockHttpResponse response = context.getResponse();
-        Assert.assertEquals(400, response.getStatusCode());
-        Assert.assertSame(data, response.getJsonStreamBody());
+        Assertions.assertEquals(400, response.getStatusCode());
+        Assertions.assertSame(data, response.getJsonStreamBody());
     }
 }
