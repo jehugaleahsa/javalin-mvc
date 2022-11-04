@@ -43,17 +43,17 @@ final class WsBeforeGenerator {
             int index) {
         String arguments = getArguments();
         InjectionResult result = container.getInstanceCall(getTypeMirror(), injectorName);
-        String handlerName = "beforeHandler" + index;
+        String handlerContextName = "beforeContext" + index;
         routeBuilder.addStatement(
             "$T $N = new $T($N, $L)",
             WsBeforeActionContext.class,
-            handlerName,
+            handlerContextName,
             JavalinWsBeforeActionContext.class,
             contextName,
             arguments
         );
-        routeBuilder.addStatement("$L.executeBefore($N)", result.getInstanceCall(), handlerName);
-        routeBuilder.beginControlFlow("if ($N.isCancelled())", handlerName)
+        routeBuilder.addStatement("$L.executeBefore($N)", result.getInstanceCall(), handlerContextName);
+        routeBuilder.beginControlFlow("if ($N.isCancelled())", handlerContextName)
             .addStatement("return")
             .endControlFlow();
         return result.isInjectorNeeded();

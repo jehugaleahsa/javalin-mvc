@@ -43,19 +43,19 @@ final class AfterGenerator {
             int index) {
         String arguments = getArguments();
         InjectionResult result = container.getInstanceCall(getTypeMirror(), injectorName);
-        String handlerName = "afterHandler" + index;
+        String handlerContextName = "afterContext" + index;
         handlerBuilder.addStatement(
             "$T $N = new $T($N, $L, $N, handled)",
             AfterActionContext.class,
-            handlerName,
+            handlerContextName,
             JavalinAfterActionContext.class,
             contextName,
             arguments,
             exceptionName
         );
-        handlerBuilder.addStatement("$L.executeAfter($N)", result.getInstanceCall(), handlerName);
-        handlerBuilder.addStatement("$N = $N.getException()", exceptionName, handlerName);
-        handlerBuilder.addStatement("handled = $N.isHandled()", handlerName);
+        handlerBuilder.addStatement("$L.executeAfter($N)", result.getInstanceCall(), handlerContextName);
+        handlerBuilder.addStatement("$N = $N.getException()", exceptionName, handlerContextName);
+        handlerBuilder.addStatement("handled = $N.isHandled()", handlerContextName);
         return result.isInjectorNeeded();
     }
 

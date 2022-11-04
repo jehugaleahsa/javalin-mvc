@@ -10,10 +10,11 @@ import com.truncon.javalin.mvc.test.handlers.WsInjectionHandler;
 @WsController(route = WsInjectedAfterHandlerController.ROUTE)
 public final class WsInjectedAfterHandlerController {
     public static final String ROUTE = "/ws/bind/injection/after-handler";
+    public static final String CONTROLLER_MESSAGE = "controller-message";
 
     @WsMessage
     @WsAfter(handler = WsInjectionHandler.class)
     public WsActionResult onMessage() {
-        return new WsContentResult("If you see this, the after handler did not overwrite the response.");
+        return new WsContentResult(CONTROLLER_MESSAGE);
     }
 }
