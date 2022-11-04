@@ -18,18 +18,18 @@ The following dependencies are needed in your web project:
   <dependency>
     <groupId>io.javalin</groupId>
     <artifactId>javalin</artifactId>
-    <version>4.6.3</version>
+    <version>5.1.3</version>
   </dependency>
   <!-- Javalin MVC -->
   <dependency>
     <groupId>com.truncon</groupId>
     <artifactId>javalin-mvc-api</artifactId>
-    <version>4.3.0</version>
+    <version>5.0.0</version>
   </dependency>
   <dependency>
     <groupId>com.truncon</groupId>
     <artifactId>javalin-mvc-core</artifactId>
-    <version>4.3.0</version>
+    <version>5.0.0</version>
   </dependency>
 </dependencies>
 ```
@@ -42,14 +42,14 @@ Javalin MVC uses annotation processing, so must be setup in your web project's `
         <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-compiler-plugin</artifactId>
-            <version>3.8.1</version>
+            <version>3.10.1</version>
             <configuration>
                 <annotationProcessorPaths>
                     <!-- Required -->
                     <path>
                         <groupId>com.truncon</groupId>
                         <artifactId>javalin-mvc-generator</artifactId>
-                        <version>4.3.0</version>
+                        <version>5.0.0</version>
                     </path>
                 </annotationProcessorPaths>
             </configuration>
@@ -120,7 +120,8 @@ public final class App {
     public static void main(String[] args) throws IOException {
         Javalin app = Javalin.create(config -> {
             // Remove the following line to disable Open API annotation processing
-            config.registerPlugin(new OpenApiPlugin(getOpenApiOptions()));
+            config.plugins.register(new OpenApiPlugin(getOpenApiOptions()));
+            config.plugins.register(new SwaggerPlugin(new SwaggerConfiguration()));
             
             // Register you JSON mapper with whatever library you want
             ObjectMapper objectMapper = new ObjectMapper(); // customize as needed
@@ -145,13 +146,12 @@ public final class App {
         app.start(5000);
     }
 
-    private static OpenApiOptions getOpenApiOptions() {
-        return new OpenApiOptions(new Info()
-            .version("1.0")
-            .description("My API"))
-            .path("/swagger")
-            .swagger(new SwaggerOptions("/swagger-ui")
-                .title("My API Documentation"));
+    private static OpenApiConfiguration getOpenApiOptions() {
+        OpenApiConfiguration configuration = new OpenApiConfiguration();
+        OpenApiInfo info = configuration.getInfo();
+        info.setTitle("My API");
+        info.setVersion("1.0");
+        return configuration;
     }
 }
 ```
@@ -278,12 +278,12 @@ There is direct support for [Dagger](https://dagger.dev). To use it, you must co
             <path>
                 <groupId>com.google.dagger</groupId>
                 <artifactId>dagger-compiler</artifactId>
-                <version>2.42</version>
+                <version>2.44</version>
             </path>
             <path>
                 <groupId>com.truncon</groupId>
                 <artifactId>javalin-mvc-generator</artifactId>
-                <version>4.3.0</version>
+                <version>5.0.0</version>
             </path>
         </annotationProcessorPaths>
     </configuration>
@@ -354,7 +354,7 @@ registry.register(app);
 
 The reason you pass a `Supplier<T>` is because each request spawns a new dependency injection scope. This means annotations like `@Singleton` will also be scoped to the request. If you want to share the same objects *across* requests, you can create them in the `main` and implement custom `@Provides` methods that return them. If you want to be really DI-friendly, you can have an application-wide container and a request-wide container and just inject the application-wide container into the request-wide container. I leave that to the reader.
 
-## Runtime DI Frameworks (Guice, Weld, etc.)
+## Runtime DI Frameworks (Guice, etc.)
 Most DI frameworks are wired up at runtime, not at compile time. Javalin MVC also supports these DI frameworks. For this example, I am going to show how you could do this with [Guice](https://github.com/google/guice).
 
 Some class in your project (any class, really) must be marked with the `@MvcModule`. We'll mark the Guice module, like so:
@@ -410,7 +410,7 @@ public final class GuiceInjector implements Injector {
     public Object getHandle() {
         return injector;
     }
-};
+}
 ```
 
 Now call the `JavalinControllerRegistry` constructor:
@@ -427,36 +427,34 @@ The reason you pass a `Supplier<Injector>` is because each request spawns a new 
 One or more `@Before` annotations can be put on an action method. You pass it a `Class<?>` to specify which class will be used. The class must implement the `BeforeActionHandler` interface, overriding a method with the following signature:
 
 ```java
-boolean executeBefore(HttpContext context, String[] arguments);
+void executeBefore(BeforeActionContext context);
 ```
 
-If `false` is returned, the request is cancelled. If you cancel a request, you should set the response. The `HttpRequest` and `HttpResponse` objects are retrieved from the `HttpContext` argument. The `String[]` argument contains any contextual information you want to provide to the processor.
+The `BeforeHandlerContext` provides access to the `HttpContext`. There is also a `getArguments()` method to get any arguments passed to the `@Before` annotation. A `setCancelled(boolean)` method is provided to cancel the request. If you cancel a request, you should also set the response. Once a request is cancelled, no other handlers will fire.
 
 One or more `@After` annotations can be put on an action method. You pass it a `Class<?>` to specify which class will be used. The class must implement the `AfterActionHandler` interface, overriding a method with the following signature:
 
 ```java
-Exception executeAfter(HttpContext context, String[] arguments, Exception exception);
+void executeAfter(AfterActionContext context);
 ```
 
-If executing a controller action results in an `Exception` being thrown, it will be passed as the last argument. The method can indicate that the exception has been handled by returning `null`. Otherwise, returning an exception indicates that the error should continue on to the next `@After` handler. Throwing an exception within an `@After` handler immediately jumps out of the request processing logic. Again, the `String[]` argument contains any contextual information you want to provide to the processor.
+If executing a controller action results in an `Exception` being thrown, it will be available in the `AfterActionContext` using the `getException()` method. The handler can mark an exception handled by passing `true` to the `setHandled(boolean)` method, or by passing `null` to the `setException(Exception)` method. If no handler marks the exception as handled, it will be rethrown. Throwing an exception within an `@After` handler immediately jumps out of the request processing logic. Again, there is also a `getArguments()` method to get any arguments passed to the `@After` annotation
 
 Here's an example `Log` handler that logs before and after an action fires:
 
 ```java
 public final class Log implements BeforeActionHandler, AfterActionHandler {
     @Override
-    public boolean executeBefore(HttpContext context, String[] arguments) {
-        System.out.println("Before: " + String.join(",", arguments));
-        return true; // Continue processing the request.
+    public void executeBefore(BeforeActionContext context) {
+        System.out.println("Before: " + String.join(",", context.getArguments()));
     }
 
     @Override
-    public Exception executeAfter(HttpContext context, String[] arguments, Exception exception) {
-        System.out.println("After: " + String.join(", ", arguments));
+    public void executeAfter(AfterActionContext context) {
+        System.out.println("After: " + String.join(", ", context.getArguments()));
         if (exception != null) {
             System.err.println(exception.toString());
         }
-        return exception; // Allow further exception processing, if needed.
     }
 }
 ```
