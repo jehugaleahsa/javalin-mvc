@@ -42,6 +42,7 @@ public interface WsAfterActionContext {
 
     /**
      * Sets the exception as handled. If no exception is set, this operation is ignored.
+     * @param handled Whether the exception was handled, if applicable.
      * @apiNote The exception remains accessible to future handlers unless
      * explicitly set to {@code null}.
      */
