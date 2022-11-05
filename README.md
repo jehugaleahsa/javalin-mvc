@@ -9,6 +9,9 @@ While Javalin is simple and amazing, you might find yourself wishing it had a co
 
 Javalin MVC just translates controller classes and "action methods" into Javalin routes at *compile time*. Because it's compile time, there's absolutely no runtime overhead for using Javalin MVC over plain Javalin. It's as fast as if you wrote all the Javalin route handlers by hand! Not only that, but it's a compile-time error if you try to register the same route multiple times. Importantly, Javalin MVC doesn't try to hide Javalin, so you can choose just how much you want to use Javalin MVC and adopt it over time.
 
+## Quick Example
+If you just want to get started quickly, you can view the Javalin MVC quick start example, found [here](https://github.com/jehugaleahsa/javalin-mvc-starter).
+
 ## Installation
 The following dependencies are needed in your web project:
 
