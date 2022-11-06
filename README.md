@@ -1,6 +1,8 @@
 # Javalin MVC
 Build Javalin route handlers at compile time using controllers and action methods.
 
+> Upgrade Note: Javalin released version 5.x. Read this [summary](./what-is-new-in-javalin-mvc-5.md) to see what changed! Use the 4.x version of this library to continue using Javalin 4.x. Use 5.x to use Javalin 5.x!
+
 ## Javalin
 We need something simple, we need something fast. [Javalin](https://javalin.io) is a very simple, very fast HTTP/WebSocket routing middleware library that runs on Jetty. If you haven't learned about Javalin yet, go do that first!
 
