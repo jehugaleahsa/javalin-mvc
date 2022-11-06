@@ -5,7 +5,7 @@
   <groupId>com.truncon</groupId>
   <artifactId>javalin-mvc</artifactId>
   <packaging>pom</packaging>
-  <version>5.0.0</version>
+  <version>5.0.1</version>
   <name>javalin-mvc</name>
   <properties>
     <maven.compiler.source>11</maven.compiler.source>

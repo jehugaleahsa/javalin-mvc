@@ -29,12 +29,12 @@ The following dependencies are needed in your web project:
   <dependency>
     <groupId>com.truncon</groupId>
     <artifactId>javalin-mvc-api</artifactId>
-    <version>5.0.0</version>
+    <version>5.0.1</version>
   </dependency>
   <dependency>
     <groupId>com.truncon</groupId>
     <artifactId>javalin-mvc-core</artifactId>
-    <version>5.0.0</version>
+    <version>5.0.1</version>
   </dependency>
 </dependencies>
 ```
@@ -54,7 +54,7 @@ Javalin MVC uses annotation processing, so must be setup in your web project's `
                     <path>
                         <groupId>com.truncon</groupId>
                         <artifactId>javalin-mvc-generator</artifactId>
-                        <version>5.0.0</version>
+                        <version>5.0.1</version>
                     </path>
                 </annotationProcessorPaths>
             </configuration>
@@ -288,7 +288,7 @@ There is direct support for [Dagger](https://dagger.dev). To use it, you must co
             <path>
                 <groupId>com.truncon</groupId>
                 <artifactId>javalin-mvc-generator</artifactId>
-                <version>5.0.0</version>
+                <version>5.0.1</version>
             </path>
         </annotationProcessorPaths>
     </configuration>
@@ -840,7 +840,7 @@ If you are familiar with the JAX-RS API, specifically it's annotations, feel fre
 </dependency>
 ```
 
-As of Javalin MVC 5.0.0, you must use the `jakarta.*` annotations instead 
+As of Javalin MVC 5.x, you must use the `jakarta.*` annotations instead 
 of `javax.*`. Due to Javalin 5 targeting Java 11+, Javalin MVC also targets Java 11+ and the jakarta annotations are required in newer Java versions.
 
 ## Known Limitations
