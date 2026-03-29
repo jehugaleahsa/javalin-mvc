@@ -1,3 +1,5 @@
+> *Archived 2026-03-28*: I started this project because I learned about Java's compile-time annotation processing. I really liked Javalin, but I wanted JAX-RS annotations. Of course, combine those together and you get this project. However, there was limited interest in using this project for production purposes and Javalin evolved faster than my interest in maintaining the project.
+
 # Javalin MVC
 Build Javalin route handlers at compile time using controllers and action methods.
 
